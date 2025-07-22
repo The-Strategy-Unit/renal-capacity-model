@@ -1,2 +1,3 @@
-# template-repository
-A template for repositories with standard Strategy Unit files
+# Renal capacity model
+
+Repository with Python code for the Renal Capacity Model.
