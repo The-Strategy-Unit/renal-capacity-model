@@ -1,0 +1,12 @@
+[project]
+name = "renal-capacity-model"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "matplotlib>=3.10.3",
+    "numpy>=2.3.1",
+    "simpy>=4.1.1",
+    "xlwings>=0.33.15",
+]
