@@ -12,7 +12,7 @@ from distributions import (
     IAT_5_LATE,
     IAT_6_LATE,
 )
-from config import DEFAULT_RND_SET, N_STREAMS
+from config import g
 import numpy as np
 from distributions import Exponential
 import itertools
@@ -26,8 +26,8 @@ class Experiment:
 
     def __init__(
         self,
-        random_number_set=DEFAULT_RND_SET,
-        n_streams=N_STREAMS,
+        random_number_set=g.default_rnd_set,
+        n_streams=g.n_streams,
         iat_1_Early=IAT_1_EARLY,
         iat_2_Early=IAT_2_EARLY,
         iat_3_Early=IAT_3_EARLY,

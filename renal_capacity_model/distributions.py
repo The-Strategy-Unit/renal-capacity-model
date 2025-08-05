@@ -2,8 +2,8 @@ import xlwings as xw
 import numpy as np
 
 # default mean inter-arrival times(exp)
-age_dist = xw.Book("Renal Modelling Input File.xlsx").sheets["age_dist"]
-referral_dist = xw.Book("Renal Modelling Input File.xlsx").sheets["referral_dist"]
+age_dist = xw.Book("data/Renal Modelling Input File.xlsx").sheets["age_dist"]
+referral_dist = xw.Book("data/Renal Modelling Input File.xlsx").sheets["referral_dist"]
 IAT_1_EARLY = 1 / (age_dist.range("B1").value * referral_dist.range("B1").value)
 IAT_2_EARLY = 1 / (age_dist.range("B2").value * referral_dist.range("B1").value)
 IAT_3_EARLY = 1 / (age_dist.range("B3").value * referral_dist.range("B1").value)
