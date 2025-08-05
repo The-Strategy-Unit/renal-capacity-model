@@ -1,5 +1,7 @@
 class g:
     n_streams = 12
-    default_rnd_set = 0
     trace = True
-    run_length = 365
+    number_of_runs = 100
+    patient_arrival_rate = 5
+    sim_duration = 365
+    random_seed = 0
