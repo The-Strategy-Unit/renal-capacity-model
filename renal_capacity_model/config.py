@@ -1,9 +1,5 @@
-# sampling settings
-N_STREAMS = 12
-DEFAULT_RND_SET = 0
-
-# Boolean switch to simulation results as the model runs
-TRACE = True
-
-# run variables (units = days)
-RUN_LENGTH = 365
+class g:
+    n_streams = 12
+    default_rnd_set = 0
+    trace = True
+    run_length = 365
