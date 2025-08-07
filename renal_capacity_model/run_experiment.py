@@ -1,9 +1,9 @@
 import simpy
-from config import RUN_LENGTH
+from config import g
 from experiment import patient_generator
 
 
-def single_run(experiment, rep=0, run_length=RUN_LENGTH):
+def single_run(experiment, rep=0, run_length=g.run_length):
     """
     Perform a single run of the model and return the results
 
@@ -16,7 +16,7 @@ def single_run(experiment, rep=0, run_length=RUN_LENGTH):
     rep: int
         The replication number.
 
-    rc_period: float, optional (default=RUN_LENGTH)
+    rc_period: float, optional (default=g.run_length)
         The run length of the model
     """
 

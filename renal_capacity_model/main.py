@@ -1,11 +1,9 @@
-from experiment import Experiment
-from run_experiment import single_run
+from trial import Trial
 
 
 def main():
-    experiment = Experiment()
-    results = single_run(experiment)
-    print(results)
+    trial = Trial()
+    trial.run_trial()
 
 
 if __name__ == "__main__":
