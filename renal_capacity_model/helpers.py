@@ -1,4 +1,4 @@
-from config import TRACE
+from config import g
 
 
 def trace(msg):
@@ -10,5 +10,5 @@ def trace(msg):
     msg: str
         string to print to screen.
     """
-    if TRACE:
+    if g.trace:
         print(msg)
