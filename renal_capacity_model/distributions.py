@@ -1,15 +1,23 @@
+"""
+This module contains distributions used to calculate other values in the model.
+These are currently stored as constants but we can adapt to take
+"""
 
-probabilities_dict = {
-    "iat_1_early": 0.05366943,
-    "iat_2_early": 0.06427639,
-    "iat_3_early": 0.10878938,
-    "iat_4_early": 0.15130789,
-    "iat_5_early": 0.21129452,
-    "iat_6_early": 0.24193274,
-    "iat_1_late": 0.01089372,
-    "iat_2_late": 0.0130467,
-    "iat_3_late": 0.02208186,
-    "iat_4_late": 0.03071218,
-    "iat_5_late": 0.04288815,
-    "iat_6_late": 0.04910704,
+age_dist = {
+    1: 0.051024846,
+    2: 0.06697011,
+    3: 0.098222828,
+    4: 0.169019801,
+    5: 0.270344708,
+    6: 0.344417708,
 }
+
+referral_dist = {"early": 0.856711916, "late": 0.143288084}
+
+
+def get_interarrival_times():
+    iat_dict = {}
+    for stage, stage_value in referral_dist.items():
+        for age_group, age_value in age_dist.items():
+            iat_dict[f"{age_group}_{stage}"] = 1 / (age_value * stage_value)
+    return iat_dict
