@@ -1,27 +1,57 @@
+"""
+Module containing the Model class. Contains most of the logic for the simulation.
+"""
+
+from typing import Generator
 import simpy
 from entity import Patient
 import numpy as np
-import random
 from config import g
-from distributions import get_interarrival_times
+from helpers import get_interarrival_times
+import pandas as pd
 
 
 class Model:
+    """
+    Model class containing the logic for the simulation
+    """
+
     def __init__(self, run_number, rng):
+        """Initialise the model
+
+        Args:
+            run_number (int): Which run number in the Trial this Model is for
+            rng (np.random.Generator): Random Number Generator used for the whole experiment
+        """
         self.env = simpy.Environment()
         self.patient_counter = 0
         self.run_number = run_number
         self.rng = rng
         self.inter_arrival_times = get_interarrival_times()
         self.patients_in_system = {k: 0 for k in self.inter_arrival_times.keys()}
+        self.results_df = self._setup_results_df()
 
-        # self.results_df = pd.DataFrame()
-        # self.results_df["patient ID"] = [1]
-        # self.results_df["Queue Time"] = [0.0]
-        # self.results_df.set_index("patient ID", inplace=True)
+    def _setup_results_df(self):
+        """Sets up DataFrame for recording model results
+
+        Returns:
+            pd.DataFrame: Empty DataFrame for recording model results
+        """
+        results_df = pd.DataFrame()
+        results_df["patient ID"] = [1]
+        results_df.set_index("patient ID", inplace=True)
+        return results_df
 
     def generator_patient_arrivals(self, rng, patient_type):
+        """Generator function for arriving patients
 
+        Args:
+            rng (np.random.Generator): Random Number Generator
+            patient_type (str): Type of patient. Used to retrieve correct inter-arrival time.
+
+        Yields:
+            simpy.Environment.Timeout: Simpy Timeout event with a delay of the sampled inter-arrival time
+        """
         while True:
             self.patient_counter += 1
 
@@ -36,6 +66,14 @@ class Model:
             yield self.env.timeout(sampled_inter_arrival_time)
 
     def start_krt(self, patient):
+        """Function containing the logic for the Kidney Replacement Therapy pathway
+
+        Args:
+            patient (Patient): An instance of the Patient object
+
+        Yields:
+            simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
+        """
         start_time_in_system_patient = self.env.now
 
         # TODO: No current processes - patients just enter system at the moment
@@ -46,14 +84,13 @@ class Model:
         pass
 
     def run(self):
+        """Runs the model"""
+        # We set up a generator for each of the patient types we have an IAT for
         for patient_type in self.inter_arrival_times.keys():
             self.env.process(self.generator_patient_arrivals(self.rng, patient_type))
 
-        # Run the model for the duration specified in g class
         self.env.run(until=g.sim_duration)
 
-        # Now the simulation run has finished, call the method that calculates
-        # run results
         self.calculate_run_results()
 
         # Show results (optional - set in config)
