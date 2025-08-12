@@ -2,7 +2,6 @@
 Module containing the Model class. Contains most of the logic for the simulation.
 """
 
-from typing import Generator
 import simpy
 from entity import Patient
 import numpy as np
