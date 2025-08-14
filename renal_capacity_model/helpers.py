@@ -1,14 +1,20 @@
+"""
+Module with helper functions
+"""
+
 from config import g
 
 
-def trace(msg):
-    """
-    Turning printing of events on and off.
+def get_interarrival_times():
+    """Calculates interarrival times using values in config
 
-    Params:
-    -------
-    msg: str
-        string to print to screen.
+    Returns:
+        dict: Dictionary containing different interarrival times for use in model
     """
-    if g.trace:
-        print(msg)
+    iat_dict = {}
+    for referral, referral_value in g.referral_dist.items():
+        for age_group, age_value in g.age_dist.items():
+            iat_dict[f"{age_group}_{referral}"] = g.arrival_rate / (
+                age_value * referral_value
+            )
+    return iat_dict
