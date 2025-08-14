@@ -14,5 +14,7 @@ def get_interarrival_times():
     iat_dict = {}
     for referral, referral_value in g.referral_dist.items():
         for age_group, age_value in g.age_dist.items():
-            iat_dict[f"{age_group}_{referral}"] = 1 / (age_value * referral_value)
+            iat_dict[f"{age_group}_{referral}"] = g.arrival_rate / (
+                age_value * referral_value
+            )
     return iat_dict

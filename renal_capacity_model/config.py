@@ -9,6 +9,7 @@ class g:
     number_of_runs = 100
     sim_duration = 365
     random_seed = 0
+    arrival_rate = 1
 
     # distributions for calculating interarrival times
     age_dist = {
