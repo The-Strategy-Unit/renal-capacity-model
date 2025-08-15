@@ -59,7 +59,7 @@ class Model:
 
             self.env.process(self.start_krt(p))
             sampled_inter_arrival_time = rng.exponential(
-                self.inter_arrival_times[patient_type]
+                1/self.inter_arrival_times[patient_type]
             )
 
             yield self.env.timeout(sampled_inter_arrival_time)
