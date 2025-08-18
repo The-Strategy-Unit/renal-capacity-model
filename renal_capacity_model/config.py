@@ -6,7 +6,7 @@ It can later be adapted to take inputs from users
 
 class g:
     trace = True
-    number_of_runs = 100
+    number_of_runs = 1
     sim_duration = 365
     random_seed = 0
     arrival_rate = 1
@@ -21,3 +21,15 @@ class g:
         6: 0.344417708,
     }
     referral_dist = {"early": 0.856711916, "late": 0.143288084}
+
+    con_care_dist = {
+        1: 0.1,
+        2: 0.1,
+        3: 0.1,
+        4: 0.1,
+        5: 0.25,
+        6: 0.5,
+    }
+
+    ttd_con_care_shape = 0.66
+    ttd_con_care_scale = 92.86

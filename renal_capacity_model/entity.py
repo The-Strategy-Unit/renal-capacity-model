@@ -10,3 +10,5 @@ class Patient:
         self.id = p_id
         self.time_in_system = 0
         self.patient_type = patient_type
+        self.age_group = int(patient_type.split('_')[0])  # Extract age group from patient type
+        self.referral_type = patient_type.split('_')[1]
