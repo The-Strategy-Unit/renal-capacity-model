@@ -59,12 +59,12 @@ class Model:
             p = Patient(self.patient_counter, patient_type)
             start_time_in_system_patient = self.env.now
             self.results_df.loc[p.id, "entry_time"] = start_time_in_system_patient
-            self.results_df.loc[p.id, "age_group"] = p.age_group
+            self.results_df.loc[p.id, "age_group"] = int(p.age_group)
             self.results_df.loc[p.id, "referral_type"] = p.referral_type
-            self.patients_in_system[patient_type] += 1
 
             if rng.uniform(0, 1) > g.con_care_dist[p.age_group]:
                 # If the patient is not diverted to conservative care they start KRT
+                self.patients_in_system[patient_type] += 1
                 self.env.process(self.start_krt(p))
             else:
                 # these patients are diverted to conservative care. We don't need a process here as all these patients do is wait a while before leaving the system
@@ -75,8 +75,6 @@ class Model:
                 )
                 yield self.env.timeout(sampled_con_care_time)
                 self.results_df.loc[p.id, "time_of_death"] = sampled_con_care_time
-                self.patient_counter -= 1
-                self.patients_in_system[patient_type] -= 1
                 if g.trace:
                     print(
                         f"Patient {p.id} of age group {p.age_group} diverted to conservative care and left the system after {sampled_con_care_time} time units."
