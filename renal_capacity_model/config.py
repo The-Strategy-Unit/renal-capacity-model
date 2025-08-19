@@ -5,9 +5,9 @@ It can later be adapted to take inputs from users
 
 
 class g:
-    trace = True
+    trace = False
     number_of_runs = 100
-    sim_duration = 365
+    sim_duration = 1000
     random_seed = 0
     arrival_rate = 1
 
