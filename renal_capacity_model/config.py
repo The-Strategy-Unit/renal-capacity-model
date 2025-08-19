@@ -21,3 +21,15 @@ class g:
         6: 0.344417708,
     }
     referral_dist = {"early": 0.856711916, "late": 0.143288084}
+
+    con_care_dist = {
+        1: 0.1,
+        2: 0.1,
+        3: 0.1,
+        4: 0.1,
+        5: 0.25,
+        6: 0.5,
+    }
+
+    ttd_con_care_shape = 0.66
+    ttd_con_care_scale = 92.86

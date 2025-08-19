@@ -57,12 +57,31 @@ class Model:
             p = Patient(self.patient_counter, patient_type)
             self.patients_in_system[patient_type] += 1
 
-            self.env.process(self.start_krt(p))
+            if rng.uniform(0,1) > g.con_care_dist[p.age_group]:
+                # If the patient is not diverted to conservative care they start KRT
+                self.env.process(self.start_krt(p))
+            else:
+                # these patients are diverted to conservative care. We don't need a process here as all these patients do is wait a while before leaving the system
+                start_time_in_system_patient = self.env.now
+                yield self.env.timeout(start_time_in_system_patient)
+                sampled_con_care_time = rng.weibull(
+                    a=g.ttd_con_care_shape, size=1
+                )
+                yield self.env.timeout(g.ttd_con_care_scale*sampled_con_care_time)
+                self.patient_counter -= 1
+                self.patients_in_system[patient_type] -= 1
+                if g.trace:
+                    print(f"Patient {p.id} of age group {p.age_group} diverted to conservative care and left the system after {g.ttd_con_care_scale*sampled_con_care_time} time units.")
+                    print(self.patients_in_system)
+        
             sampled_inter_arrival_time = rng.exponential(
-                1/self.inter_arrival_times[patient_type]
+            1/self.inter_arrival_times[patient_type]
             )
 
             yield self.env.timeout(sampled_inter_arrival_time)
+            
+
+
 
     def start_krt(self, patient):
         """Function containing the logic for the Kidney Replacement Therapy pathway
