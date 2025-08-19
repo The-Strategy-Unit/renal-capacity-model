@@ -86,3 +86,6 @@ venv.bak/
 
 # Data
 data/*
+
+# VSCode settings
+.vscode/settings.json
