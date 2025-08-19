@@ -36,7 +36,9 @@ class Model:
         Returns:
             pd.DataFrame: Empty DataFrame for recording model results
         """
-        results_df = pd.DataFrame()
+        results_df = pd.DataFrame(
+            columns=["entry_time", "diverted_to_con_care", "time_of_death"]
+        )
         results_df["patient ID"] = [1]
         results_df.set_index("patient ID", inplace=True)
         return results_df
@@ -55,33 +57,35 @@ class Model:
             self.patient_counter += 1
 
             p = Patient(self.patient_counter, patient_type)
-            self.patients_in_system[patient_type] += 1
+            start_time_in_system_patient = self.env.now
+            self.results_df.loc[p.id, "entry_time"] = start_time_in_system_patient
+            self.results_df.loc[p.id, "age_group"] = int(p.age_group)
+            self.results_df.loc[p.id, "referral_type"] = p.referral_type
 
-            if rng.uniform(0,1) > g.con_care_dist[p.age_group]:
+            if rng.uniform(0, 1) > g.con_care_dist[p.age_group]:
                 # If the patient is not diverted to conservative care they start KRT
+                self.patients_in_system[patient_type] += 1
                 self.env.process(self.start_krt(p))
             else:
                 # these patients are diverted to conservative care. We don't need a process here as all these patients do is wait a while before leaving the system
-                start_time_in_system_patient = self.env.now
+                self.results_df.loc[p.id, "diverted_to_con_care"] = True
                 yield self.env.timeout(start_time_in_system_patient)
-                sampled_con_care_time = rng.weibull(
+                sampled_con_care_time = g.ttd_con_care_scale * rng.weibull(
                     a=g.ttd_con_care_shape, size=1
                 )
-                yield self.env.timeout(g.ttd_con_care_scale*sampled_con_care_time)
-                self.patient_counter -= 1
-                self.patients_in_system[patient_type] -= 1
+                yield self.env.timeout(sampled_con_care_time)
+                self.results_df.loc[p.id, "time_of_death"] = sampled_con_care_time
                 if g.trace:
-                    print(f"Patient {p.id} of age group {p.age_group} diverted to conservative care and left the system after {g.ttd_con_care_scale*sampled_con_care_time} time units.")
+                    print(
+                        f"Patient {p.id} of age group {p.age_group} diverted to conservative care and left the system after {sampled_con_care_time} time units."
+                    )
                     print(self.patients_in_system)
-        
+
             sampled_inter_arrival_time = rng.exponential(
-            1/self.inter_arrival_times[patient_type]
+                1 / self.inter_arrival_times[patient_type]
             )
 
             yield self.env.timeout(sampled_inter_arrival_time)
-            
-
-
 
     def start_krt(self, patient):
         """Function containing the logic for the Kidney Replacement Therapy pathway
@@ -92,10 +96,9 @@ class Model:
         Yields:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
         """
-        start_time_in_system_patient = self.env.now
 
         # TODO: No current processes - patients just enter system at the moment
-        yield self.env.timeout(start_time_in_system_patient)
+        yield self.env.timeout(5)
 
     def calculate_run_results(self):
         # TODO: what do we want to count?
@@ -115,6 +118,7 @@ class Model:
         if g.trace:
             print(f"Run Number {self.run_number}")
             print(self.patients_in_system)
+            print(self.results_df)
 
 
 if __name__ == "__main__":
