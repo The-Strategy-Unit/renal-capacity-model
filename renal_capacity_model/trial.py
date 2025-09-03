@@ -2,7 +2,6 @@
 Module containing Trial class with logic for running multiple model iterations
 """
 
-from turtle import mode
 import pandas as pd
 from model import Model
 from config import g
