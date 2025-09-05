@@ -4,16 +4,20 @@ Module containing Trial class with logic for running multiple model iterations
 
 import pandas as pd
 from model import Model
-from config import g
 import numpy as np
 
 pd.set_option("display.max_columns", None)
 
 
 class Trial:
-    def __init__(self):
+    """
+    Trial class containing logic for running full experiment
+    """
+
+    def __init__(self, config):
         self.df_trial_results = self.setup_trial_results()
-        self.rng = np.random.default_rng(g.random_seed)
+        self.config = config
+        self.rng = np.random.default_rng(self.config.random_seed)
 
     def print_trial_results(self):
         print("Trial Results")
@@ -26,8 +30,8 @@ class Trial:
         return df_trial_results
 
     def run_trial(self):
-        for run in range(g.number_of_runs):
-            model = Model(run, self.rng)
+        for run in range(self.config.number_of_runs):
+            model = Model(run, self.rng, self.config)
             model.run()
             # Process results. Consider moving to separate function if it gets too complex
             results_grouped_by_age = (

@@ -5,7 +5,7 @@ Module containing the Model class. Contains most of the logic for the simulation
 import simpy
 from entity import Patient
 import numpy as np
-from config import g
+from config import Config
 from helpers import get_interarrival_times
 import pandas as pd
 
@@ -15,18 +15,20 @@ class Model:
     Model class containing the logic for the simulation
     """
 
-    def __init__(self, run_number, rng):
+    def __init__(self, run_number, rng, config):
         """Initialise the model
 
         Args:
             run_number (int): Which run number in the Trial this Model is for
             rng (np.random.Generator): Random Number Generator used for the whole experiment
+            config (Config): Config Class containing values to be used for model run
         """
         self.env = simpy.Environment()
+        self.config = config
         self.patient_counter = 0
         self.run_number = run_number
         self.rng = rng
-        self.inter_arrival_times = get_interarrival_times()
+        self.inter_arrival_times = get_interarrival_times(self.config)
         self.patients_in_system = {k: 0 for k in self.inter_arrival_times.keys()}
         self.results_df = self._setup_results_df()
 
@@ -62,7 +64,7 @@ class Model:
             self.results_df.loc[p.id, "age_group"] = int(p.age_group)
             self.results_df.loc[p.id, "referral_type"] = p.referral_type
 
-            if rng.uniform(0, 1) > g.con_care_dist[p.age_group]:
+            if rng.uniform(0, 1) > self.config.con_care_dist[p.age_group]:
                 # If the patient is not diverted to conservative care they start KRT
                 self.patients_in_system[patient_type] += 1
                 self.env.process(self.start_krt(p))
@@ -70,12 +72,12 @@ class Model:
                 # these patients are diverted to conservative care. We don't need a process here as all these patients do is wait a while before leaving the system
                 self.results_df.loc[p.id, "diverted_to_con_care"] = True
                 yield self.env.timeout(start_time_in_system_patient)
-                sampled_con_care_time = g.ttd_con_care_scale * rng.weibull(
-                    a=g.ttd_con_care_shape, size=1
+                sampled_con_care_time = self.config.ttd_con_care_scale * rng.weibull(
+                    a=self.config.ttd_con_care_shape, size=1
                 )
                 yield self.env.timeout(sampled_con_care_time)
                 self.results_df.loc[p.id, "time_of_death"] = sampled_con_care_time
-                if g.trace:
+                if self.config.trace:
                     print(
                         f"Patient {p.id} of age group {p.age_group} diverted to conservative care and left the system after {sampled_con_care_time} time units."
                     )
@@ -110,18 +112,19 @@ class Model:
         for patient_type in self.inter_arrival_times.keys():
             self.env.process(self.generator_patient_arrivals(self.rng, patient_type))
 
-        self.env.run(until=g.sim_duration)
+        self.env.run(until=self.config.sim_duration)
 
         self.calculate_run_results()
 
         # Show results (optional - set in config)
-        if g.trace:
+        if self.config.trace:
             print(f"Run Number {self.run_number}")
             print(self.patients_in_system)
             print(self.results_df)
 
 
 if __name__ == "__main__":
-    rng = np.random.default_rng(g.random_seed)
-    model = Model(1, rng)
+    config = Config({"trace": True})
+    rng = np.random.default_rng(config.random_seed)
+    model = Model(1, rng, config)
     model.run()
