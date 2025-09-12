@@ -8,6 +8,7 @@ import numpy as np
 from config import Config
 from helpers import get_interarrival_times
 import pandas as pd
+from tests.test_arrivalprocesses import test_arrival_processes
 
 
 class Model:
@@ -43,6 +44,7 @@ class Model:
         )
         results_df["patient ID"] = [1]
         results_df.set_index("patient ID", inplace=True)
+
         return results_df
 
     def generator_patient_arrivals(self, rng, patient_type):
@@ -59,7 +61,7 @@ class Model:
             self.patient_counter += 1
 
             p = Patient(self.patient_counter, patient_type)
-            start_time_in_system_patient = self.env.now
+            start_time_in_system_patient = rng.exponential(1 / self.inter_arrival_times[patient_type]) #self.env.now
             self.results_df.loc[p.id, "entry_time"] = start_time_in_system_patient
             self.results_df.loc[p.id, "age_group"] = int(p.age_group)
             self.results_df.loc[p.id, "referral_type"] = p.referral_type
@@ -121,6 +123,8 @@ class Model:
             print(f"Run Number {self.run_number}")
             print(self.patients_in_system)
             print(self.results_df)
+            print(test_arrival_processes(self.results_df,self.config))
+            
 
 
 if __name__ == "__main__":
