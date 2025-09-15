@@ -44,7 +44,7 @@ class Config:
             },
         )
 
-        self.suitable_for_transplant = config_dict.get(
+        self.suitable_for_transplant_dist = config_dict.get(
             "suitable_for_transplant_dist",
             {
                 1: 0.9,
@@ -56,21 +56,23 @@ class Config:
             },
         )
 
-        self.transplant_type = config_dict.get(
+        self.transplant_type_dist = config_dict.get(
             "transplant_type_dist",
+             {   
                 1: 0.4,
                 2: 0.3,
                 3: 0.3,
                 4: 0.25,
                 5: 0.2,
                 6: 0.1,
+             }
         )
 
-        self.pre_emptive_transplant_live_donor = config_dict.get(
+        self.pre_emptive_transplant_live_donor_dist = config_dict.get(
             "pre_emptive_transplant_live_donor_dist", {"early": 0.5, "late": 0.1}
         )
         
-        self.pre_emptive_transplant_cadaver_donor = config_dict.get(
+        self.pre_emptive_transplant_cadaver_donor_dist = config_dict.get(
             "pre_emptive_transplant_cadaver_donor_dist", {"early": 0.2, "late": 0.01}
         )
 
