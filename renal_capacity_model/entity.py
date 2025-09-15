@@ -14,3 +14,4 @@ class Patient:
         self.referral_type = patient_type.split('_')[1]
         self.transplant_suitable = None
         self.transplant_type = None  # 1 = live, 2 = cadaver
+        self.pre_emptive_transplant = None

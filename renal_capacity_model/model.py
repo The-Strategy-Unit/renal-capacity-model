@@ -115,7 +115,7 @@ class Model:
             # Patient is suitable for transplant and so we need to decide if they start pre-emptive transplant or dialysis whilst waiting for transplant
             patient.suitable_for_transplant = True
             # We first assign a transplant type: live or cadaver as this impacts the probability of starting pre-emptive transplant
-            if rng.uniform(0,1) < self.config.transplant_type_dist[p.age_group]:
+            if rng.uniform(0,1) < self.config.transplant_type_dist[patient.age_group]:
                 patient.transplant_type = 1 # live
             else:
                 patient.transplant_type = 2 # cadaver
@@ -124,7 +124,7 @@ class Model:
             self.results_df.loc[patient.id, "transplant_type"] = patient.transplant_type
 
             if patient.transplant_type == 1: # live
-                if rng.uniform(0, 1) < self.config.pre_emptive_transplant_live_donor[patient.referral_type]:
+                if rng.uniform(0, 1) < self.config.pre_emptive_transplant_live_donor_dist[patient.referral_type]:
                     # Patient starts pre-emptive transplant
                     self.results_df.loc[patient.id, "pre_emptive_transplant"] = True
 
@@ -143,7 +143,7 @@ class Model:
                             f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with live donor."
                         )
             else: # cadaver
-                if rng.uniform(0, 1) < self.config.pre_emptive_transplant_cadaver_donor[patient.referral_type]:
+                if rng.uniform(0, 1) < self.config.pre_emptive_transplant_cadaver_donor_dist[patient.referral_type]:
                     # Patient starts pre-emptive transplant
                     self.results_df.loc[patient.id, "pre_emptive_transplant"] = True
 
