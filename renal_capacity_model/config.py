@@ -44,5 +44,35 @@ class Config:
             },
         )
 
+        self.suitable_for_transplant = config_dict.get(
+            "suitable_for_transplant_dist",
+            {
+                1: 0.9,
+                2: 0.8,
+                3: 0.7,
+                4: 0.5,
+                5: 0.25,
+                6: 0.03,
+            },
+        )
+
+        self.transplant_type = config_dict.get(
+            "transplant_type_dist",
+                1: 0.4,
+                2: 0.3,
+                3: 0.3,
+                4: 0.25,
+                5: 0.2,
+                6: 0.1,
+        )
+
+        self.pre_emptive_transplant_live_donor = config_dict.get(
+            "pre_emptive_transplant_live_donor_dist", {"early": 0.5, "late": 0.1}
+        )
+        
+        self.pre_emptive_transplant_cadaver_donor = config_dict.get(
+            "pre_emptive_transplant_cadaver_donor_dist", {"early": 0.2, "late": 0.01}
+        )
+
         self.ttd_con_care_shape = config_dict.get("ttd_con_care_shape", 0.66)
         self.ttd_con_care_scale = config_dict.get("ttd_con_care_scale", 92.86)
