@@ -11,7 +11,7 @@ class Config:
 
     def __init__(self, config_dict={}):
         self.trace = config_dict.get("trace", False)
-        self.number_of_runs = config_dict.get("number_of_runs", 100)
+        self.number_of_runs = config_dict.get("number_of_runs", 10)
         self.sim_duration = config_dict.get("sim_duration", 1000)
         self.random_seed = config_dict.get("random_seed", 0)
         self.arrival_rate = config_dict.get("arrival_rate", 1)
