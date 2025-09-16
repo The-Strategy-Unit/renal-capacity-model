@@ -66,7 +66,7 @@ class Model:
             self.results_df.loc[p.id, "age_group"] = int(p.age_group)
             self.results_df.loc[p.id, "referral_type"] = p.referral_type
 
-            if rng.uniform(0, 1) > self.config.con_care_dist[p.age_group]:
+            if self.rng.uniform(0, 1) > self.config.con_care_dist[p.age_group]:
                 # If the patient is not diverted to conservative care they start KRT
                 self.patients_in_system[patient_type] += 1
                 self.env.process(self.start_krt(p))
@@ -101,7 +101,7 @@ class Model:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
         """
 
-        if rng.uniform(0, 1) > self.config.suitable_for_transplant_dist[patient.age_group]:
+        if self.rng.uniform(0, 1) > self.config.suitable_for_transplant_dist[patient.age_group]:
             # Patient is not suitable for transplant and so starts dialysis only pathway
             patient.suitable_for_transplant = False
             self.results_df.loc[patient.id, "suitable_for_transplant"] = patient.suitable_for_transplant
@@ -115,16 +115,16 @@ class Model:
             # Patient is suitable for transplant and so we need to decide if they start pre-emptive transplant or dialysis whilst waiting for transplant
             patient.suitable_for_transplant = True
             # We first assign a transplant type: live or cadaver as this impacts the probability of starting pre-emptive transplant
-            if rng.uniform(0,1) < self.config.transplant_type_dist[patient.age_group]:
-                patient.transplant_type = 1 # live
+            if self.rng.uniform(0,1) < self.config.transplant_type_dist[patient.age_group]:
+                patient.transplant_type = "live" 
             else:
-                patient.transplant_type = 2 # cadaver
+                patient.transplant_type = "cadaver" 
             
             self.results_df.loc[patient.id, "suitable_for_transplant"] = patient.suitable_for_transplant
             self.results_df.loc[patient.id, "transplant_type"] = patient.transplant_type
 
-            if patient.transplant_type == 1: # live
-                if rng.uniform(0, 1) < self.config.pre_emptive_transplant_live_donor_dist[patient.referral_type]:
+            if patient.transplant_type == "live": 
+                if self.rng.uniform(0, 1) < self.config.pre_emptive_transplant_live_donor_dist[patient.referral_type]:
                     # Patient starts pre-emptive transplant
                     self.results_df.loc[patient.id, "pre_emptive_transplant"] = True
 
@@ -143,7 +143,7 @@ class Model:
                             f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with live donor."
                         )
             else: # cadaver
-                if rng.uniform(0, 1) < self.config.pre_emptive_transplant_cadaver_donor_dist[patient.referral_type]:
+                if self.rng.uniform(0, 1) < self.config.pre_emptive_transplant_cadaver_donor_dist[patient.referral_type]:
                     # Patient starts pre-emptive transplant
                     self.results_df.loc[patient.id, "pre_emptive_transplant"] = True
 
