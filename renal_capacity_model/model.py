@@ -40,7 +40,7 @@ class Model:
             pd.DataFrame: Empty DataFrame for recording model results
         """
         results_df = pd.DataFrame(
-            columns=["age_group","referral_type","entry_time", "diverted_to_con_care", "suitable_for_transplant", "live_transplant","cadaver_transplant", "pre_emptive_transplant", "time_of_death"]
+            columns=["age_group","referral_type","entry_time", "diverted_to_con_care", "suitable_for_transplant", "live_transplant","cadaver_transplant", "pre_emptive_transplant", "transplant_count","last_dialysis_modality","dialysis_modality", "time_of_death"]
         )
         results_df["patient ID"] = [1]
         results_df.set_index("patient ID", inplace=True)
@@ -65,6 +65,7 @@ class Model:
             self.results_df.loc[p.id, "entry_time"] = start_time_in_system_patient
             self.results_df.loc[p.id, "age_group"] = int(p.age_group)
             self.results_df.loc[p.id, "referral_type"] = p.referral_type
+            self.results_df.loc[p.id, "last_dialysis_modality"] = "none"
 
             if self.rng.uniform(0, 1) > self.config.con_care_dist[p.age_group]:
                 # If the patient is not diverted to conservative care they start KRT
@@ -106,7 +107,7 @@ class Model:
             patient.suitable_for_transplant = False
             self.results_df.loc[patient.id, "suitable_for_transplant"] = patient.suitable_for_transplant
 
-            yield self.env.process(self.start_dialysis_only(patient))
+            yield self.env.process(self.start_dialysis(patient))
             if self.config.trace:
                 print(
                     f"Patient {patient.id} of age group {patient.age_group} started dialysis only pathway."
@@ -130,7 +131,7 @@ class Model:
                     # Patient starts pre-emptive transplant
                     self.results_df.loc[patient.id, "pre_emptive_transplant"] = True
 
-                    yield self.env.process(self.start_pre_emptive_transplant(patient))
+                    yield self.env.process(self.start_transplant(patient))
                     if self.config.trace:
                         print(
                             f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with live donor."
@@ -149,7 +150,7 @@ class Model:
                     # Patient starts pre-emptive transplant
                     self.results_df.loc[patient.id, "pre_emptive_transplant"] = True
 
-                    yield self.env.process(self.start_pre_emptive_transplant(patient))
+                    yield self.env.process(self.start_transplant(patient))
                     if self.config.trace:             
                         print(
                             f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with cadaver donor."
@@ -167,8 +168,8 @@ class Model:
 
 
 
-    def start_dialysis_only(self, patient):
-        """Function containing the logic for the dialysis only pathway
+    def start_dialysis(self, patient):
+        """Function containing the logic for the dialysis pathway
 
         Args:
             patient (Patient): An instance of the Patient object
@@ -178,9 +179,42 @@ class Model:
         """
 
         # TODO: No current processes - patients just enter system at the moment
-        yield self.env.timeout(5)
 
-    def start_pre_emptive_transplant(self, patient):
+        #which dialysis modality? Depends on last modality
+        if patient.last_dialysis_modality == "none":
+            if self.rng.uniform(0,1) < self.config.modality_allocation_none_dist["ichd"]:
+                patient.dialysis_modality = "ichd"
+                yield self.env.process(self.start_ichd(patient))
+            elif self.rng.uniform(0,1) < self.config.modality_allocation_none_dist["ichd"] + self.config.modality_allocation_none_dist["hhd"]:
+                patient.dialysis_modality = "hhd" 
+                yield self.env.process(self.start_hhd(patient))  
+            else:
+                patient.dialysis_modality = "pd"
+                yield self.env.process(self.start_pd(patient))
+        elif patient.last_dialysis_modality == "ichd":
+            if self.rng.uniform(0,1) < self.config.modality_allocation_ichd_dist["hhd"]:
+                patient.dialysis_modality = "hhd"
+                yield self.env.process(self.start_hhd(patient))
+            else:
+                patient.dialysis_modality = "pd"
+                yield self.env.process(self.start_pd(patient))
+        elif patient.last_dialysis_modality == "hhd":
+            if self.rng.uniform(0,1) < self.config.modality_allocation_hhd_dist["ichd"]:
+                patient.dialysis_modality = "ichd" 
+                yield self.env.process(self.start_ichd(patient))
+            else:
+                patient.dialysis_modality = "pd"
+                yield self.env.process(self.start_pd(patient))
+        else: # pd
+            if self.rng.uniform(0,1) < self.config.modality_allocation_pd_dist["ichd"]:
+                patient.dialysis_modality = "ichd"
+                yield self.env.process(self.start_ichd(patient))
+            else:
+                patient.dialysis_modality = "hhd" 
+                yield self.env.process(self.start_hhd(patient))
+
+
+    def start_transplant(self, patient):
         """Function containing the logic for the pre-emptive transplant pathway
 
         Args:
@@ -202,9 +236,70 @@ class Model:
         Yields:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
         """
+        if self.results_df.loc[patient.id, "transplant_count"] > 0 :
+            # if this isn't the first time through the pathway then we need to simulate the time they wait before 
+            # starting dialysis
+            sampled_wait_time = self.config.tw_before_dialysis_scale * self.rng.weibull(
+                a=self.config.tw_before_dialysis_shape, size=1
+            )
+            yield self.env.timeout(sampled_wait_time)
+            yield self.env.process(self.start_dialysis(patient))
+            if self.config.trace:          
+                print(
+                    f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant."
+                )
+        else:
+            # if this is the first time in the model then there should be no wait before starting dialysis as they 
+            # are assumed to enter the model at the point of starting dialysis
+            yield self.env.process(self.start_dialysis(patient))
+            print(
+                f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant."
+            )
+             
+
+    def start_ichd(self, patient):
+        """Function containing the logic for the ichd pathway
+
+        Args:
+            patient (Patient): An instance of the Patient object
+
+        Yields:
+            simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
+        """
 
         # TODO: No current processes - patients just enter system at the moment
-        yield self.env.timeout(5)                
+
+        ## from here they can go to death or transplant or modality switch
+        yield self.env.timeout(5) 
+        self.patient.last_dialysis_modality = "ichd"  
+           
+    def start_hhd(self, patient):
+        """Function containing the logic for the hhd pathway
+
+        Args:
+            patient (Patient): An instance of the Patient object
+
+        Yields:
+            simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
+        """
+
+        # TODO: No current processes - patients just enter system at the moment
+        yield self.env.timeout(5) 
+        self.patient.last_dialysis_modality = "hhd" 
+
+    def start_pd(self, patient):
+        """Function containing the logic for the pd pathway
+
+        Args:
+            patient (Patient): An instance of the Patient object
+
+        Yields:
+            simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
+        """
+
+        # TODO: No current processes - patients just enter system at the moment
+        yield self.env.timeout(5)  
+        self.patient.last_dialysis_modality = "pd" 
 
     def calculate_run_results(self):
         # TODO: what do we want to count?

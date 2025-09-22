@@ -68,6 +68,42 @@ class Config:
              }
         )
 
+        self.modality_allocation_none_dist = config_dict.get(
+            "modality_allocation_none_dist",
+            {
+                "ichd": 0.75,
+                "hhd": 0.01,
+                "pd": 0.24,
+            },
+        )
+
+        self.modality_allocation_ichd_dist = config_dict.get(
+            "modality_allocation_ichd_dist",
+            {
+                "ichd": 0,
+                "hhd": 0.4,
+                "pd": 0.6,
+            },
+        )
+
+        self.modality_allocation_hhd_dist = config_dict.get(
+            "modality_allocation_hhd_dist",
+            {
+                "ichd": 0.95,
+                "hhd": 0,
+                "pd": 0.05,
+            },
+        )
+
+        self.modality_allocation_pd_dist = config_dict.get(
+            "modality_allocation_pd_dist",
+            {
+                "ichd": 0.99,
+                "hhd": 0.01,
+                "pd": 0,
+            },
+        )
+
         self.pre_emptive_transplant_live_donor_dist = config_dict.get(
             "pre_emptive_transplant_live_donor_dist", {"early": 0.5, "late": 0.1}
         )
@@ -76,5 +112,8 @@ class Config:
             "pre_emptive_transplant_cadaver_donor_dist", {"early": 0.2, "late": 0.01}
         )
 
-        self.ttd_con_care_shape = config_dict.get("ttd_con_care_shape", 0.66)
-        self.ttd_con_care_scale = config_dict.get("ttd_con_care_scale", 92.86)
+        self.ttd_con_care_shape = config_dict.get("ttd_con_care_shape", 0.5)
+        self.ttd_con_care_scale = config_dict.get("ttd_con_care_scale", 100)
+
+        self.tw_before_dialysis_shape = config_dict.get("tw_before_dialysis_shape", 1)
+        self.tw_before_dialysis_scale = config_dict.get("tw_before_dialysis_scale", 450)
