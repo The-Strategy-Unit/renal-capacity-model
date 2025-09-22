@@ -40,7 +40,7 @@ class Model:
             pd.DataFrame: Empty DataFrame for recording model results
         """
         results_df = pd.DataFrame(
-            columns=["entry_time", "diverted_to_con_care", "time_of_death"]
+            columns=["entry_time", "diverted_to_con_care", "suitable_for_transplant", "transplant_type", "pre_emptive_transplant", "time_of_death"]
         )
         results_df["patient ID"] = [1]
         results_df.set_index("patient ID", inplace=True)
@@ -66,7 +66,7 @@ class Model:
             self.results_df.loc[p.id, "age_group"] = int(p.age_group)
             self.results_df.loc[p.id, "referral_type"] = p.referral_type
 
-            if rng.uniform(0, 1) > self.config.con_care_dist[p.age_group]:
+            if self.rng.uniform(0, 1) > self.config.con_care_dist[p.age_group]:
                 # If the patient is not diverted to conservative care they start KRT
                 self.patients_in_system[patient_type] += 1
                 self.env.process(self.start_krt(p))
@@ -101,8 +101,108 @@ class Model:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
         """
 
+        if self.rng.uniform(0, 1) > self.config.suitable_for_transplant_dist[patient.age_group]:
+            # Patient is not suitable for transplant and so starts dialysis only pathway
+            patient.suitable_for_transplant = False
+            self.results_df.loc[patient.id, "suitable_for_transplant"] = patient.suitable_for_transplant
+
+            yield self.env.process(self.start_dialysis_only(patient))
+            if self.config.trace:
+                print(
+                    f"Patient {patient.id} of age group {patient.age_group} started dialysis only pathway."
+                )
+        else:
+            # Patient is suitable for transplant and so we need to decide if they start pre-emptive transplant or dialysis whilst waiting for transplant
+            patient.suitable_for_transplant = True
+            # We first assign a transplant type: live or cadaver as this impacts the probability of starting pre-emptive transplant
+            if self.rng.uniform(0,1) < self.config.transplant_type_dist[patient.age_group]:
+                patient.transplant_type = "live" 
+            else:
+                patient.transplant_type = "cadaver" 
+            
+            self.results_df.loc[patient.id, "suitable_for_transplant"] = patient.suitable_for_transplant
+            self.results_df.loc[patient.id, "transplant_type"] = patient.transplant_type
+
+            if patient.transplant_type == "live": 
+                if self.rng.uniform(0, 1) < self.config.pre_emptive_transplant_live_donor_dist[patient.referral_type]:
+                    # Patient starts pre-emptive transplant
+                    self.results_df.loc[patient.id, "pre_emptive_transplant"] = True
+
+                    yield self.env.process(self.start_pre_emptive_transplant(patient))
+                    if self.config.trace:
+                        print(
+                            f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with live donor."
+                        )
+                else:
+                    # Patient starts dialysis whilst waiting for transplant
+                    self.results_df.loc[patient.id, "pre_emptive_transplant"] = False
+
+                    yield self.env.process(self.start_dialysis_whilst_waiting_for_transplant(patient))
+                    if self.config.trace:
+                        print(
+                            f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with live donor."
+                        )
+            else: # cadaver
+                if self.rng.uniform(0, 1) < self.config.pre_emptive_transplant_cadaver_donor_dist[patient.referral_type]:
+                    # Patient starts pre-emptive transplant
+                    self.results_df.loc[patient.id, "pre_emptive_transplant"] = True
+
+                    yield self.env.process(self.start_pre_emptive_transplant(patient))
+                    if self.config.trace:             
+                        print(
+                            f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with cadaver donor."
+                        )
+                else:
+                    # Patient starts dialysis whilst waiting for transplant
+                    self.results_df.loc[patient.id, "pre_emptive_transplant"] = False
+                    
+                    yield self.env.process(self.start_dialysis_whilst_waiting_for_transplant(patient))
+                    if self.config.trace:          
+                        print(
+                            f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with cadaver donor."
+                        )
+
+
+
+
+    def start_dialysis_only(self, patient):
+        """Function containing the logic for the dialysis only pathway
+
+        Args:
+            patient (Patient): An instance of the Patient object
+
+        Yields:
+            simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
+        """
+
         # TODO: No current processes - patients just enter system at the moment
         yield self.env.timeout(5)
+
+    def start_pre_emptive_transplant(self, patient):
+        """Function containing the logic for the pre-emptive transplant pathway
+
+        Args:
+            patient (Patient): An instance of the Patient object
+
+        Yields:
+            simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
+        """
+
+        # TODO: No current processes - patients just enter system at the moment
+        yield self.env.timeout(5)    
+
+    def start_dialysis_whilst_waiting_for_transplant(self, patient):
+        """Function containing the logic for the mixed pathway where a patient starts on dialysis and then receives a transplant
+
+        Args:
+            patient (Patient): An instance of the Patient object
+
+        Yields:
+            simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
+        """
+
+        # TODO: No current processes - patients just enter system at the moment
+        yield self.env.timeout(5)                
 
     def calculate_run_results(self):
         # TODO: what do we want to count?
