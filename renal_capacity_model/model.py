@@ -40,7 +40,7 @@ class Model:
             pd.DataFrame: Empty DataFrame for recording model results
         """
         results_df = pd.DataFrame(
-            columns=["entry_time", "diverted_to_con_care", "suitable_for_transplant", "transplant_type", "pre_emptive_transplant", "time_of_death"]
+            columns=["age_group","referral_type","entry_time", "diverted_to_con_care", "suitable_for_transplant", "live_transplant","cadaver_transplant", "pre_emptive_transplant", "time_of_death"]
         )
         results_df["patient ID"] = [1]
         results_df.set_index("patient ID", inplace=True)
@@ -117,11 +117,13 @@ class Model:
             # We first assign a transplant type: live or cadaver as this impacts the probability of starting pre-emptive transplant
             if self.rng.uniform(0,1) < self.config.transplant_type_dist[patient.age_group]:
                 patient.transplant_type = "live" 
+                self.results_df.loc[patient.id, "live_transplant"] = True
             else:
                 patient.transplant_type = "cadaver" 
+                self.results_df.loc[patient.id, "cadaver_transplant"] = True
             
             self.results_df.loc[patient.id, "suitable_for_transplant"] = patient.suitable_for_transplant
-            self.results_df.loc[patient.id, "transplant_type"] = patient.transplant_type
+            
 
             if patient.transplant_type == "live": 
                 if self.rng.uniform(0, 1) < self.config.pre_emptive_transplant_live_donor_dist[patient.referral_type]:
@@ -223,7 +225,7 @@ class Model:
             print(f"Run Number {self.run_number}")
             print(self.patients_in_system)
             print(self.results_df)
-            print(test_arrival_processes(self.results_df,self.config))
+            #print(test_arrival_processes(self.results_df,self.config))
             
 
 
