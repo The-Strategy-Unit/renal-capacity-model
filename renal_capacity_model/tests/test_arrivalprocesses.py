@@ -3,8 +3,6 @@ This test looks at the arrivals entering the system and checks
 that they are being generated according to the specified distributions.
 
 """
-import pandas as pd
-import numpy as np
 
 def test_arrival_processes(results_df,config):
 
