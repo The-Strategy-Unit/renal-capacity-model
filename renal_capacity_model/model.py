@@ -280,10 +280,6 @@ class Model:
         self.results_df.loc[patient.id,"transplant_count"] += 1
         patient.time_of_transplant = self.env.now
         if patient.transplant_type == "live":
-            if self.config.trace:
-                    print(
-                        f"Patient {patient.id} of age group {patient.age_group} had a live donor transplant at {self.env.now} time units."
-                    )
             self.results_df.loc[patient.id,"live_transplant_count"] += 1
             # how long the graft lasts depends on where they go next: death or back to start_krt
             if self.rng.uniform(0, 1) < self.config.death_post_transplant["live"]:
@@ -315,10 +311,6 @@ class Model:
                     )
                 yield self.env.process(self.start_krt(patient))
         else: # cadaver
-            if self.config.trace:
-                    print(
-                        f"Patient {patient.id} of age group {patient.age_group} had a cadaver donor transplant at {self.env.now} time units."
-                    )
             self.results_df.loc[patient.id,"cadaver_transplant_count"] += 1
             # how long the graft lasts depends on where they go next: death or back to start_krt
             if self.rng.uniform(0, 1) < self.config.death_post_transplant["cadaver"]:
