@@ -86,6 +86,14 @@ venv.bak/
 
 # Data
 data/*
+*.xlsx
+*.xls
+*.csv
+*.parquet
 
 # VSCode settings
 .vscode/settings.json
+
+# Python
+build/
+*.egg-info/
