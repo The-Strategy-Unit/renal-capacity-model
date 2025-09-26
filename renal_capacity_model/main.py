@@ -2,8 +2,8 @@
 Module for running the experiment
 """
 
-from trial import Trial
-from config import Config
+from renal_capacity_model.trial import Trial
+from renal_capacity_model.config import Config
 
 
 def main(config):
