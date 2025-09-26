@@ -41,8 +41,8 @@ class Trial:
                         "diverted_to_con_care": "sum",
                         "entry_time": "count",
                         "suitable_for_transplant": "sum",
-                        "live_transplant": "sum",
-                        "cadaver_transplant": "sum",
+                        "live_transplant_count": "sum",
+                        "cadaver_transplant_count": "sum",
                         "pre_emptive_transplant": "sum",
                     }
                 )
@@ -92,18 +92,18 @@ class Trial:
                 )
             self.df_trial_results.loc[
                 run, "proportion_live_transplant"
-            ] = results_grouped_by_age["live_transplant"].sum() / (
-                results_grouped_by_age["live_transplant"].sum()
-                + results_grouped_by_age["cadaver_transplant"].sum()
+            ] = results_grouped_by_age["live_transplant_count"].sum() / (
+                results_grouped_by_age["live_transplant_count"].sum()
+                + results_grouped_by_age["cadaver_transplant_count"].sum()
             )
             for age_group in results_grouped_by_age.index:
                 self.df_trial_results.loc[run, f"live_transplants_{int(age_group)}"] = (
-                    results_grouped_by_age.loc[age_group, "live_transplant"]
+                    results_grouped_by_age.loc[age_group, "live_transplant_count"]
                 )
             for age_group in results_grouped_by_age.index:
                 self.df_trial_results.loc[
                     run, f"cadaver_transplants_{int(age_group)}"
-                ] = results_grouped_by_age.loc[age_group, "cadaver_transplant"]
+                ] = results_grouped_by_age.loc[age_group, "cadaver_transplant_count"]
             for k, v in model.patients_in_system.items():
                 self.df_trial_results.loc[run, k] = v
 
