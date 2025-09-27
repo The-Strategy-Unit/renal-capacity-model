@@ -19,3 +19,7 @@ testpaths = ["tests/unit"]
 
 [tool.coverage.run]
 omit=["tests/*"]
+
+[tool.coverage.report]
+exclude_also = ['if __name__ == .__main__.:', 
+                'if self.config.trace:']

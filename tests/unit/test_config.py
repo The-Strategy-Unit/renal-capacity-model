@@ -1,6 +1,4 @@
 import pytest
-from unittest.mock import Mock
-
 from renal_capacity_model.config import Config
 
 
