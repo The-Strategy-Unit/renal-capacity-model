@@ -5,9 +5,17 @@ description = "Discrete Event Simulation renal services model"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "coverage>=7.10.7",
     "matplotlib>=3.10.3",
     "numpy>=2.3.1",
     "pandas>=2.3.1",
     "pytest>=8.4.2",
     "simpy>=4.1.1",
 ]
+
+[tool.pytest.ini_options]
+addopts = "--ignore=tests"
+testpaths = ["tests/unit"]
+
+[tool.coverage.run]
+omit=["tests/*"]

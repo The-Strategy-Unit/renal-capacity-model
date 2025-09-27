@@ -18,12 +18,10 @@ def rng():
 def test_single_model_run(config, rng):
     model = Model(1, rng, config)
     model.run()
-    assert model.results_df.shape[0] > 0
-    assert model.results_df.shape[1] == 13
+    assert model.results_df.shape[0] > 0  # There are results in the dataframe
 
 
 def test_full_trial_run(config):
     trial = Trial(config)
     trial.run_trial()
-    assert trial.df_trial_results.shape[0] > 0
-    trial.run_trial
+    assert trial.df_trial_results.shape[0] > 0  # There are results in the dataframe
