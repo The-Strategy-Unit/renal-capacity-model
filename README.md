@@ -25,9 +25,9 @@ To install the package:
 
 Once installed, set the configuration for your model run in `config.py`.
 
-Run the model using `uv run renal_capacity_model/main.py`. This runs a full trial.
+Run the model using `uv run -m renal_capacity_model.main`. This runs a full trial.
 
-To run a single model run, use `uv run renal_capacity_model/model.py`
+To run a single model run, use `uv run -m renal_capacity_model.model`
 
 ## Information for developers
 
