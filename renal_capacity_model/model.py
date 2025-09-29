@@ -31,8 +31,11 @@ class Model:
         self.inter_arrival_times = get_interarrival_times(self.config)
         self.patients_in_system = {k: 0 for k in self.inter_arrival_times.keys()}
         self.results_df = self._setup_results_df()
+        self.snapshot_results_df = self._setup_snapshot_df()
+        self.snapshot_interval = self.config.snapshot_interval  # how often to take a snapshot of the results_df
 
     def _setup_results_df(self):
+
         """Sets up DataFrame for recording model results
 
         Returns:
@@ -45,11 +48,11 @@ class Model:
                 "entry_time",
                 "diverted_to_con_care",
                 "suitable_for_transplant",
-                "live_transplant_count",  ## should this instead count number of live transplants per patient?
-                "cadaver_transplant_count",  ## should this instead count number of cadaver transplants per patient?
+                "live_transplant_count",  
+                "cadaver_transplant_count", 
                 "pre_emptive_transplant",
                 "transplant_count",
-                "ichd_dialysis_count",  ## this is what we'll use to track the number in ichd over time
+                "ichd_dialysis_count",  
                 "hhd_dialysis_count",
                 "pd_dialysis_count",
                 "time_of_death",
@@ -66,6 +69,42 @@ class Model:
 
         return results_df
 
+    def _setup_snapshot_df(self):
+
+        """Sets up DataFrame for recording snapshot model results
+
+        Returns:
+            pd.DataFrame: Empty DataFrame for recording model results
+        """
+        snapshot_results_df = pd.DataFrame(
+            columns=[
+                "snapshot_time",
+                "age_group",
+                "referral_type",
+                "entry_time",
+                "diverted_to_con_care",
+                "suitable_for_transplant",
+                "live_transplant_count",  
+                "cadaver_transplant_count", 
+                "pre_emptive_transplant",
+                "transplant_count",
+                "ichd_dialysis_count",  
+                "hhd_dialysis_count",
+                "pd_dialysis_count",
+                "time_of_death",
+                "death_from_con_care",
+                "death_from_ichd",
+                "death_from_hhd",  
+                "death_from_pd",
+                "death_post_live_transplant",
+                "death_post_cadaver_transplant",
+            ]
+        )
+        snapshot_results_df["patient ID"] = [1]
+        snapshot_results_df.set_index("patient ID", inplace=True)
+
+        return snapshot_results_df
+
     def generator_patient_arrivals(self, patient_type):
         """Generator function for arriving patients
 
@@ -81,7 +120,7 @@ class Model:
             p = Patient(self.patient_counter, patient_type)
 
 
-            if self.patient_counter == 1:
+            if self.patient_counter <= 12:
                 start_time_in_system_patient = self.rng.exponential(
                     1 / self.inter_arrival_times[patient_type]
                 )  
@@ -566,26 +605,31 @@ class Model:
         yield self.env.timeout(5)
         patient.last_dialysis_modality = "pd"
 
-    def calculate_run_results(self):
-        # TODO: what do we want to count?
-        pass
+    def snapshot_results(self):
+        while True:
+            self.snapshot_results_df = pd.concat([self.snapshot_results_df, self.results_df.assign(snapshot_time=self.env.now)])
+            if self.config.trace:
+                print(f"Taking results snapshot of the results_df at time {self.env.now}")
+            yield self.env.timeout(self.snapshot_interval) 
 
     def run(self):
         """Runs the model"""
         # We set up a generator for each of the patient types we have an IAT for
         for patient_type in self.inter_arrival_times.keys():
             self.env.process(self.generator_patient_arrivals(patient_type))
+        
+        self.env.process(self.snapshot_results())
 
         self.env.run(until=self.config.sim_duration)
 
-        self.calculate_run_results()
+        #self.calculate_run_results()
 
         # Show results (optional - set in config)
         if self.config.trace:
             print(f"Run Number {self.run_number}")
             print(self.patients_in_system)
             print(self.results_df)
-            # print(test_arrival_processes(self.results_df,self.config))
+            print(self.snapshot_results_df)
 
 
 if __name__ == "__main__":

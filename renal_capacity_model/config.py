@@ -12,9 +12,10 @@ class Config:
     def __init__(self, config_dict={}):
         self.trace = config_dict.get("trace", False)
         self.number_of_runs = config_dict.get("number_of_runs", 10)
-        self.sim_duration = config_dict.get("sim_duration", 1000)
+        self.sim_duration = config_dict.get("sim_duration", int(2*365))     # in days, but should be a multiple of 365 i.e. years
         self.random_seed = config_dict.get("random_seed", 0)
         self.arrival_rate = config_dict.get("arrival_rate", 1)
+        self.snapshot_interval = config_dict.get("snapshot_interval", int(365))  # how often to take a snapshot of the results_df
 
         # distributions for calculating interarrival times
         self.age_dist = config_dict.get(
