@@ -3,7 +3,7 @@ Module containing Trial class with logic for running multiple model iterations
 """
 
 import pandas as pd
-from model import Model
+from renal_capacity_model.model import Model
 import numpy as np
 
 pd.set_option("display.max_columns", None)
