@@ -1,5 +1,12 @@
 # Renal capacity model
 
+<!-- badges: start -->
+
+[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
+[![codecov](https://codecov.io/gh/The-Strategy-Unit/renal-capacity-model/graph/badge.svg?token=lr1OaInPCf)](https://codecov.io/gh/The-Strategy-Unit/renal-capacity-model)
+
+<!-- badges: end -->
+
 Repository with Python code for the Renal Capacity Model, an open source implementation of the Discrete Event Simulation (DES) [Renal Services model created in collaboration with the Midlands Renal Operational Delivery Network (MRODN)](https://github.com/The-Strategy-Unit/renal-services).
 
 ⚠️ **Please note that the code in this repository is still in development**
