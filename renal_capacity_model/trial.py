@@ -32,7 +32,6 @@ class Trial:
     def process_model_results(self,model,run):
  
         self.df_trial_results.loc[run, "total_entries"] = model.results_df["entry_time"].count()   
-        self.df_trial_results.loc[run, "total_deaths"] = model.results_df["time_of_death"].count()   
         self.df_trial_results.loc[run, "prevalence_con_care"] = model.results_df["diverted_to_con_care"].sum()
         self.df_trial_results.loc[run, "prevalence_ichd"] = model.results_df["ichd_dialysis_count"].sum()
         self.df_trial_results.loc[run, "prevalence_hhd"] = model.results_df["hhd_dialysis_count"].sum()
@@ -40,6 +39,13 @@ class Trial:
         self.df_trial_results.loc[run, "prevalence_live_Tx"] = model.results_df["live_transplant_count"].sum()
         self.df_trial_results.loc[run, "prevalence_cadaver_Tx"] = model.results_df["cadaver_transplant_count"].sum()
 
+        self.df_trial_results.loc[run, "total_deaths"] = model.results_df["time_of_death"].count()   
+        self.df_trial_results.loc[run, "mortality_con_care"] = model.results_df["death_from_con_care"].sum()
+        self.df_trial_results.loc[run, "mortality_ichd"] = model.results_df["death_from_ichd"].sum()
+        self.df_trial_results.loc[run, "mortality_hhd"] = model.results_df["death_from_hhd"].sum()
+        self.df_trial_results.loc[run, "mortality_pd"] = model.results_df["death_from_pd"].sum()
+        self.df_trial_results.loc[run, "mortality_live_Tx"] = model.results_df["death_post_live_transplant"].sum()
+        self.df_trial_results.loc[run, "mortality_cadaver_Tx"] = model.results_df["death_post_cadaver_transplant"].sum()
 
 
     def run_trial(self):
