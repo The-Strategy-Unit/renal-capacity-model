@@ -75,9 +75,17 @@ class Model:
             self.patient_counter += 1
 
             p = Patient(self.patient_counter, patient_type)
-            start_time_in_system_patient = self.rng.exponential(
-                1 / self.inter_arrival_times[patient_type]
-            )  # self.env.now
+
+            if self.patient_counter == 1:
+                start_time_in_system_patient = self.rng.exponential(
+                    1 / self.inter_arrival_times[patient_type]
+                )  
+                yield self.env.timeout(start_time_in_system_patient)
+            else:
+                start_time_in_system_patient = self.env.now
+            
+            self.patients_in_system[patient_type] += 1
+            
             p.last_dialysis_modality = "none" 
             p.transplant_count = 0 
             self.results_df.loc[p.id, "entry_time"] = start_time_in_system_patient
@@ -93,12 +101,10 @@ class Model:
 
             if self.rng.uniform(0, 1) > self.config.con_care_dist[p.age_group]:
                 # If the patient is not diverted to conservative care they start KRT
-                self.patients_in_system[patient_type] += 1
                 self.env.process(self.start_krt(p))
             else:
                 # these patients are diverted to conservative care. We don't need a process here as all these patients do is wait a while before leaving the system
                 self.results_df.loc[p.id, "diverted_to_con_care"] = True
-                yield self.env.timeout(start_time_in_system_patient)
                 sampled_con_care_time = (
                     self.config.ttd_con_care_scale
                     * self.rng.weibull(a=self.config.ttd_con_care_shape, size=1)
@@ -106,6 +112,7 @@ class Model:
                 yield self.env.timeout(sampled_con_care_time)
                 self.results_df.loc[p.id, "time_of_death"] = self.env.now
                 self.patients_in_system[patient_type] -= 1
+                self.results_df.loc[p.id, "diverted_to_con_care"] = False # as they've left conservative care
                 if self.config.trace:
                     print(
                         f"Patient {p.id} of age group {p.age_group} diverted to conservative care and left the system after {sampled_con_care_time} time units."
