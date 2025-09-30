@@ -20,9 +20,13 @@ class Trial:
         self.rng = np.random.default_rng(self.config.random_seed)
 
     def print_trial_results(self):
-        #print(self.df_trial_results)
         print("Trial Results")
-        print(self.df_trial_results.mean())
+        output_means = self.df_trial_results.mean().to_frame()
+        output_means['Time']=output_means.index.str.split('_').str[-1]
+        output_means.index = output_means.index.str.rsplit('_', n=1).str[0]
+        reshaped_trial_results = output_means.pivot(columns='Time', values=0)
+        print(reshaped_trial_results)
+
 
     def setup_trial_results(self):
         df_trial_results = pd.DataFrame()
