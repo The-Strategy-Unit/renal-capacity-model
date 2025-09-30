@@ -26,6 +26,7 @@ class Trial:
         output_means.index = output_means.index.str.rsplit('_', n=1).str[0]
         reshaped_trial_results = output_means.pivot(columns='Time', values=0)
         print(reshaped_trial_results)
+        print(reshaped_trial_results.diff(axis=1))   ### could use for plotting mortality over time instead of cumulative mortality
 
 
     def setup_trial_results(self):
