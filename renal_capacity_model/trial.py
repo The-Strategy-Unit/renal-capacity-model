@@ -28,7 +28,6 @@ class Trial:
         print(reshaped_trial_results)
         print(reshaped_trial_results.diff(axis=1))   ### could use for plotting mortality over time instead of cumulative mortality
 
-
     def setup_trial_results(self):
         df_trial_results = pd.DataFrame()
         df_trial_results["Run Number"] = [0]
@@ -54,7 +53,7 @@ class Trial:
         self.df_trial_results.loc[run, "mortality_cadaver_Tx"] = model.results_df["death_post_cadaver_transplant"].sum()
 
     def process_snapshot_results(self,model,run):
- 
+        ## this groups the results by the time the snapshot was taken, so we can see how prevalence and mortality change over time
         results_grouped_by_time = (
             model.snapshot_results_df.groupby("snapshot_time")
             .agg(
