@@ -43,27 +43,29 @@ class Model:
             pd.DataFrame: Empty DataFrame for recording model results
         """
         results_df = pd.DataFrame(
-            columns=[
-                "age_group",
-                "referral_type",
-                "entry_time",
-                "diverted_to_con_care",
-                "suitable_for_transplant",
-                "live_transplant_count",
-                "cadaver_transplant_count",
-                "pre_emptive_transplant",
-                "transplant_count",
-                "ichd_dialysis_count",
-                "hhd_dialysis_count",
-                "pd_dialysis_count",
-                "time_of_death",
-                "death_from_con_care",
-                "death_from_ichd",
-                "death_from_hhd",
-                "death_from_pd",
-                "death_post_live_transplant",
-                "death_post_cadaver_transplant",
-            ]
+            columns=pd.Index(
+                [
+                    "age_group",
+                    "referral_type",
+                    "entry_time",
+                    "diverted_to_con_care",
+                    "suitable_for_transplant",
+                    "live_transplant_count",
+                    "cadaver_transplant_count",
+                    "pre_emptive_transplant",
+                    "transplant_count",
+                    "ichd_dialysis_count",
+                    "hhd_dialysis_count",
+                    "pd_dialysis_count",
+                    "time_of_death",
+                    "death_from_con_care",
+                    "death_from_ichd",
+                    "death_from_hhd",
+                    "death_from_pd",
+                    "death_post_live_transplant",
+                    "death_post_cadaver_transplant",
+                ]
+            )
         )
         results_df["patient ID"] = [1]
         results_df.set_index("patient ID", inplace=True)
@@ -77,28 +79,30 @@ class Model:
             pd.DataFrame: Empty DataFrame for recording model results
         """
         snapshot_results_df = pd.DataFrame(
-            columns=[
-                "snapshot_time",
-                "age_group",
-                "referral_type",
-                "entry_time",
-                "diverted_to_con_care",
-                "suitable_for_transplant",
-                "live_transplant_count",
-                "cadaver_transplant_count",
-                "pre_emptive_transplant",
-                "transplant_count",
-                "ichd_dialysis_count",
-                "hhd_dialysis_count",
-                "pd_dialysis_count",
-                "time_of_death",
-                "death_from_con_care",
-                "death_from_ichd",
-                "death_from_hhd",
-                "death_from_pd",
-                "death_post_live_transplant",
-                "death_post_cadaver_transplant",
-            ]
+            pd.Index(
+                columns=[
+                    "snapshot_time",
+                    "age_group",
+                    "referral_type",
+                    "entry_time",
+                    "diverted_to_con_care",
+                    "suitable_for_transplant",
+                    "live_transplant_count",
+                    "cadaver_transplant_count",
+                    "pre_emptive_transplant",
+                    "transplant_count",
+                    "ichd_dialysis_count",
+                    "hhd_dialysis_count",
+                    "pd_dialysis_count",
+                    "time_of_death",
+                    "death_from_con_care",
+                    "death_from_ichd",
+                    "death_from_hhd",
+                    "death_from_pd",
+                    "death_post_live_transplant",
+                    "death_post_cadaver_transplant",
+                ]
+            )
         )
         snapshot_results_df["patient ID"] = [1]
         snapshot_results_df.set_index("patient ID", inplace=True)
