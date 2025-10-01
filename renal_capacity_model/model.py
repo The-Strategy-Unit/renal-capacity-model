@@ -36,7 +36,7 @@ class Model:
             self.config.snapshot_interval
         )  # how often to take a snapshot of the results_df
 
-    def _setup_results_df(self):
+    def _setup_results_df(self) -> pd.DataFrame:
         """Sets up DataFrame for recording model results
 
         Returns:
