@@ -18,3 +18,21 @@ jobs:
       - uses: astral-sh/ruff-action@v3
         with:
           args: format --check --diff
+
+  pyright:
+    name: pyright with uv
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install the project
+        run: uv sync --locked --all-extras --dev
+
+      - name: Pyright
+        uses: jakebailey/pyright-action@v2
+        with:
+          version: 1.1.405
