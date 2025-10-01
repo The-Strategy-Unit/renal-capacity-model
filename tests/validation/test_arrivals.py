@@ -5,7 +5,6 @@ import pandas as pd
 
 
 def test_arrival_processes(results_df, config):
-
     # Takes in the results dataframe from a model run and checks for each patient type
     # that the number of arrivals is roughly equal to what we would expect
     # TODO: currently only works on single model run - should probably check average across

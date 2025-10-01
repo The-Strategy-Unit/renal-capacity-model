@@ -250,7 +250,6 @@ class Model:
 
                     yield self.env.process(self.start_transplant(patient))
                     if self.config.trace:
-
                         print(
                             f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with cadaver donor."
                         )
