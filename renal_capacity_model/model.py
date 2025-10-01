@@ -133,9 +133,6 @@ class Model:
 
             self.patients_in_system[patient_type] += 1
 
-            p.last_dialysis_modality = "none"
-            p.transplant_count = 0
-
             self.results_df.loc[p.id, "entry_time"] = start_time_in_system_patient
             self.results_df.loc[p.id, "age_group"] = int(p.age_group)
             self.results_df.loc[p.id, "referral_type"] = p.referral_type

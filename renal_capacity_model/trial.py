@@ -21,7 +21,7 @@ class Trial:
 
     def print_trial_results(self):
         print("Trial Results")
-        output_means = self.df_trial_results.mean().to_frame()
+        output_means = pd.DataFrame(self.df_trial_results.mean())
         output_means["Time"] = output_means.index.str.split("_").str[-1]
         output_means.index = output_means.index.str.rsplit("_", n=1).str[0]
         reshaped_trial_results = output_means.pivot(columns="Time", values=0)

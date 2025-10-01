@@ -24,7 +24,7 @@ class Patient:
         self.time_on_pd_dialysis = None
         self.time_living_with_live_transplant = None
         self.time_living_with_cadaver_transplant = None
-        self.transplant_count = None
+        self.transplant_count = 0
         self.time_on_waiting_list = None
         self.time_enters_waiting_list = None
         self.time_of_transplant = None
