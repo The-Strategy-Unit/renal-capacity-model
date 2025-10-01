@@ -8,14 +8,14 @@
             "name": "Single Model Run",
             "type": "debugpy",
             "request": "launch",
-            "program": "renal_capacity_model/model.py",
+            "module": "renal_capacity_model.model",
             "console": "integratedTerminal"
         },
         {
             "name": "Full Experiment",
             "type": "debugpy",
             "request": "launch",
-            "program": "renal_capacity_model/main.py",
+            "module": "renal_capacity_model.main",
             "console": "integratedTerminal"
         }
     ]

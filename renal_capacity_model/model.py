@@ -79,8 +79,8 @@ class Model:
             pd.DataFrame: Empty DataFrame for recording model results
         """
         snapshot_results_df = pd.DataFrame(
-            pd.Index(
-                columns=[
+            columns=pd.Index(
+                [
                     "snapshot_time",
                     "age_group",
                     "referral_type",
