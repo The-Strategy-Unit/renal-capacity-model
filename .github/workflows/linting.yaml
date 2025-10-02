@@ -34,7 +34,5 @@ jobs:
           uv sync --locked --all-extras --dev
           source .venv/bin/activate
 
-      - name: Pyright
-        uses: jakebailey/pyright-action@v2
-        with:
-          version: 1.1.405
+      - name: Run pyright
+        run: uv run pyright
