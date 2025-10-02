@@ -56,3 +56,11 @@ View the code unit testing coverage report using:
 To run the validation tests:
 
 - `uv run tests/validation/validation_test_file.py`
+
+### Contributing to this repository
+
+We have set up some linting tools to help maintain good coding practices. To use these:
+
+- `uv sync --all-extras` to install the development-only packages
+- `uv run pyright` to run typing checks with pyright
+- `uv run ruff check` to run linting checks with ruff
