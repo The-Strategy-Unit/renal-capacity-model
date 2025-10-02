@@ -192,7 +192,7 @@ class Model:
                 patient.suitable_for_transplant
             )
 
-            yield self.env.process(self.start_dialysis(patient))
+            yield self.env.process(self.start_dialysis_modality_allocation(patient))
             if self.config.trace:
                 print(
                     f"Patient {patient.id} of age group {patient.age_group} started dialysis only pathway."
@@ -266,7 +266,7 @@ class Model:
                             f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with cadaver donor."
                         )
 
-    def start_dialysis(self, patient):
+    def start_dialysis_modality_allocation(self, patient):
         """Function containing the logic for the dialysis pathway
 
 
@@ -279,57 +279,62 @@ class Model:
 
         ## which modality do they start on?
         patient.time_starts_dialysis = self.env.now
+        random_number = self.rng.uniform(0, 1)
         if not patient.dialysis_modality:  # no modality
-            random_number = self.rng.uniform(0, 1)
-            if random_number < self.config.modality_allocation_none_dist["ichd"]:
+            current_modality = "none"
+        else:
+            current_modality = patient.dialysis_modality
+        if current_modality == "none":
+            if (
+                random_number
+                < self.config.modality_allocation_distributions[current_modality][
+                    "ichd"
+                ]
+            ):
                 patient.dialysis_modality = "ichd"
-                self.results_df.loc[patient.id, "ichd_dialysis_count"] += 1
-                yield self.env.process(self.start_ichd(patient))
+
             elif (
                 random_number
-                < self.config.modality_allocation_none_dist["ichd"]
-                + self.config.modality_allocation_none_dist["hhd"]
+                < self.config.modality_allocation_distributions[current_modality][
+                    "ichd"
+                ]
+                + self.config.modality_allocation_distributions[current_modality]["hhd"]
             ):
                 patient.dialysis_modality = "hhd"
-                self.results_df.loc[patient.id, "hhd_dialysis_count"] += 1
-                yield self.env.process(self.start_hhd(patient))
             else:
                 patient.dialysis_modality = "pd"
-                self.results_df.loc[patient.id, "pd_dialysis_count"] += 1
-                yield self.env.process(self.start_pd(patient))
-        elif patient.dialysis_modality == "ichd":
+        elif current_modality == "ichd":
             if (
                 self.rng.uniform(0, 1)
-                < self.config.modality_allocation_ichd_dist["hhd"]
+                < self.config.modality_allocation_distributions[current_modality]["hhd"]
             ):
                 patient.dialysis_modality = "hhd"
-                self.results_df.loc[patient.id, "hhd_dialysis_count"] += 1
-                yield self.env.process(self.start_hhd(patient))
             else:
                 patient.dialysis_modality = "pd"
-                self.results_df.loc[patient.id, "pd_dialysis_count"] += 1
-                yield self.env.process(self.start_pd(patient))
-        elif patient.dialysis_modality == "hhd":
+        elif current_modality == "hhd":
             if (
                 self.rng.uniform(0, 1)
-                < self.config.modality_allocation_hhd_dist["ichd"]
+                < self.config.modality_allocation_distributions[current_modality][
+                    "ichd"
+                ]
             ):
                 patient.dialysis_modality = "ichd"
-                self.results_df.loc[patient.id, "ichd_dialysis_count"] += 1
-                yield self.env.process(self.start_ichd(patient))
             else:
                 patient.dialysis_modality = "pd"
-                self.results_df.loc[patient.id, "pd_dialysis_count"] += 1
-                yield self.env.process(self.start_pd(patient))
-        else:  # pd
-            if self.rng.uniform(0, 1) < self.config.modality_allocation_pd_dist["ichd"]:
+        elif current_modality == "pd":
+            if (
+                self.rng.uniform(0, 1)
+                < self.config.modality_allocation_distributions[current_modality][
+                    "ichd"
+                ]
+            ):
                 patient.dialysis_modality = "ichd"
-                self.results_df.loc[patient.id, "ichd_dialysis_count"] += 1
-                yield self.env.process(self.start_ichd(patient))
             else:
                 patient.dialysis_modality = "hhd"
-                self.results_df.loc[patient.id, "hhd_dialysis_count"] += 1
-                yield self.env.process(self.start_hhd(patient))
+        self.results_df.loc[
+            patient.id, f"{patient.dialysis_modality}_dialysis_count"
+        ] += 1
+        yield self.env.process(self.start_dialysis_modality(patient))
 
     def start_transplant(self, patient):
         """Function containing the logic for the transplant pathway
@@ -464,7 +469,7 @@ class Model:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant at time {self.env.now}."
                     )
-                yield self.env.process(self.start_dialysis(patient))
+                yield self.env.process(self.start_dialysis_modality_allocation(patient))
         else:
             # if this is the first time in the model then there should be no wait before starting dialysis as they
             # are assumed to enter the model at the point of starting dialysis
@@ -472,10 +477,10 @@ class Model:
                 print(
                     f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant at time {self.env.now}."
                 )
-            yield self.env.process(self.start_dialysis(patient))
+            yield self.env.process(self.start_dialysis_modality_allocation(patient))
 
-    def start_ichd(self, patient):
-        """Function containing the logic for the ichd pathway
+    def start_dialysis_modality(self, patient):
+        """Function containing the logic for all dialysis pathways
 
         Args:
             patient (Patient): An instance of the Patient object
@@ -486,47 +491,53 @@ class Model:
 
         if self.config.trace:
             print(
-                f"Patient {patient.id} of age group {patient.age_group} starts ichd at time {self.env.now}."
+                f"Patient {patient.id} of age group {patient.age_group} starts {patient.dialysis_modality} at time {self.env.now}."
             )
 
         # what is the next step modality change, death
         # if they're waiting for transplant we'll compare the time generated to patient.time on waiting list
-        if self.rng.uniform(0, 1) < self.config.death_post_ichd[patient.age_group]:
-            # death or transplant
-            sampled_ichd_time = self.config.ttd_ichd_scale[
+        if (
+            self.rng.uniform(0, 1)
+            < self.config.death_post_dialysis_modality[patient.dialysis_modality][
                 patient.age_group
-            ] * self.rng.weibull(self.config.ttd_ichd_shape[patient.age_group])
-            if patient.suitable_for_transplant:
-                if sampled_ichd_time >= patient.time_on_waiting_list:
-                    yield self.env.timeout(patient.time_on_waiting_list)
-                    patient.time_on_ichd_dialysis = patient.time_on_waiting_list
-                    if self.config.trace:
-                        print(
-                            f"Patient {patient.id} of age group {patient.age_group} has {patient.transplant_type} transplant at time {self.env.now}."
-                        )
-                    self.results_df.loc[patient.id, "ichd_dialysis_count"] -= 1
-                    yield self.env.process(self.start_transplant(patient))
-                else:
-                    # death
-                    yield self.env.timeout(sampled_ichd_time)
-                    patient.time_on_ichd_dialysis = sampled_ichd_time
-                    self.patients_in_system[patient.patient_type] -= 1
-                    self.results_df.loc[patient.id, "ichd_dialysis_count"] -= 1
-                    self.results_df.loc[patient.id, "time_of_death"] = self.env.now
-                    self.results_df.loc[patient.id, "death_from_ichd"] = True
-                    if self.config.trace:
-                        print(
-                            f"Patient {patient.id} of age group {patient.age_group} died and left the system at time {self.env.now}."
-                        )
-                        print(self.patients_in_system)
+            ]
+        ):
+            # death or transplant
+            sampled_time = self.config.ttd_dialysis_modality_scale[
+                patient.dialysis_modality
+            ][patient.age_group] * self.rng.weibull(
+                self.config.ttd_dialysis_modality_shape[patient.dialysis_modality][
+                    patient.age_group
+                ]
+            )
+            if (
+                patient.suitable_for_transplant
+                and sampled_time >= patient.time_on_waiting_list
+            ):
+                yield self.env.timeout(patient.time_on_waiting_list)
+                patient.time_on_dialysis[patient.dialysis_modality] = (
+                    patient.time_on_waiting_list
+                )
+                if self.config.trace:
+                    print(
+                        f"Patient {patient.id} of age group {patient.age_group} has {patient.transplant_type} transplant at time {self.env.now}."
+                    )
+                self.results_df.loc[
+                    patient.id, f"{patient.dialysis_modality}_dialysis_count"
+                ] -= 1
+                yield self.env.process(self.start_transplant(patient))
             else:
                 # death
-                yield self.env.timeout(sampled_ichd_time)
-                patient.time_on_ichd_dialysis = sampled_ichd_time
+                yield self.env.timeout(sampled_time)
+                patient.time_on_dialysis[patient.dialysis_modality] = sampled_time
                 self.patients_in_system[patient.patient_type] -= 1
-                self.results_df.loc[patient.id, "ichd_dialysis_count"] -= 1
-                self.results_df.loc[patient.id, "death_from_ichd"] = True
+                self.results_df.loc[
+                    patient.id, f"{patient.dialysis_modality}_dialysis_count"
+                ] -= 1
                 self.results_df.loc[patient.id, "time_of_death"] = self.env.now
+                self.results_df.loc[
+                    patient.id, f"death_from_{patient.dialysis_modality}"
+                ] = True
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} died and left the system at time {self.env.now}."
@@ -534,77 +545,41 @@ class Model:
                     print(self.patients_in_system)
         else:
             # modality change or transplant
-            sampled_ichd_time = self.config.ttma_ichd_scale[
-                patient.age_group
-            ] * self.rng.weibull(self.config.ttma_ichd_shape[patient.age_group])
-            if patient.suitable_for_transplant:
-                if sampled_ichd_time >= patient.time_on_waiting_list:
-                    yield self.env.timeout(patient.time_on_waiting_list)
-                    patient.time_on_ichd_dialysis = patient.time_on_waiting_list
-                    if self.config.trace:
-                        print(
-                            f"Patient {patient.id} of age group {patient.age_group} has {patient.transplant_type} transplant at time {self.env.now}."
-                        )
-                    self.results_df.loc[patient.id, "ichd_dialysis_count"] -= 1
-                    yield self.env.process(self.start_transplant(patient))
-                else:
-                    # modality change
-                    yield self.env.timeout(sampled_ichd_time)
-                    patient.time_on_ichd_dialysis = sampled_ichd_time
-                    if self.config.trace:
-                        print(
-                            f"Patient {patient.id} of age group {patient.age_group} changed dialysis modality at time {self.env.now}s."
-                        )
-                    self.results_df.loc[patient.id, "ichd_dialysis_count"] -= 1
-                    yield self.env.process(self.start_dialysis(patient))
+            sampled_time = self.config.ttma_dialysis_modality_scale[
+                patient.dialysis_modality
+            ][patient.age_group] * self.rng.weibull(
+                self.config.ttma_dialysis_modality_shape[patient.dialysis_modality][
+                    patient.age_group
+                ]
+            )
+            if (
+                patient.suitable_for_transplant
+                and sampled_time >= patient.time_on_waiting_list
+            ):
+                yield self.env.timeout(patient.time_on_waiting_list)
+                patient.time_on_dialysis[patient.dialysis_modality] = (
+                    patient.time_on_waiting_list
+                )
+                if self.config.trace:
+                    print(
+                        f"Patient {patient.id} of age group {patient.age_group} has {patient.transplant_type} transplant at time {self.env.now}."
+                    )
+                self.results_df.loc[
+                    patient.id, f"{patient.dialysis_modality}_dialysis_count"
+                ] -= 1
+                yield self.env.process(self.start_transplant(patient))
             else:
                 # modality change
-                yield self.env.timeout(sampled_ichd_time)
-                patient.time_on_ichd_dialysis = sampled_ichd_time
+                yield self.env.timeout(sampled_time)
+                patient.time_on_dialysis[patient.dialysis_modality] = sampled_time
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} changed dialysis modality at time {self.env.now}."
                     )
-                self.results_df.loc[patient.id, "ichd_dialysis_count"] -= 1
-                yield self.env.process(self.start_dialysis(patient))
-
-        patient.dialysis_modality = "ichd"
-
-    def start_hhd(self, patient):
-        """Function containing the logic for the hhd pathway
-
-        Args:
-            patient (Patient): An instance of the Patient object
-
-        Yields:
-            simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
-        """
-
-        if self.config.trace:
-            print(
-                f"Patient {patient.id} of age group {patient.age_group} starts hhd at time {self.env.now}."
-            )
-        # TODO: If ICHD okay above then I'll fill this out in a similar way
-        yield self.env.timeout(5)
-        patient.dialysis_modality = "hhd"
-
-    def start_pd(self, patient):
-        """Function containing the logic for the pd pathway
-
-        Args:
-            patient (Patient): An instance of the Patient object
-
-        Yields:
-            simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
-        """
-        if self.config.trace:
-            print(
-                f"Patient {patient.id} of age group {patient.age_group} starts pd at time {self.env.now}."
-            )
-        # TODO: If ICHD okay above then I'll fill this out in a similar way
-
-        yield self.env.timeout(5)
-        patient.dialysis_modality = "pd"
+                self.results_df.loc[
+                    patient.id, f"{patient.dialysis_modality}_dialysis_count"
+                ] -= 1
+                yield self.env.process(self.start_dialysis_modality_allocation(patient))
 
     def snapshot_results(self):
         while True:

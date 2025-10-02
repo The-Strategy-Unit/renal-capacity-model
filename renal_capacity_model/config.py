@@ -73,39 +73,29 @@ class Config:
             },
         )
 
-        self.modality_allocation_none_dist = config_dict.get(
-            "modality_allocation_none_dist",
+        self.modality_allocation_distributions = config_dict.get(
+            "modality_allocation_distributions",
             {
-                "ichd": 0.75,
-                "hhd": 0.01,
-                "pd": 0.24,
-            },
-        )
-
-        self.modality_allocation_ichd_dist = config_dict.get(
-            "modality_allocation_ichd_dist",
-            {
-                "ichd": 0,
-                "hhd": 0.4,
-                "pd": 0.6,
-            },
-        )
-
-        self.modality_allocation_hhd_dist = config_dict.get(
-            "modality_allocation_hhd_dist",
-            {
-                "ichd": 0.95,
-                "hhd": 0,
-                "pd": 0.05,
-            },
-        )
-
-        self.modality_allocation_pd_dist = config_dict.get(
-            "modality_allocation_pd_dist",
-            {
-                "ichd": 0.99,
-                "hhd": 0.01,
-                "pd": 0,
+                "none": {
+                    "ichd": 0.75,
+                    "hhd": 0.01,
+                    "pd": 0.24,
+                },
+                "ichd": {
+                    "ichd": 0,
+                    "hhd": 0.4,
+                    "pd": 0.6,
+                },
+                "hhd": {
+                    "ichd": 0.95,
+                    "hhd": 0,
+                    "pd": 0.05,
+                },
+                "pd": {
+                    "ichd": 0.99,
+                    "hhd": 0.01,
+                    "pd": 0,
+                },
             },
         )
 
@@ -237,86 +227,149 @@ class Config:
             },
         )
 
-        self.death_post_ichd = config_dict.get(
-            "live_tx_ttd_scale",
+        self.death_post_dialysis_modality = config_dict.get(
+            "death_post_dialysis_modality",
             {
-                1: 0.6,
-                2: 0.7,
-                3: 0.75,
-                4: 0.8,
-                5: 0.9,
-                6: 0.9,
+                "ichd": {
+                    1: 0.6,
+                    2: 0.7,
+                    3: 0.75,
+                    4: 0.8,
+                    5: 0.9,
+                    6: 0.9,
+                },
+                "hhd": {
+                    1: 0.6,
+                    2: 0.7,
+                    3: 0.75,
+                    4: 0.8,
+                    5: 0.9,
+                    6: 0.9,
+                },
+                "pd": {
+                    1: 0.6,
+                    2: 0.7,
+                    3: 0.75,
+                    4: 0.8,
+                    5: 0.9,
+                    6: 0.9,
+                },
             },
         )
 
-        self.death_post_hhd = config_dict.get(
-            "live_tx_ttd_scale",
+        self.ttd_dialysis_modality_shape = config_dict.get(
+            "ttd_dialysis_modality_shape",
             {
-                1: 0.4,
-                2: 0.4,
-                3: 0.4,
-                4: 0.4,
-                5: 0.4,
-                6: 0.4,
+                "ichd": {
+                    1: 0.9,
+                    2: 0.9,
+                    3: 0.9,
+                    4: 0.9,
+                    5: 0.9,
+                    6: 0.9,
+                },
+                "hhd": {
+                    1: 0.9,
+                    2: 0.9,
+                    3: 0.9,
+                    4: 0.9,
+                    5: 0.9,
+                    6: 0.9,
+                },
+                "pd": {
+                    1: 0.9,
+                    2: 0.9,
+                    3: 0.9,
+                    4: 0.9,
+                    5: 0.9,
+                    6: 0.9,
+                },
             },
         )
-
-        self.death_post_pd = config_dict.get(
-            "live_tx_ttd_scale",
+        self.ttd_dialysis_modality_scale = config_dict.get(
+            "ttd_dialysis_modality_scale",
             {
-                1: 0.45,
-                2: 0.45,
-                3: 0.45,
-                4: 0.45,
-                5: 0.45,
-                6: 0.45,
+                "ichd": {
+                    1: 1500,
+                    2: 1500,
+                    3: 1500,
+                    4: 1250,
+                    5: 1000,
+                    6: 1000,
+                },
+                "hhd": {
+                    1: 1500,
+                    2: 1500,
+                    3: 1500,
+                    4: 1250,
+                    5: 1000,
+                    6: 1000,
+                },
+                "pd": {
+                    1: 1500,
+                    2: 1500,
+                    3: 1500,
+                    4: 1250,
+                    5: 1000,
+                    6: 1000,
+                },
             },
         )
-
-        self.ttd_ichd_shape = config_dict.get(
-            "ttd_ichd_shape",
+        self.ttma_dialysis_modality_shape = config_dict.get(
+            "ttma_dialysis_modality_shape",
             {
-                1: 0.9,
-                2: 0.9,
-                3: 0.9,
-                4: 0.9,
-                5: 0.9,
-                6: 0.9,
+                "ichd": {
+                    1: 0.5,
+                    2: 0.5,
+                    3: 0.5,
+                    4: 0.5,
+                    5: 0.5,
+                    6: 0.5,
+                },
+                "hhd": {
+                    1: 0.5,
+                    2: 0.5,
+                    3: 0.5,
+                    4: 0.5,
+                    5: 0.5,
+                    6: 0.5,
+                },
+                "pd": {
+                    1: 0.5,
+                    2: 0.5,
+                    3: 0.5,
+                    4: 0.5,
+                    5: 0.5,
+                    6: 0.5,
+                },
             },
         )
-
-        self.ttd_ichd_scale = config_dict.get(
-            "ttd_ichd_scale",
+        self.ttma_dialysis_modality_scale = config_dict.get(
+            "ttma_dialysis_modality_scale",
             {
-                1: 1500,
-                2: 1500,
-                3: 1500,
-                4: 1250,
-                5: 1000,
-                6: 1000,
-            },
-        )
-
-        self.ttma_ichd_shape = config_dict.get(
-            "ttma_ichd_shape",
-            {
-                1: 0.5,
-                2: 0.5,
-                3: 0.5,
-                4: 0.5,
-                5: 0.5,
-                6: 0.5,
-            },
-        )
-
-        self.ttma_ichd_scale = config_dict.get(
-            "ttma_ichd_scale",
-            {
-                1: 1500,
-                2: 1000,
-                3: 750,
-                4: 500,
-                5: 500,
-                6: 250,
+                "ichd": {
+                    1: 1500,
+                    2: 1000,
+                    3: 750,
+                    4: 500,
+                    5: 500,
+                    6: 250,
+                },
+                "hhd": {
+                    1: 1500,
+                    2: 1000,
+                    3: 750,
+                    4: 500,
+                    5: 500,
+                    6: 250,
+                },
+                "pd": {
+                    1: 1500,
+                    2: 1000,
+                    3: 750,
+                    4: 500,
+                    5: 500,
+                    6: 250,
+                },
             },
         )

@@ -18,9 +18,7 @@ class Patient:
         self.transplant_type = None  # "live", "cadaver"
         self.pre_emptive_transplant = None
         self.dialysis_modality = None  # none, ichd, hhd, pd
-        self.time_on_ichd_dialysis = None
-        self.time_on_hhd_dialysis = None
-        self.time_on_pd_dialysis = None
+        self.time_on_dialysis = {"ichd": 0, "hhd": 0, "pd": 0}
         self.time_living_with_live_transplant = None
         self.time_living_with_cadaver_transplant = None
         self.transplant_count = 0
