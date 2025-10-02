@@ -279,7 +279,7 @@ class Model:
 
         ## which modality do they start on?
         patient.time_starts_dialysis = self.env.now
-        if patient.last_dialysis_modality == "none":
+        if not patient.dialysis_modality:  # no modality
             random_number = self.rng.uniform(0, 1)
             if random_number < self.config.modality_allocation_none_dist["ichd"]:
                 patient.dialysis_modality = "ichd"
@@ -297,7 +297,7 @@ class Model:
                 patient.dialysis_modality = "pd"
                 self.results_df.loc[patient.id, "pd_dialysis_count"] += 1
                 yield self.env.process(self.start_pd(patient))
-        elif patient.last_dialysis_modality == "ichd":
+        elif patient.dialysis_modality == "ichd":
             if (
                 self.rng.uniform(0, 1)
                 < self.config.modality_allocation_ichd_dist["hhd"]
@@ -309,7 +309,7 @@ class Model:
                 patient.dialysis_modality = "pd"
                 self.results_df.loc[patient.id, "pd_dialysis_count"] += 1
                 yield self.env.process(self.start_pd(patient))
-        elif patient.last_dialysis_modality == "hhd":
+        elif patient.dialysis_modality == "hhd":
             if (
                 self.rng.uniform(0, 1)
                 < self.config.modality_allocation_hhd_dist["ichd"]
@@ -568,7 +568,7 @@ class Model:
                 self.results_df.loc[patient.id, "ichd_dialysis_count"] -= 1
                 yield self.env.process(self.start_dialysis(patient))
 
-        patient.last_dialysis_modality = "ichd"
+        patient.dialysis_modality = "ichd"
 
     def start_hhd(self, patient):
         """Function containing the logic for the hhd pathway
@@ -586,7 +586,7 @@ class Model:
             )
         # TODO: If ICHD okay above then I'll fill this out in a similar way
         yield self.env.timeout(5)
-        patient.last_dialysis_modality = "hhd"
+        patient.dialysis_modality = "hhd"
 
     def start_pd(self, patient):
         """Function containing the logic for the pd pathway
@@ -604,7 +604,7 @@ class Model:
         # TODO: If ICHD okay above then I'll fill this out in a similar way
 
         yield self.env.timeout(5)
-        patient.last_dialysis_modality = "pd"
+        patient.dialysis_modality = "pd"
 
     def snapshot_results(self):
         while True:
