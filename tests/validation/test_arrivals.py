@@ -9,13 +9,6 @@ def test_arrival_processes(results_df, config):
     # that the number of arrivals is roughly equal to what we would expect
     # TODO: currently only works on single model run - should probably check average across
     # entire trial?
-    expected_iat_dict = {}
-    for referral, referral_value in config.referral_dist.items():
-        for age_group, age_value in config.age_dist.items():
-            expected_iat_dict[f"{age_group}_{referral}"] = config.arrival_rate / (
-                age_value * referral_value
-            )
-
     observed_iat_dict = {}
     for referral, referral_value in config.referral_dist.items():
         for age_group, age_value in config.age_dist.items():
@@ -26,13 +19,15 @@ def test_arrival_processes(results_df, config):
             observed_iat_dict[f"{age_group}_{referral}"] = float(
                 1 / results_df.loc[inds, "entry_time"].mean()
             )
-    return pd.DataFrame({"observed": observed_iat_dict, "expected": expected_iat_dict})
+    return observed_iat_dict
 
 
 if __name__ == "__main__":
-    config = Config()
+    config = Config({"sim_duration": 100 * 365})
     rng = np.random.default_rng(config.random_seed)
     model = Model(1, rng, config)
     model.run()
     results_df = model.results_df
-    print(test_arrival_processes(results_df, config))
+    expected_iat_dict = model.inter_arrival_times
+    observed_iat_dict = test_arrival_processes(results_df, config)
+    print(pd.DataFrame({"observed": observed_iat_dict, "expected": expected_iat_dict}))
