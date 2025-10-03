@@ -123,13 +123,9 @@ class Model:
 
             p = Patient(self.patient_counter, patient_type)
 
-            if self.patient_counter <= 12:
-                start_time_in_system_patient = self.rng.exponential(
-                    1 / self.inter_arrival_times[patient_type]
-                )
-                yield self.env.timeout(start_time_in_system_patient)
-            else:
-                start_time_in_system_patient = self.env.now
+            start_time_in_system_patient = self.rng.exponential(
+                1 / self.inter_arrival_times[patient_type]
+            )
 
             self.patients_in_system[patient_type] += 1
 
