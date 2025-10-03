@@ -5,6 +5,7 @@ Module containing Trial class with logic for running multiple model iterations
 import pandas as pd
 from renal_capacity_model.model import Model
 import numpy as np
+from tqdm import tqdm
 
 pd.set_option("display.max_columns", None)
 
@@ -155,7 +156,7 @@ class Trial:
             )
 
     def run_trial(self):
-        for run in range(self.config.number_of_runs):
+        for run in tqdm(range(self.config.number_of_runs)):
             model = Model(run, self.rng, self.config)
             model.run()
 
