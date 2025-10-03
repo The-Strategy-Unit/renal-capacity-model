@@ -1,0 +1,38 @@
+name: Linting and Type checking
+
+on: pull_request
+
+jobs:
+  ruff-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/ruff-action@v3
+
+  ruff-format-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: format --check --diff
+
+  pyright:
+    name: pyright with uv
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install the project
+        run: |
+          uv sync --locked --all-extras --dev
+          source .venv/bin/activate
+
+      - name: Run pyright
+        run: uv run pyright
