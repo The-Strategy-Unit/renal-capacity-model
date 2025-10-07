@@ -48,7 +48,7 @@ class Model:
                     "age_group",
                     "referral_type",
                     "entry_time",
-                    "diverted_to_con_care",
+                    "diverted_to_con_care_count",
                     "suitable_for_transplant",
                     "live_transplant_count",
                     "cadaver_transplant_count",
@@ -102,7 +102,7 @@ class Model:
                 self.env.process(self.start_krt(p))
             else:
                 # these patients are diverted to conservative care. We don't need a process here as all these patients do is wait a while before leaving the system
-                self.results_df.loc[p.id, "diverted_to_con_care"] = True
+                self.results_df.loc[p.id, "diverted_to_con_care_count"] = True
                 sampled_con_care_time = (
                     self.config.ttd_con_care_scale
                     * self.rng.weibull(a=self.config.ttd_con_care_shape, size=1)
@@ -110,7 +110,7 @@ class Model:
                 yield self.env.timeout(sampled_con_care_time)
                 self.results_df.loc[p.id, "time_of_death"] = self.env.now
                 self.patients_in_system[patient_type] -= 1
-                self.results_df.loc[p.id, "diverted_to_con_care"] = (
+                self.results_df.loc[p.id, "diverted_to_con_care_count"] = (
                     False  # as they've left conservative care
                 )
                 self.results_df.loc[p.id, "treatment_modality_at_death"] = (
