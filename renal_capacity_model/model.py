@@ -58,12 +58,7 @@ class Model:
                     "hhd_dialysis_count",
                     "pd_dialysis_count",
                     "time_of_death",
-                    "death_from_con_care",
-                    "death_from_ichd",
-                    "death_from_hhd",
-                    "death_from_pd",
-                    "death_post_live_transplant",
-                    "death_post_cadaver_transplant",
+                    "treatment_modality_at_death",
                 ]
             )
         )
@@ -118,7 +113,9 @@ class Model:
                 self.results_df.loc[p.id, "diverted_to_con_care"] = (
                     False  # as they've left conservative care
                 )
-                self.results_df.loc[p.id, "death_from_con_care"] = True
+                self.results_df.loc[p.id, "treatment_modality_at_death"] = (
+                    "conservative_care"
+                )
                 if self.config.trace:
                     print(
                         f"Patient {p.id} of age group {p.age_group} diverted to conservative care and left the system after {sampled_con_care_time} time units."
@@ -322,7 +319,9 @@ class Model:
                 self.results_df.loc[patient.id, "live_transplant_count"] -= 1
                 self.patients_in_system[patient.patient_type] -= 1
                 self.results_df.loc[patient.id, "time_of_death"] = self.env.now
-                self.results_df.loc[patient.id, "death_post_live_transplant"] = True
+                self.results_df.loc[patient.id, "treatment_modality_at_death"] = (
+                    "live_transplant"
+                )
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} died after live transplant at time {self.env.now}."
@@ -358,7 +357,9 @@ class Model:
                 self.results_df.loc[patient.id, "cadaver_transplant_count"] -= 1
                 self.patients_in_system[patient.patient_type] -= 1
                 self.results_df.loc[patient.id, "time_of_death"] = self.env.now
-                self.results_df.loc[patient.id, "death_post_cadaver_transplant"] = True
+                self.results_df.loc[patient.id, "treatment_modality_at_death"] = (
+                    "cadaver_transplant"
+                )
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} died after cadaver transplant at time {self.env.now}."
@@ -494,9 +495,9 @@ class Model:
                     patient.id, f"{patient.dialysis_modality}_dialysis_count"
                 ] -= 1
                 self.results_df.loc[patient.id, "time_of_death"] = self.env.now
-                self.results_df.loc[
-                    patient.id, f"death_from_{patient.dialysis_modality}"
-                ] = True
+                self.results_df.loc[patient.id, "treatment_modality_at_death"] = (
+                    patient.dialysis_modality
+                )
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} died and left the system at time {self.env.now}."
