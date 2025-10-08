@@ -6,6 +6,7 @@ import pandas as pd
 from renal_capacity_model.model import Model
 import numpy as np
 from tqdm import tqdm
+from typing import Optional
 
 pd.set_option("display.max_columns", None)
 
@@ -16,156 +17,79 @@ class Trial:
     """
 
     def __init__(self, config):
-        self.df_trial_results = self.setup_trial_results()
         self.config = config
         self.rng = np.random.default_rng(self.config.random_seed)
+        self.df_trial_results: Optional[pd.DataFrame] = None
 
     def print_trial_results(self):
         print("Trial Results")
-        output_means = pd.DataFrame(self.df_trial_results.mean())
-        output_means["Time"] = output_means.index.str.split("_").str[-1]
-        output_means.index = output_means.index.str.rsplit("_", n=1).str[0]
-        reshaped_trial_results = output_means.pivot(columns="Time", values=0)
-        print(reshaped_trial_results)
-        print(
-            reshaped_trial_results.diff(axis=1)
-        )  ### could use for plotting mortality over time instead of cumulative mortality
-
-    def setup_trial_results(self):
-        df_trial_results = pd.DataFrame()
-        df_trial_results["Run Number"] = [0]
-        df_trial_results.set_index("Run Number", inplace=True)
-        return df_trial_results
-
-    def process_model_results(self, model, run):
-        self.df_trial_results.loc[run, "total_entries"] = model.results_df[
-            "entry_time"
-        ].count()
-        self.df_trial_results.loc[run, "prevalence_con_care"] = model.results_df[
-            "diverted_to_con_care"
-        ].sum()
-        self.df_trial_results.loc[run, "prevalence_ichd"] = model.results_df[
-            "ichd_dialysis_count"
-        ].sum()
-        self.df_trial_results.loc[run, "prevalence_hhd"] = model.results_df[
-            "hhd_dialysis_count"
-        ].sum()
-        self.df_trial_results.loc[run, "prevalence_pd"] = model.results_df[
-            "pd_dialysis_count"
-        ].sum()
-        self.df_trial_results.loc[run, "prevalence_live_Tx"] = model.results_df[
-            "live_transplant_count"
-        ].sum()
-        self.df_trial_results.loc[run, "prevalence_cadaver_Tx"] = model.results_df[
-            "cadaver_transplant_count"
-        ].sum()
-
-        self.df_trial_results.loc[run, "total_deaths"] = model.results_df[
-            "time_of_death"
-        ].count()
-        self.df_trial_results.loc[run, "mortality_con_care"] = model.results_df[
-            "death_from_con_care"
-        ].sum()
-        self.df_trial_results.loc[run, "mortality_ichd"] = model.results_df[
-            "death_from_ichd"
-        ].sum()
-        self.df_trial_results.loc[run, "mortality_hhd"] = model.results_df[
-            "death_from_hhd"
-        ].sum()
-        self.df_trial_results.loc[run, "mortality_pd"] = model.results_df[
-            "death_from_pd"
-        ].sum()
-        self.df_trial_results.loc[run, "mortality_live_Tx"] = model.results_df[
-            "death_post_live_transplant"
-        ].sum()
-        self.df_trial_results.loc[run, "mortality_cadaver_Tx"] = model.results_df[
-            "death_post_cadaver_transplant"
-        ].sum()
-
-    def process_snapshot_results(self, model, run):
-        ## this groups the results by the time the snapshot was taken, so we can see how prevalence and mortality change over time
-        results_grouped_by_time = (
-            model.snapshot_results_df.groupby("snapshot_time")
-            .agg(
-                {
-                    "entry_time": "count",
-                    "diverted_to_con_care": "sum",
-                    "ichd_dialysis_count": "sum",
-                    "hhd_dialysis_count": "sum",
-                    "pd_dialysis_count": "sum",
-                    "live_transplant_count": "sum",
-                    "cadaver_transplant_count": "sum",
-                    "time_of_death": "count",
-                    "death_from_con_care": "sum",
-                    "death_from_ichd": "sum",
-                    "death_from_hhd": "sum",
-                    "death_from_pd": "sum",
-                    "death_post_live_transplant": "count",
-                    "death_post_cadaver_transplant": "count",
-                }
+        print(f"Average across {self.config.number_of_runs} runs")
+        if self.df_trial_results is not None:
+            print(
+                self.df_trial_results.infer_objects(copy=False)
+                .fillna(0)
+                .drop(columns=["run"])
+                .groupby(["measure"])
+                .mean()
             )
+        else:
+            raise TypeError("No trial results available")
+
+    def process_model_results(self, results_df):
+        # calculate prevalence
+        prevalence_columns = [
+            col for col in results_df.columns if col.endswith("count")
+        ]
+        prevalence = (
+            results_df[prevalence_columns]
+            .sum()
+            .rename(lambda x: f"{x.replace('count', 'prevalence')}")
+        )
+        mortality = (
+            results_df["treatment_modality_at_death"]
+            .value_counts()
+            .rename(lambda x: f"mortality_{x}")
+        )
+        totals = (
+            results_df[["entry_time", "time_of_death"]]
             .rename(
                 columns={"entry_time": "total_entries", "time_of_death": "total_deaths"}
             )
+            .count()
         )
+        df = pd.concat([prevalence, mortality, totals])
+        return df
 
-        for snapshot_time in results_grouped_by_time.index:
-            self.df_trial_results.loc[run, f"total_entries_{snapshot_time}"] = (
-                results_grouped_by_time.loc[snapshot_time, "total_entries"]
-            )
-            self.df_trial_results.loc[run, f"prevalence_con_care_{snapshot_time}"] = (
-                results_grouped_by_time.loc[snapshot_time, "diverted_to_con_care"]
-            )
-            self.df_trial_results.loc[run, f"prevalence_ichd_{snapshot_time}"] = (
-                results_grouped_by_time.loc[snapshot_time, "ichd_dialysis_count"]
-            )
-            self.df_trial_results.loc[run, f"prevalence_hhd_{snapshot_time}"] = (
-                results_grouped_by_time.loc[snapshot_time, "hhd_dialysis_count"]
-            )
-            self.df_trial_results.loc[run, f"prevalence_pd_{snapshot_time}"] = (
-                results_grouped_by_time.loc[snapshot_time, "pd_dialysis_count"]
-            )
-            self.df_trial_results.loc[run, f"prevalence_live_Tx_{snapshot_time}"] = (
-                results_grouped_by_time.loc[snapshot_time, "live_transplant_count"]
-            )
-            self.df_trial_results.loc[run, f"prevalence_cadaver_Tx_{snapshot_time}"] = (
-                results_grouped_by_time.loc[snapshot_time, "cadaver_transplant_count"]
-            )
-            self.df_trial_results.loc[run, f"total_deaths_{snapshot_time}"] = (
-                results_grouped_by_time.loc[snapshot_time, "total_deaths"]
-            )
-            self.df_trial_results.loc[run, f"mortality_con_care_{snapshot_time}"] = (
-                results_grouped_by_time.loc[snapshot_time, "death_from_con_care"]
-            )
-            self.df_trial_results.loc[run, f"mortality_ichd_{snapshot_time}"] = (
-                results_grouped_by_time.loc[snapshot_time, "death_from_ichd"]
-            )
-            self.df_trial_results.loc[run, f"mortality_hhd_{snapshot_time}"] = (
-                results_grouped_by_time.loc[snapshot_time, "death_from_hhd"]
-            )
-            self.df_trial_results.loc[run, f"mortality_pd_{snapshot_time}"] = (
-                results_grouped_by_time.loc[snapshot_time, "death_from_pd"]
-            )
-            self.df_trial_results.loc[run, f"mortality_live_Tx_{snapshot_time}"] = (
-                results_grouped_by_time.loc[snapshot_time, "death_post_live_transplant"]
-            )
-            self.df_trial_results.loc[run, f"mortality_cadaver_Tx_{snapshot_time}"] = (
-                results_grouped_by_time.loc[
-                    snapshot_time, "death_post_cadaver_transplant"
+    def process_snapshot_results(self, model, run):
+        snapshots = []
+        for time in model.snapshot_results_df["snapshot_time"].unique():
+            if time > 0:
+                snapshot_df = model.snapshot_results_df[
+                    model.snapshot_results_df["snapshot_time"] == time
                 ]
+                processed_snapshot = self.process_model_results(snapshot_df)
+                processed_snapshot.name = time
+                snapshots.append(processed_snapshot)
+        # add final results
+        final_snapshot = self.process_model_results(model.results_df)
+        final_snapshot.name = model.config.sim_duration
+        snapshots.append(final_snapshot)
+        all_processed_snapshots = (
+            (pd.concat(snapshots, axis=1).assign(run=run))
+            .reset_index()
+            .rename(columns={"index": "measure"})
+        )
+        if self.df_trial_results is not None:
+            self.df_trial_results = pd.concat(
+                [self.df_trial_results, all_processed_snapshots]
             )
+        else:
+            self.df_trial_results = all_processed_snapshots
 
     def run_trial(self):
         for run in tqdm(range(self.config.number_of_runs)):
             model = Model(run, self.rng, self.config)
             model.run()
-
-            model.snapshot_results_df = pd.concat(
-                [
-                    model.snapshot_results_df,
-                    model.results_df.assign(snapshot_time=model.config.sim_duration),
-                ]
-            )
             self.process_snapshot_results(model, run)
 
         self.print_trial_results()

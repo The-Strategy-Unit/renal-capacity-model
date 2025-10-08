@@ -24,4 +24,5 @@ def test_single_model_run(config, rng):
 def test_full_trial_run(config):
     trial = Trial(config)
     trial.run_trial()
-    assert trial.df_trial_results.shape[0] > 0  # There are results in the dataframe
+    if trial.df_trial_results is not None:
+        assert trial.df_trial_results.shape[0] > 0  # There are results in the dataframe

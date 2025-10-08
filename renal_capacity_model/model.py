@@ -31,7 +31,7 @@ class Model:
         self.inter_arrival_times = get_interarrival_times(self.config)
         self.patients_in_system = {k: 0 for k in self.inter_arrival_times.keys()}
         self.results_df = self._setup_results_df()
-        self.snapshot_results_df = self._setup_snapshot_df()
+        self.snapshot_results_df = None
         self.snapshot_interval = (
             self.config.snapshot_interval
         )  # how often to take a snapshot of the results_df
@@ -48,7 +48,7 @@ class Model:
                     "age_group",
                     "referral_type",
                     "entry_time",
-                    "diverted_to_con_care",
+                    "diverted_to_con_care_count",
                     "suitable_for_transplant",
                     "live_transplant_count",
                     "cadaver_transplant_count",
@@ -58,12 +58,7 @@ class Model:
                     "hhd_dialysis_count",
                     "pd_dialysis_count",
                     "time_of_death",
-                    "death_from_con_care",
-                    "death_from_ichd",
-                    "death_from_hhd",
-                    "death_from_pd",
-                    "death_post_live_transplant",
-                    "death_post_cadaver_transplant",
+                    "treatment_modality_at_death",
                 ]
             )
         )
@@ -71,43 +66,6 @@ class Model:
         results_df.set_index("patient ID", inplace=True)
 
         return results_df
-
-    def _setup_snapshot_df(self):
-        """Sets up DataFrame for recording snapshot model results
-
-        Returns:
-            pd.DataFrame: Empty DataFrame for recording model results
-        """
-        snapshot_results_df = pd.DataFrame(
-            columns=pd.Index(
-                [
-                    "snapshot_time",
-                    "age_group",
-                    "referral_type",
-                    "entry_time",
-                    "diverted_to_con_care",
-                    "suitable_for_transplant",
-                    "live_transplant_count",
-                    "cadaver_transplant_count",
-                    "pre_emptive_transplant",
-                    "transplant_count",
-                    "ichd_dialysis_count",
-                    "hhd_dialysis_count",
-                    "pd_dialysis_count",
-                    "time_of_death",
-                    "death_from_con_care",
-                    "death_from_ichd",
-                    "death_from_hhd",
-                    "death_from_pd",
-                    "death_post_live_transplant",
-                    "death_post_cadaver_transplant",
-                ]
-            )
-        )
-        snapshot_results_df["patient ID"] = [1]
-        snapshot_results_df.set_index("patient ID", inplace=True)
-
-        return snapshot_results_df
 
     def generator_patient_arrivals(self, patient_type):
         """Generator function for arriving patients
@@ -144,7 +102,7 @@ class Model:
                 self.env.process(self.start_krt(p))
             else:
                 # these patients are diverted to conservative care. We don't need a process here as all these patients do is wait a while before leaving the system
-                self.results_df.loc[p.id, "diverted_to_con_care"] = True
+                self.results_df.loc[p.id, "diverted_to_con_care_count"] = True
                 sampled_con_care_time = (
                     self.config.ttd_con_care_scale
                     * self.rng.weibull(a=self.config.ttd_con_care_shape, size=1)
@@ -152,10 +110,12 @@ class Model:
                 yield self.env.timeout(sampled_con_care_time)
                 self.results_df.loc[p.id, "time_of_death"] = self.env.now
                 self.patients_in_system[patient_type] -= 1
-                self.results_df.loc[p.id, "diverted_to_con_care"] = (
+                self.results_df.loc[p.id, "diverted_to_con_care_count"] = (
                     False  # as they've left conservative care
                 )
-                self.results_df.loc[p.id, "death_from_con_care"] = True
+                self.results_df.loc[p.id, "treatment_modality_at_death"] = (
+                    "conservative_care"
+                )
                 if self.config.trace:
                     print(
                         f"Patient {p.id} of age group {p.age_group} diverted to conservative care and left the system after {sampled_con_care_time} time units."
@@ -359,7 +319,9 @@ class Model:
                 self.results_df.loc[patient.id, "live_transplant_count"] -= 1
                 self.patients_in_system[patient.patient_type] -= 1
                 self.results_df.loc[patient.id, "time_of_death"] = self.env.now
-                self.results_df.loc[patient.id, "death_post_live_transplant"] = True
+                self.results_df.loc[patient.id, "treatment_modality_at_death"] = (
+                    "live_transplant"
+                )
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} died after live transplant at time {self.env.now}."
@@ -395,7 +357,9 @@ class Model:
                 self.results_df.loc[patient.id, "cadaver_transplant_count"] -= 1
                 self.patients_in_system[patient.patient_type] -= 1
                 self.results_df.loc[patient.id, "time_of_death"] = self.env.now
-                self.results_df.loc[patient.id, "death_post_cadaver_transplant"] = True
+                self.results_df.loc[patient.id, "treatment_modality_at_death"] = (
+                    "cadaver_transplant"
+                )
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} died after cadaver transplant at time {self.env.now}."
@@ -531,9 +495,9 @@ class Model:
                     patient.id, f"{patient.dialysis_modality}_dialysis_count"
                 ] -= 1
                 self.results_df.loc[patient.id, "time_of_death"] = self.env.now
-                self.results_df.loc[
-                    patient.id, f"death_from_{patient.dialysis_modality}"
-                ] = True
+                self.results_df.loc[patient.id, "treatment_modality_at_death"] = (
+                    patient.dialysis_modality
+                )
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} died and left the system at time {self.env.now}."
@@ -579,16 +543,18 @@ class Model:
 
     def snapshot_results(self):
         while True:
-            self.snapshot_results_df = pd.concat(
-                [
-                    self.snapshot_results_df,
-                    self.results_df.assign(snapshot_time=self.env.now),
-                ]
-            )
+            snapshot_results_df = self.results_df.copy()
+            snapshot_results_df["snapshot_time"] = self.env.now
             if self.config.trace:
                 print(
                     f"Taking results snapshot of the results_df at time {self.env.now}"
                 )
+            if self.snapshot_results_df is not None:
+                self.snapshot_results_df = pd.concat(
+                    [self.snapshot_results_df, snapshot_results_df]
+                )
+            else:
+                self.snapshot_results_df = snapshot_results_df
             yield self.env.timeout(self.snapshot_interval)
 
     def run(self):
@@ -600,7 +566,6 @@ class Model:
         self.env.process(self.snapshot_results())
 
         self.env.run(until=self.config.sim_duration)
-
         # self.calculate_run_results()
 
         # Show results (optional - set in config)
