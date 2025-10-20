@@ -35,6 +35,26 @@ class Model:
         self.snapshot_interval = (
             self.config.snapshot_interval
         )  # how often to take a snapshot of the results_df
+        self.event_log = self._setup_event_log()
+
+    def _setup_event_log(self) -> pd.DataFrame:
+        """Sets up DataFrame for recording model events
+
+        Returns:
+            pd.DataFrame: Empty DataFrame for recording model events
+        """
+        event_log = pd.DataFrame(
+            columns=pd.Index(
+                [
+                    "patient_id",
+                    "activity_from",
+                    "activity_to",
+                    "time_starting_activity_from",
+                    "time_spent_in_activity_from",
+                ]
+            )
+        )
+        return event_log
 
     def _setup_results_df(self) -> pd.DataFrame:
         """Sets up DataFrame for recording model results
@@ -66,6 +86,22 @@ class Model:
         results_df.set_index("patient ID", inplace=True)
 
         return results_df
+
+    def _update_event_log(
+        self,
+        patient_id,
+        activity_from,
+        activity_to,
+        time_starting_activity_from,
+        time_spent_in_activity_from,
+    ):
+        self.event_log.loc[len(self.event_log)] = [
+            patient_id,
+            activity_from,
+            activity_to,
+            time_starting_activity_from,
+            time_spent_in_activity_from,
+        ]
 
     def generator_patient_arrivals(self, patient_type):
         """Generator function for arriving patients
