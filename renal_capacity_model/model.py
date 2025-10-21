@@ -97,8 +97,6 @@ class Model:
         time_starting_activity_from: float,
         time_spent_in_activity_from: float,
     ) -> None:
-        if time_starting_activity_from == 0:
-            time_starting_activity_from = patient.start_time_in_system
         self.event_log.loc[len(self.event_log)] = [
             patient.id,
             activity_from,
@@ -121,6 +119,7 @@ class Model:
             start_time_in_system_patient = self.rng.exponential(
                 1 / self.inter_arrival_times[patient_type]
             )
+            yield self.env.timeout(start_time_in_system_patient)
             p = Patient(
                 self.patient_counter, patient_type, start_time_in_system_patient
             )
