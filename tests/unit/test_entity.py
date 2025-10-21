@@ -7,10 +7,11 @@ def test_entity_initializes_with_values():
     patient_type = "0_referraltype"
 
     # act
-    patient = Patient(p_id, patient_type)
+    patient = Patient(p_id, patient_type, 1)
 
     # assert
     assert patient.id == p_id
     assert patient.patient_type == patient_type
     assert patient.age_group == 0
+    assert patient.start_time_in_system == 1
     assert patient.referral_type == "referraltype"
