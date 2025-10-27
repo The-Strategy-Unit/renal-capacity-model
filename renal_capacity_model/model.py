@@ -501,7 +501,7 @@ class Model:
                 # patient goes back to start_krt after graft fails
                 ## sampled_wait_time depends on whether patitent is inicident or not
                 if patient.patient_flag == "incident":
-                    ## this is a mixture distribution as a patient has initiall a high chance of early graft failure and then a longer tailed component (bathtub shape survial curve)
+                    ## this is a mixture distribution as a patient has a high chance of early graft failure and then a longer tailed component (bathtub shape survial curve)
                     if self.rng.uniform(0, 1) < self.config.ttgf_tx_distribution["live"][patient.age_group]["proportion_below_break"]:
                         sampled_wait_time = self.rng.triangular(left = 0, mode = self.config.ttgf_tx_distribution["live"][patient.age_group]["mode"], right = self.config.ttgf_tx_distribution["live"][patient.age_group]["break_point"])
                     else:
@@ -512,8 +512,9 @@ class Model:
                     if self.rng.uniform(0, 1) < 1-self.config.ttgf_tx_initial_distribution["live"][patient.age_group]["proportion_uncensored"]:
                         sampled_wait_time = self.config.sim_duration + 1
                     else:
-                        sampled_wait_time = self.rng.uniform(self.config.ttgf_tx_initial_distribution["live"][patient.age_group]["lower_bound"], self.config.ttgf_tx_initial_distribution["live"][patient.age_group]["upper_bound"])
-
+                        sampled_wait_time = self.config.ttgf_tx_initial_distribution["live"][patient.age_group]["scale"]* self.rng.weibull(
+                            a=self.config.ttgf_tx_initial_distribution["live"][patient.age_group]["shape"] , size=1
+                        )
                 yield self.env.timeout(sampled_wait_time)
                 patient.time_living_with_live_transplant = sampled_wait_time
                 self.results_df.loc[patient.id, "live_transplant_count"] -= 1
@@ -568,7 +569,9 @@ class Model:
                     if self.rng.uniform(0, 1) < 1-self.config.ttgf_tx_initial_distribution["cadaver"][patient.age_group]["proportion_uncensored"]:
                         sampled_wait_time = self.config.sim_duration + 1
                     else:
-                        sampled_wait_time = self.rng.uniform(self.config.ttgf_tx_initial_distribution["cadaver"][patient.age_group]["lower_bound"], self.config.ttgf_tx_initial_distribution["cadaver"][patient.age_group]["upper_bound"])
+                        sampled_wait_time = self.config.ttgf_tx_initial_distribution["cadaver"][patient.age_group]["scale"]* self.rng.weibull(
+                            a=self.config.ttgf_tx_initial_distribution["cadaver"][patient.age_group]["shape"] , size=1
+                        )
 
                 yield self.env.timeout(sampled_wait_time)
                 patient.time_living_with_cadaver_transplant = sampled_wait_time
@@ -662,16 +665,14 @@ class Model:
             # death or transplant
             ## sampled_time depends on whether patitent is inicident or not
             if(patient.patient_flag == "incident"):
-                sampled_time = self.config.ttd_distribution[
-                    patient.dialysis_modality
-                ][patient.age_group]["scale"] * self.rng.gamma(
-                    self.config.ttd_distribution[patient.dialysis_modality][
+                sampled_time =  self.rng.gamma(self.config.ttd_distribution[patient.dialysis_modality][
                         patient.age_group]["shape"
-                    ]
+                    ],self.config.ttd_distribution[patient.dialysis_modality
+                    ][patient.age_group]["scale"] , size=1
                 )  
             else: ## prevalent patient
                 if self.rng.uniform(0, 1) < 1-self.config.ttd_initial_distribution[patient.dialysis_modality][patient.age_group]["proportion_uncensored"]:
-                    sampled_time = self.config.sim_duration + 1
+                    sampled_time = self.config.sim_duration + 1 # this is a censored observation
                 else:
                     sampled_time = self.config.ttd_initial_distribution[
                         patient.dialysis_modality
@@ -718,16 +719,14 @@ class Model:
 
             ## sampled_time depends on whether patitent is inicident or not
             if(patient.patient_flag == "incident"):
-                sampled_time = self.config.ttma_distribution[
-                    patient.dialysis_modality
-                ][patient.age_group]["scale"] * self.rng.gamma(
-                    self.config.ttma_distribution[patient.dialysis_modality][
+                sampled_time =  self.rng.gamma(self.config.ttma_distribution[patient.dialysis_modality][
                         patient.age_group]["shape"
-                    ]
+                    ],self.config.ttma_distribution[patient.dialysis_modality
+                    ][patient.age_group]["scale"], size=1
                 )  
             else: ## prevalent patient
                 if self.rng.uniform(0, 1) < 1-self.config.ttma_initial_distribution[patient.dialysis_modality][patient.age_group]["proportion_uncensored"]:
-                    sampled_time = self.config.sim_duration + 1
+                    sampled_time = self.config.sim_duration + 1  # this is a censored observation
                 else:
                     sampled_time = self.config.ttma_initial_distribution[
                         patient.dialysis_modality
