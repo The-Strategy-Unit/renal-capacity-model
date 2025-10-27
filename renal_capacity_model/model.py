@@ -45,6 +45,7 @@ class Model:
         results_df = pd.DataFrame(
             columns=pd.Index(
                 [
+                    "patient_flag",
                     "age_group",
                     "referral_type",
                     "entry_time",
@@ -79,7 +80,7 @@ class Model:
         while True:
             self.patient_counter += 1
 
-            p = Patient(self.patient_counter, patient_type)
+            p = Patient(self.patient_counter, patient_type, patient_flag="incident")
 
             start_time_in_system_patient = self.rng.exponential(
                 1 / self.inter_arrival_times[patient_type]
@@ -87,6 +88,7 @@ class Model:
 
             self.patients_in_system[patient_type] += 1
 
+            self.results_df.loc[p.id, "patient_flag"] = p.patient_flag
             self.results_df.loc[p.id, "entry_time"] = start_time_in_system_patient
             self.results_df.loc[p.id, "age_group"] = int(p.age_group)
             self.results_df.loc[p.id, "referral_type"] = p.referral_type
@@ -559,6 +561,8 @@ class Model:
 
     def run(self):
         """Runs the model"""
+        # We first initialize the model with patients that were in the system at time zero
+
         # We set up a generator for each of the patient types we have an IAT for
         for patient_type in self.inter_arrival_times.keys():
             self.env.process(self.generator_patient_arrivals(patient_type))

@@ -6,10 +6,11 @@ Contains the Entities to be used in the model
 class Patient:
     """Patient entity"""
 
-    def __init__(self, p_id, patient_type):
+    def __init__(self, p_id, patient_type, patient_flag):
         self.id = p_id
         self.time_in_system = 0
         self.patient_type = patient_type
+        self.patient_flag = patient_flag    # "incident" or "prevalent"
         self.age_group = int(
             patient_type.split("_")[0]
         )  # Extract age group from patient type
