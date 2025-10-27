@@ -69,6 +69,13 @@ class Model:
 
         return results_df
 
+    def initial_patient_arrivals(self, patient_type):
+        print(self.patient_counter)
+        start_time_in_system_patient = self.rng.exponential(
+                1 / self.inter_arrival_times[patient_type]
+            )
+        yield self.env.timeout(start_time_in_system_patient)
+
     def generator_prevalent_patient_arrivals(self, patient_type, location):
         """Generator function for prevalent patients at time zero
 
@@ -78,6 +85,8 @@ class Model:
         Yields:
             simpy.Environment.process: starts process based on location of the patient at time t=0.         
         """
+        self.patient_counter += 1
+
         p = Patient(self.patient_counter, patient_type, patient_flag="prevalent")
 
         self.patients_in_system[patient_type] += 1
@@ -96,6 +105,10 @@ class Model:
         if location == "conservative_care":
             # these patients are diverted to conservative care. We don't need a process here as all these patients do is wait a while before leaving the system
             self.results_df.loc[p.id, "diverted_to_con_care_count"] = True
+            if self.config.trace:
+                print(
+                    f"Patient {p.id} of age group {p.age_group} is in conservative care at time {self.env.now}."
+                )
             sampled_con_care_time = (
                 self.config.ttd_con_care_scale
                 * self.rng.weibull(a=self.config.ttd_con_care_shape, size=1)
@@ -113,21 +126,103 @@ class Model:
                 print(
                     f"Prevalent Patient {p.id} of age group {p.age_group} diverted to conservative care and left the system after {sampled_con_care_time} time units."
                 )
-                print(self.patients_in_system)
+                #print(self.patients_in_system)
         elif location == "ichd":
             p.dialysis_modality = "ichd"
+            if (self.rng.uniform(0, 1)  > self.config.suitable_for_transplant_dist[p.age_group]):
+                p.suitable_for_transplant = False
+                if self.config.trace:
+                        print(
+                            f"Patient {p.id} of age group {p.age_group} is in ICHD dialysis at time {self.env.now}."
+                        )
+            else: 
+                p.suitable_for_transplant = True
+                p.time_enters_waiting_list = self.env.now
+                if self.config.trace:
+                        print(
+                            f"Patient {p.id} of age group {p.age_group} is in ICHD dialysis whilst waiting for transplant at time {self.env.now}."
+                        )
+                if (self.rng.uniform(0, 1)< self.config.transplant_type_dist[p.age_group]):
+                    p.transplant_type = "live"
+                    p.time_on_waiting_list = self.rng.exponential(
+                        scale=self.config.time_on_waiting_list_mean["live"]) # due to memoryless property of exponential dist
+                else:
+                    p.transplant_type = "cadaver"
+                    p.time_on_waiting_list = self.rng.exponential(
+                        scale=self.config.time_on_waiting_list_mean["cadaver"]) # due to memoryless property of exponential dist
+            self.results_df.loc[p.id, "suitable_for_transplant"] = (p.suitable_for_transplant)  
+            self.results_df.loc[p.id, "pre_emptive_transplant"] = False
+            self.results_df.loc[p.id, "time_enters_waiting_list"] = p.time_enters_waiting_list 
             yield self.env.process(self.start_dialysis_modality(p))
         elif location == "hhd":
             p.dialysis_modality = "hhd"
+            if (self.rng.uniform(0, 1)  > self.config.suitable_for_transplant_dist[p.age_group]):
+                p.suitable_for_transplant = False
+                if self.config.trace:
+                        print(
+                            f"Patient {p.id} of age group {p.age_group} is in HHD dialysis at time {self.env.now}."
+                        )
+            else: 
+                p.suitable_for_transplant = True
+                p.time_enters_waiting_list = self.env.now
+                if self.config.trace:
+                        print(
+                            f"Patient {p.id} of age group {p.age_group} is in HHD dialysis whilst waiting for transplant at time {self.env.now}."
+                        )
+                if (self.rng.uniform(0, 1)< self.config.transplant_type_dist[p.age_group]):
+                    p.transplant_type = "live"
+                    p.time_on_waiting_list = self.rng.exponential(
+                        scale=self.config.time_on_waiting_list_mean["live"]) # due to memoryless property of exponential dist
+                else:
+                    p.transplant_type = "cadaver"
+                    p.time_on_waiting_list = self.rng.exponential(
+                        scale=self.config.time_on_waiting_list_mean["cadaver"]) # due to memoryless property of exponential dist
+            self.results_df.loc[p.id, "suitable_for_transplant"] = (p.suitable_for_transplant)  
+            self.results_df.loc[p.id, "pre_emptive_transplant"] = False
+            self.results_df.loc[p.id, "time_enters_waiting_list"] = p.time_enters_waiting_list 
             yield self.env.process(self.start_dialysis_modality(p))
         elif location == "pd":
             p.dialysis_modality = "pd"
+            if (self.rng.uniform(0, 1)  > self.config.suitable_for_transplant_dist[p.age_group]):
+                p.suitable_for_transplant = False
+                if self.config.trace:
+                        print(
+                            f"Patient {p.id} of age group {p.age_group} is in PD dialysis at time {self.env.now}."
+                        )
+            else: 
+                p.suitable_for_transplant = True
+                p.time_enters_waiting_list = self.env.now
+                if self.config.trace:
+                        print(
+                            f"Patient {p.id} of age group {p.age_group} is in PD dialysis whilst waiting for transplant at time {self.env.now}."
+                        )
+                if (self.rng.uniform(0, 1)< self.config.transplant_type_dist[p.age_group]):
+                    p.transplant_type = "live"
+                    p.time_on_waiting_list = self.rng.exponential(
+                        scale=self.config.time_on_waiting_list_mean["live"]) # due to memoryless property of exponential dist
+                else:
+                    p.transplant_type = "cadaver"
+                    p.time_on_waiting_list = self.rng.exponential(
+                        scale=self.config.time_on_waiting_list_mean["cadaver"]) # due to memoryless property of exponential dist
+            self.results_df.loc[p.id, "suitable_for_transplant"] = (p.suitable_for_transplant)  
+            self.results_df.loc[p.id, "pre_emptive_transplant"] = False
+            self.results_df.loc[p.id, "time_enters_waiting_list"] = p.time_enters_waiting_list 
             yield self.env.process(self.start_dialysis_modality(p))
         elif location == "live_transplant":
+            p.transplant_suitable = True
             p.transplant_type = "live"
+            if self.config.trace:
+                print(
+                    f"Patient {p.id} of age group {p.age_group} is living with live donor transplant at time {self.env.now}."
+                )
             yield self.env.process(self.start_transplant(p))
         elif location == "cadaver_transplant":
+            p.transplant_suitable = True
             p.transplant_type = "cadaver"
+            if self.config.trace:
+                print(
+                    f"Patient {p.id} of age group {p.age_group} is living with live donor transplant at time {self.env.now}."
+                )
             yield self.env.process(self.start_transplant(p))
 
     def generator_patient_arrivals(self, patient_type):
@@ -144,14 +239,15 @@ class Model:
 
             p = Patient(self.patient_counter, patient_type, patient_flag="incident")
 
-            start_time_in_system_patient = self.rng.exponential(
-                1 / self.inter_arrival_times[patient_type]
-            )
-
+            if self.config.trace:
+                print(
+                    f"Patient {p.id} of age group {p.age_group} entered the system at {self.env.now} time units."
+                )
+        
             self.patients_in_system[patient_type] += 1
 
             self.results_df.loc[p.id, "patient_flag"] = p.patient_flag
-            self.results_df.loc[p.id, "entry_time"] = start_time_in_system_patient
+            self.results_df.loc[p.id, "entry_time"] = self.env.now #start_time_in_system_patient
             self.results_df.loc[p.id, "age_group"] = int(p.age_group)
             self.results_df.loc[p.id, "referral_type"] = p.referral_type
             self.results_df.loc[p.id, "transplant_count"] = 0
@@ -184,12 +280,13 @@ class Model:
                     print(
                         f"Patient {p.id} of age group {p.age_group} diverted to conservative care and left the system after {sampled_con_care_time} time units."
                     )
-                    print(self.patients_in_system)
+                    #print(self.patients_in_system)
 
+            ## NOTE for review - to be deleted ##
+            ## I don't think we need the below anymore as we're yielding the timeout at the start of this function i.e. generating the inter-arrival time and then the patient
             sampled_inter_arrival_time = self.rng.exponential(
                 1 / self.inter_arrival_times[patient_type]
             )
-
             yield self.env.timeout(sampled_inter_arrival_time)
 
     def start_krt(self, patient):
@@ -211,12 +308,12 @@ class Model:
             self.results_df.loc[patient.id, "suitable_for_transplant"] = (
                 patient.suitable_for_transplant
             )
-
-            yield self.env.process(self.start_dialysis_modality_allocation(patient))
             if self.config.trace:
                 print(
-                    f"Patient {patient.id} of age group {patient.age_group} started dialysis only pathway."
+                    f"Patient {patient.id} of age group {patient.age_group} started dialysis only pathway at time {self.env.now}."
                 )
+            yield self.env.process(self.start_dialysis_modality_allocation(patient))
+
         else:
             # Patient is suitable for transplant and so we need to decide if they start pre-emptive transplant or dialysis whilst waiting for transplant
             patient.suitable_for_transplant = True
@@ -243,18 +340,19 @@ class Model:
                     # Patient starts pre-emptive transplant
                     self.results_df.loc[patient.id, "pre_emptive_transplant"] = True
 
-                    yield self.env.process(self.start_transplant(patient))
+                    
                     if self.config.trace:
                         print(
-                            f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with live donor."
+                            f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with live donor at time {self.env.now}."
                         )
+                    yield self.env.process(self.start_transplant(patient))
                 else:
                     # Patient starts dialysis whilst waiting for transplant
                     self.results_df.loc[patient.id, "pre_emptive_transplant"] = False
                     patient.time_enters_waiting_list = self.env.now
                     if self.config.trace:
                         print(
-                            f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with live donor."
+                            f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with live donor at time {self.env.now}."
                         )
                     yield self.env.process(
                         self.start_dialysis_whilst_waiting_for_transplant(patient)
@@ -268,23 +366,22 @@ class Model:
                 ):
                     # Patient starts pre-emptive transplant
                     self.results_df.loc[patient.id, "pre_emptive_transplant"] = True
-
-                    yield self.env.process(self.start_transplant(patient))
                     if self.config.trace:
                         print(
-                            f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with cadaver donor."
+                            f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with cadaver donor at time {self.env.now}."
                         )
+                    yield self.env.process(self.start_transplant(patient))
+
                 else:
                     # Patient starts dialysis whilst waiting for transplant
                     self.results_df.loc[patient.id, "pre_emptive_transplant"] = False
-
+                    if self.config.trace:
+                        print(
+                            f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with cadaver donor at time {self.env.now}."
+                        )
                     yield self.env.process(
                         self.start_dialysis_whilst_waiting_for_transplant(patient)
                     )
-                    if self.config.trace:
-                        print(
-                            f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with cadaver donor."
-                        )
 
     def start_dialysis_modality_allocation(self, patient):
         """Function containing the logic for the dialysis pathway
@@ -623,11 +720,25 @@ class Model:
 
     def run(self):
         """Runs the model"""
-        # We first initialize the model with patients that were in the system at time zero
-
-        # We set up a generator for each of the patient types we have an IAT for
+        # We first initialize the model with patients that were in the system at time zero - we look at each location in turn (conservative care, ichd, hhd, pd, live transplant, cadaver transplant)
         for patient_type in self.inter_arrival_times.keys():
-            self.env.process(self.generator_patient_arrivals(patient_type))
+            for _ in range(self.config.prevalent_counts["conservative_care"][patient_type]):
+                self.env.process(self.generator_prevalent_patient_arrivals(patient_type, "conservative_care"))
+            for _ in range(self.config.prevalent_counts["ichd"][patient_type]):
+                self.env.process(self.generator_prevalent_patient_arrivals(patient_type, "ichd"))
+            for _ in range(self.config.prevalent_counts["hhd"][patient_type]):
+                self.env.process(self.generator_prevalent_patient_arrivals(patient_type, "hhd"))
+            for _ in range(self.config.prevalent_counts["pd"][patient_type]):
+                self.env.process(self.generator_prevalent_patient_arrivals(patient_type, "pd"))
+            for _ in range(self.config.prevalent_counts["live_transplant"][patient_type]):
+                self.env.process(self.generator_prevalent_patient_arrivals(patient_type, "live_transplant"))
+            for _ in range(self.config.prevalent_counts["cadaver_transplant"][patient_type]):
+                self.env.process(self.generator_prevalent_patient_arrivals(patient_type, "cadaver_transplant"))
+            # We set up a generator for each of the patient types we have an IAT for
+
+        for patient_type in self.inter_arrival_times.keys():
+            self.env.process(self.initial_patient_arrivals(patient_type))   ## adds pause before first arrival 
+            self.env.process(self.generator_patient_arrivals(patient_type))   ## generates the first arrival and subsequent arrivals
 
         self.env.process(self.snapshot_results())
 

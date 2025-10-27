@@ -13,15 +13,104 @@ class Config:
         self.trace = config_dict.get("trace", False)
         self.number_of_runs = config_dict.get("number_of_runs", 10)
         self.sim_duration = config_dict.get(
-            "sim_duration", int(2 * 365)
+            "sim_duration", int(1) #2 * 365)
         )  # in days, but should be a multiple of 365 i.e. years
         self.random_seed = config_dict.get("random_seed", 0)
         self.arrival_rate = config_dict.get("arrival_rate", 1)
         self.snapshot_interval = config_dict.get(
             "snapshot_interval", int(365)
         )  # how often to take a snapshot of the results_df
-
-        # distributions for calculating interarrival times
+        self.prevalent_counts = config_dict.get(
+            "prevalent_counts",
+            {
+                "conservative_care" : {
+                    "1_early": 1,
+                    "2_early": 1,
+                    "3_early": 1, 
+                    "4_early": 1,
+                    "5_early": 1,
+                    "6_early": 1,
+                    "1_late": 1,
+                    "2_late": 1,
+                    "3_late": 1,
+                    "4_late": 1,
+                    "5_late": 1,
+                    "6_late": 1,
+                },
+                "ichd" : {
+                    "1_early": 1,
+                    "2_early": 1,
+                    "3_early": 1, 
+                    "4_early": 1,
+                    "5_early": 1,
+                    "6_early": 1,
+                    "1_late": 1,
+                    "2_late": 1,
+                    "3_late": 1,
+                    "4_late": 1,
+                    "5_late": 1,
+                    "6_late": 1,
+                },
+                "hhd" : {
+                    "1_early": 1,
+                    "2_early": 1,
+                    "3_early": 1, 
+                    "4_early": 1,
+                    "5_early": 1,
+                    "6_early": 1,
+                    "1_late": 1,
+                    "2_late": 1,
+                    "3_late": 1,
+                    "4_late": 1,
+                    "5_late": 1,
+                    "6_late": 1,
+                },
+                "pd" : {
+                    "1_early": 1,
+                    "2_early": 1,
+                    "3_early": 1, 
+                    "4_early": 1,
+                    "5_early": 1,
+                    "6_early": 1,
+                    "1_late": 1,
+                    "2_late": 1,
+                    "3_late": 1,
+                    "4_late": 1,
+                    "5_late": 1,
+                    "6_late": 1,
+                },
+                "live_transplant" : {
+                    "1_early": 1,
+                    "2_early": 1,
+                    "3_early": 1, 
+                    "4_early": 1,
+                    "5_early": 1,
+                    "6_early": 1,
+                    "1_late": 1,
+                    "2_late": 1,
+                    "3_late": 1,
+                    "4_late": 1,
+                    "5_late": 1,
+                    "6_late": 1,
+                },
+                "cadaver_transplant" : {
+                    "1_early": 1,
+                    "2_early": 1,
+                    "3_early": 1, 
+                    "4_early": 1,
+                    "5_early": 1,
+                    "6_early": 1,
+                    "1_late": 1,
+                    "2_late": 1,
+                    "3_late": 1,
+                    "4_late": 1,
+                    "5_late": 1,
+                    "6_late": 1,
+                },
+            },
+        ) # how many people of each patient group are already in the system at time zero
+        
+         # distributions for calculating interarrival times
         self.age_dist = config_dict.get(
             "age_dist",
             {
@@ -37,6 +126,7 @@ class Config:
             "referral_dist", {"early": 0.856711916, "late": 0.143288084}
         )
 
+        #routing distributions (to be fed in externally for each geography under study - these are defaults unrelated to any particular geography)
         self.con_care_dist = config_dict.get(
             "con_care_dist",
             {
@@ -107,11 +197,93 @@ class Config:
             },
         )
 
-        self.time_on_waiting_list_mean = config_dict.get(
-            "time_on_waiting_list_mean",
+        self.death_post_dialysis_modality = config_dict.get(
+            "death_post_dialysis_modality",
             {
-                "live": 4.5 * 30,  # 3-6 months on average
-                "cadaver": 365 * 2.5 * 30,  # 2-3 years on average
+                "ichd": {
+                    1: 0.6,
+                    2: 0.7,
+                    3: 0.75,
+                    4: 0.8,
+                    5: 0.9,
+                    6: 0.9,
+                },
+                "hhd": {
+                    1: 0.6,
+                    2: 0.7,
+                    3: 0.75,
+                    4: 0.8,
+                    5: 0.9,
+                    6: 0.9,
+                },
+                "pd": {
+                    1: 0.6,
+                    2: 0.7,
+                    3: 0.75,
+                    4: 0.8,
+                    5: 0.9,
+                    6: 0.9,
+                },
+            },
+        )
+
+        self.ttd_dialysis_modality_shape = config_dict.get(
+            "ttd_dialysis_modality_shape",
+            {
+                "ichd": {
+                    1: 0.9,
+                    2: 0.9,
+                    3: 0.9,
+                    4: 0.9,
+                    5: 0.9,
+                    6: 0.9,
+                },
+                "hhd": {
+                    1: 0.9,
+                    2: 0.9,
+                    3: 0.9,
+                    4: 0.9,
+                    5: 0.9,
+                    6: 0.9,
+                },
+                "pd": {
+                    1: 0.9,
+                    2: 0.9,
+                    3: 0.9,
+                    4: 0.9,
+                    5: 0.9,
+                    6: 0.9,
+                },
+            },
+        )
+
+        self.ttma_dialysis_modality_shape = config_dict.get(
+            "ttma_dialysis_modality_shape",
+            {
+                "ichd": {
+                    1: 0.5,
+                    2: 0.5,
+                    3: 0.5,
+                    4: 0.5,
+                    5: 0.5,
+                    6: 0.5,
+                },
+                "hhd": {
+                    1: 0.5,
+                    2: 0.5,
+                    3: 0.5,
+                    4: 0.5,
+                    5: 0.5,
+                    6: 0.5,
+                },
+                "pd": {
+                    1: 0.5,
+                    2: 0.5,
+                    3: 0.5,
+                    4: 0.5,
+                    5: 0.5,
+                    6: 0.5,
+                },
             },
         )
 
@@ -125,6 +297,14 @@ class Config:
             {"early": 0.2, "late": 0.01},
         )
 
+        #time to event distribution parameters (these are the same regardless of geography).
+        self.time_on_waiting_list_mean = config_dict.get(
+            "time_on_waiting_list_mean",
+            {
+                "live": 4.5 * 30,  # 3-6 months on average
+                "cadaver": 365 * 2.5 * 30,  # 2-3 years on average
+            },
+        )
         self.ttd_con_care_shape = config_dict.get("ttd_con_care_shape", 0.5)
         self.ttd_con_care_scale = config_dict.get("ttd_con_care_scale", 100)
 
@@ -227,65 +407,7 @@ class Config:
             },
         )
 
-        self.death_post_dialysis_modality = config_dict.get(
-            "death_post_dialysis_modality",
-            {
-                "ichd": {
-                    1: 0.6,
-                    2: 0.7,
-                    3: 0.75,
-                    4: 0.8,
-                    5: 0.9,
-                    6: 0.9,
-                },
-                "hhd": {
-                    1: 0.6,
-                    2: 0.7,
-                    3: 0.75,
-                    4: 0.8,
-                    5: 0.9,
-                    6: 0.9,
-                },
-                "pd": {
-                    1: 0.6,
-                    2: 0.7,
-                    3: 0.75,
-                    4: 0.8,
-                    5: 0.9,
-                    6: 0.9,
-                },
-            },
-        )
 
-        self.ttd_dialysis_modality_shape = config_dict.get(
-            "ttd_dialysis_modality_shape",
-            {
-                "ichd": {
-                    1: 0.9,
-                    2: 0.9,
-                    3: 0.9,
-                    4: 0.9,
-                    5: 0.9,
-                    6: 0.9,
-                },
-                "hhd": {
-                    1: 0.9,
-                    2: 0.9,
-                    3: 0.9,
-                    4: 0.9,
-                    5: 0.9,
-                    6: 0.9,
-                },
-                "pd": {
-                    1: 0.9,
-                    2: 0.9,
-                    3: 0.9,
-                    4: 0.9,
-                    5: 0.9,
-                    6: 0.9,
-                },
-            },
-        )
         self.ttd_dialysis_modality_scale = config_dict.get(
             "ttd_dialysis_modality_scale",
             {
@@ -315,35 +437,7 @@ class Config:
                 },
             },
         )
-        self.ttma_dialysis_modality_shape = config_dict.get(
-            "ttma_dialysis_modality_shape",
-            {
-                "ichd": {
-                    1: 0.5,
-                    2: 0.5,
-                    3: 0.5,
-                    4: 0.5,
-                    5: 0.5,
-                    6: 0.5,
-                },
-                "hhd": {
-                    1: 0.5,
-                    2: 0.5,
-                    3: 0.5,
-                    4: 0.5,
-                    5: 0.5,
-                    6: 0.5,
-                },
-                "pd": {
-                    1: 0.5,
-                    2: 0.5,
-                    3: 0.5,
-                    4: 0.5,
-                    5: 0.5,
-                    6: 0.5,
-                },
-            },
-        )
+
         self.ttma_dialysis_modality_scale = config_dict.get(
             "ttma_dialysis_modality_scale",
             {
