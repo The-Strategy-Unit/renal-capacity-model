@@ -37,6 +37,7 @@ class Model:
         )  # how often to take a snapshot of the results_df
 
     def _setup_results_df(self) -> pd.DataFrame:
+
         """Sets up DataFrame for recording model results
 
         Returns:
@@ -67,6 +68,67 @@ class Model:
         results_df.set_index("patient ID", inplace=True)
 
         return results_df
+
+    def generator_prevalent_patient_arrivals(self, patient_type, location):
+        """Generator function for prevalent patients at time zero
+
+        Args:
+            patient_type (str): Type of patient. Used to retrieve correct inter-arrival time.
+
+        Yields:
+            simpy.Environment.process: starts process based on location of the patient at time t=0.         
+        """
+        p = Patient(self.patient_counter, patient_type, patient_flag="prevalent")
+
+        self.patients_in_system[patient_type] += 1
+
+        self.results_df.loc[p.id, "patient_flag"] = p.patient_flag
+        self.results_df.loc[p.id, "entry_time"] = 0
+        self.results_df.loc[p.id, "age_group"] = int(p.age_group)
+        self.results_df.loc[p.id, "referral_type"] = p.referral_type
+        self.results_df.loc[p.id, "transplant_count"] = 0
+        self.results_df.loc[p.id, "live_transplant_count"] = 0
+        self.results_df.loc[p.id, "cadaver_transplant_count"] = 0
+        self.results_df.loc[p.id, "ichd_dialysis_count"] = 0
+        self.results_df.loc[p.id, "hhd_dialysis_count"] = 0
+        self.results_df.loc[p.id, "pd_dialysis_count"] = 0
+
+        if location == "conservative_care":
+            # these patients are diverted to conservative care. We don't need a process here as all these patients do is wait a while before leaving the system
+            self.results_df.loc[p.id, "diverted_to_con_care_count"] = True
+            sampled_con_care_time = (
+                self.config.ttd_con_care_scale
+                * self.rng.weibull(a=self.config.ttd_con_care_shape, size=1)
+            )
+            yield self.env.timeout(sampled_con_care_time)
+            self.results_df.loc[p.id, "time_of_death"] = self.env.now
+            self.patients_in_system[patient_type] -= 1
+            self.results_df.loc[p.id, "diverted_to_con_care_count"] = (
+                False  # as they've left conservative care
+            )
+            self.results_df.loc[p.id, "treatment_modality_at_death"] = (
+                "conservative_care"
+            )
+            if self.config.trace:
+                print(
+                    f"Prevalent Patient {p.id} of age group {p.age_group} diverted to conservative care and left the system after {sampled_con_care_time} time units."
+                )
+                print(self.patients_in_system)
+        elif location == "ichd":
+            p.dialysis_modality = "ichd"
+            yield self.env.process(self.start_dialysis_modality(p))
+        elif location == "hhd":
+            p.dialysis_modality = "hhd"
+            yield self.env.process(self.start_dialysis_modality(p))
+        elif location == "pd":
+            p.dialysis_modality = "pd"
+            yield self.env.process(self.start_dialysis_modality(p))
+        elif location == "live_transplant":
+            p.transplant_type = "live"
+            yield self.env.process(self.start_transplant(p))
+        elif location == "cadaver_transplant":
+            p.transplant_type = "cadaver"
+            yield self.env.process(self.start_transplant(p))
 
     def generator_patient_arrivals(self, patient_type):
         """Generator function for arriving patients
