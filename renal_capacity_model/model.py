@@ -69,12 +69,12 @@ class Model:
 
         return results_df
 
-    def initial_patient_arrivals(self, patient_type):
-        print(self.patient_counter)
-        start_time_in_system_patient = self.rng.exponential(
-                1 / self.inter_arrival_times[patient_type]
-            )
-        yield self.env.timeout(start_time_in_system_patient)
+    #def initial_patient_arrivals(self, patient_type):
+    #    print(self.patient_counter)
+    #    start_time_in_system_patient = self.rng.exponential(
+    #            1 / self.inter_arrival_times[patient_type]
+    #        )
+    #    yield self.env.timeout(start_time_in_system_patient)
 
     def generator_prevalent_patient_arrivals(self, patient_type, location):
         """Generator function for prevalent patients at time zero
@@ -798,7 +798,6 @@ class Model:
             # We set up a generator for each of the patient types we have an IAT for
 
         for patient_type in self.inter_arrival_times.keys():
-            #self.env.process(self.initial_patient_arrivals(patient_type))   ## adds pause before first arrival 
             self.env.process(self.generator_patient_arrivals(patient_type))   ## generates the first arrival and subsequent arrivals
 
         self.env.process(self.snapshot_results())

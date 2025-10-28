@@ -86,7 +86,7 @@ class Config:
                     "2_early": 0,
                     "3_early": 0, 
                     "4_early": 0,
-                    "5_early": 0,
+                    "5_early": 1,
                     "6_early": 0,
                     "1_late": 0,
                     "2_late": 0,
