@@ -243,11 +243,16 @@ class Model:
                 print(
                     f"Patient {p.id} of age group {p.age_group} entered the system at {self.env.now} time units."
                 )
-        
+            
+            sampled_inter_arrival_time = self.rng.exponential(
+                1 / self.inter_arrival_times[patient_type]
+            )
+            yield self.env.timeout(sampled_inter_arrival_time)
+            
             self.patients_in_system[patient_type] += 1
 
             self.results_df.loc[p.id, "patient_flag"] = p.patient_flag
-            self.results_df.loc[p.id, "entry_time"] = self.env.now #start_time_in_system_patient
+            self.results_df.loc[p.id, "entry_time"] = self.env.now      #start_time_in_system_patient
             self.results_df.loc[p.id, "age_group"] = int(p.age_group)
             self.results_df.loc[p.id, "referral_type"] = p.referral_type
             self.results_df.loc[p.id, "transplant_count"] = 0
@@ -282,12 +287,10 @@ class Model:
                     )
                     #print(self.patients_in_system)
 
-            ## NOTE for review - to be deleted ##
-            ## I don't think we need the below anymore as we're yielding the timeout at the start of this function i.e. generating the inter-arrival time and then the patient
-            sampled_inter_arrival_time = self.rng.exponential(
-                1 / self.inter_arrival_times[patient_type]
-            )
-            yield self.env.timeout(sampled_inter_arrival_time)
+            #sampled_inter_arrival_time = self.rng.exponential(
+            #     1 / self.inter_arrival_times[patient_type]
+            #)
+            #yield self.env.timeout(sampled_inter_arrival_time)
 
     def start_krt(self, patient):
         """Function containing the logic for the Kidney Replacement Therapy pathway
@@ -800,7 +803,7 @@ class Model:
             # We set up a generator for each of the patient types we have an IAT for
 
         for patient_type in self.inter_arrival_times.keys():
-            self.env.process(self.initial_patient_arrivals(patient_type))   ## adds pause before first arrival 
+            #self.env.process(self.initial_patient_arrivals(patient_type))   ## adds pause before first arrival 
             self.env.process(self.generator_patient_arrivals(patient_type))   ## generates the first arrival and subsequent arrivals
 
         self.env.process(self.snapshot_results())
