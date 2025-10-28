@@ -13,7 +13,7 @@ class Config:
         self.trace = config_dict.get("trace", False)
         self.number_of_runs = config_dict.get("number_of_runs", 10)
         self.sim_duration = config_dict.get(
-            "sim_duration", int(1)  # 2 * 365)
+            "sim_duration", int(2 * 365)
         )  # in days, but should be a multiple of 365 i.e. years
         self.random_seed = config_dict.get("random_seed", 0)
         self.arrival_rate = config_dict.get("arrival_rate", 1)
@@ -41,7 +41,7 @@ class Config:
                 },
                 "ichd": {
                     "1_early": 0,
-                    "2_early": 0,
+                    "2_early": 1,
                     "3_early": 0,
                     "4_early": 0,
                     "5_early": 0,

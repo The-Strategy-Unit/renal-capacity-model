@@ -571,7 +571,7 @@ class Model:
                         ][
                             "scale"
                         ] * self.rng.weibull(
-                            a=self.config.ttgf_tx_distribution["live"][
+                            a=self.config.ttgf_tx_distribution["cadaver"][
                                 patient.age_group
                             ]["shape"],
                             size=1,
