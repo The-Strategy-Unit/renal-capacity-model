@@ -287,11 +287,6 @@ class Model:
                     )
                     #print(self.patients_in_system)
 
-            #sampled_inter_arrival_time = self.rng.exponential(
-            #     1 / self.inter_arrival_times[patient_type]
-            #)
-            #yield self.env.timeout(sampled_inter_arrival_time)
-
     def start_krt(self, patient):
         """Function containing the logic for the Kidney Replacement Therapy pathway
 
