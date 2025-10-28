@@ -68,13 +68,6 @@ class Model:
 
         return results_df
 
-    # def initial_patient_arrivals(self, patient_type):
-    #    print(self.patient_counter)
-    #    start_time_in_system_patient = self.rng.exponential(
-    #            1 / self.inter_arrival_times[patient_type]
-    #        )
-    #    yield self.env.timeout(start_time_in_system_patient)
-
     def generator_prevalent_patient_arrivals(self, patient_type, location):
         """Generator function for prevalent patients at time zero
 
@@ -127,17 +120,18 @@ class Model:
                 # print(self.patients_in_system)
         elif location == "ichd":
             p.dialysis_modality = "ichd"
+            self.results_df.loc[p.id, "ichd_dialysis_count"] += 1
             if (
                 self.rng.uniform(0, 1)
                 > self.config.suitable_for_transplant_dist[p.age_group]
             ):
-                p.suitable_for_transplant = False
+                p.transplant_suitable = False
                 if self.config.trace:
                     print(
                         f"Patient {p.id} of age group {p.age_group} is in ICHD dialysis at time {self.env.now}."
                     )
             else:
-                p.suitable_for_transplant = True
+                p.transplant_suitable = True
                 p.time_enters_waiting_list = self.env.now
                 if self.config.trace:
                     print(
@@ -156,9 +150,7 @@ class Model:
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean["cadaver"]
                     )  # due to memoryless property of exponential dist
-            self.results_df.loc[p.id, "suitable_for_transplant"] = (
-                p.suitable_for_transplant
-            )
+            self.results_df.loc[p.id, "suitable_for_transplant"] = p.transplant_suitable
             self.results_df.loc[p.id, "pre_emptive_transplant"] = False
             self.results_df.loc[p.id, "time_enters_waiting_list"] = (
                 p.time_enters_waiting_list
@@ -166,17 +158,18 @@ class Model:
             yield self.env.process(self.start_dialysis_modality(p))
         elif location == "hhd":
             p.dialysis_modality = "hhd"
+            self.results_df.loc[p.id, "hhd_dialysis_count"] += 1
             if (
                 self.rng.uniform(0, 1)
                 > self.config.suitable_for_transplant_dist[p.age_group]
             ):
-                p.suitable_for_transplant = False
+                p.transplant_suitable = False
                 if self.config.trace:
                     print(
                         f"Patient {p.id} of age group {p.age_group} is in HHD dialysis at time {self.env.now}."
                     )
             else:
-                p.suitable_for_transplant = True
+                p.transplant_suitable = True
                 p.time_enters_waiting_list = self.env.now
                 if self.config.trace:
                     print(
@@ -195,9 +188,7 @@ class Model:
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean["cadaver"]
                     )  # due to memoryless property of exponential dist
-            self.results_df.loc[p.id, "suitable_for_transplant"] = (
-                p.suitable_for_transplant
-            )
+            self.results_df.loc[p.id, "suitable_for_transplant"] = p.transplant_suitable
             self.results_df.loc[p.id, "pre_emptive_transplant"] = False
             self.results_df.loc[p.id, "time_enters_waiting_list"] = (
                 p.time_enters_waiting_list
@@ -205,17 +196,18 @@ class Model:
             yield self.env.process(self.start_dialysis_modality(p))
         elif location == "pd":
             p.dialysis_modality = "pd"
+            self.results_df.loc[p.id, "pd_dialysis_count"] += 1
             if (
                 self.rng.uniform(0, 1)
                 > self.config.suitable_for_transplant_dist[p.age_group]
             ):
-                p.suitable_for_transplant = False
+                p.transplant_suitable = False
                 if self.config.trace:
                     print(
                         f"Patient {p.id} of age group {p.age_group} is in PD dialysis at time {self.env.now}."
                     )
             else:
-                p.suitable_for_transplant = True
+                p.transplant_suitable = True
                 p.time_enters_waiting_list = self.env.now
                 if self.config.trace:
                     print(
@@ -234,9 +226,7 @@ class Model:
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean["cadaver"]
                     )  # due to memoryless property of exponential dist
-            self.results_df.loc[p.id, "suitable_for_transplant"] = (
-                p.suitable_for_transplant
-            )
+            self.results_df.loc[p.id, "suitable_for_transplant"] = p.transplant_suitable
             self.results_df.loc[p.id, "pre_emptive_transplant"] = False
             self.results_df.loc[p.id, "time_enters_waiting_list"] = (
                 p.time_enters_waiting_list
@@ -244,7 +234,11 @@ class Model:
             yield self.env.process(self.start_dialysis_modality(p))
         elif location == "live_transplant":
             p.transplant_suitable = True
+            p.pre_emptive_transplant = "NA"
+            p.time_of_transplant = self.env.now
             p.transplant_type = "live"
+            self.results_df.loc[p.id, "live_transplant_count"] += 1
+            self.results_df.loc[p.id, "transplant_count"] += 1
             if self.config.trace:
                 print(
                     f"Patient {p.id} of age group {p.age_group} is living with live donor transplant at time {self.env.now}."
@@ -252,7 +246,11 @@ class Model:
             yield self.env.process(self.start_transplant(p))
         elif location == "cadaver_transplant":
             p.transplant_suitable = True
+            p.pre_emptive_transplant = "NA"  # unknown for prevalent patients
+            p.time_of_transplant = self.env.now
             p.transplant_type = "cadaver"
+            self.results_df.loc[p.id, "cadaver_transplant_count"] += 1
+            self.results_df.loc[p.id, "transplant_count"] += 1
             if self.config.trace:
                 print(
                     f"Patient {p.id} of age group {p.age_group} is living with live donor transplant at time {self.env.now}."
@@ -337,9 +335,9 @@ class Model:
             > self.config.suitable_for_transplant_dist[patient.age_group]
         ):
             # Patient is not suitable for transplant and so starts dialysis only pathway
-            patient.suitable_for_transplant = False
+            patient.transplant_suitable = False
             self.results_df.loc[patient.id, "suitable_for_transplant"] = (
-                patient.suitable_for_transplant
+                patient.transplant_suitable
             )
             if self.config.trace:
                 print(
@@ -349,7 +347,7 @@ class Model:
 
         else:
             # Patient is suitable for transplant and so we need to decide if they start pre-emptive transplant or dialysis whilst waiting for transplant
-            patient.suitable_for_transplant = True
+            patient.transplant_suitable = True
             # We first assign a transplant type: live or cadaver as this impacts the probability of starting pre-emptive transplant
             if (
                 self.rng.uniform(0, 1)
@@ -360,7 +358,7 @@ class Model:
                 patient.transplant_type = "cadaver"
 
             self.results_df.loc[patient.id, "suitable_for_transplant"] = (
-                patient.suitable_for_transplant
+                patient.transplant_suitable
             )
 
             if patient.transplant_type == "live":
@@ -824,7 +822,7 @@ class Model:
                         ]["shape"]
                     )
             if (
-                patient.suitable_for_transplant
+                patient.transplant_suitable
                 and sampled_time >= patient.time_on_waiting_list
             ):
                 yield self.env.timeout(patient.time_on_waiting_list)
@@ -891,7 +889,7 @@ class Model:
                     )
             # print(f"SAMPLED TIME was {sampled_time} for {patient.patient_flag} patient {patient.id}")
             if (
-                patient.suitable_for_transplant
+                patient.transplant_suitable
                 and sampled_time >= patient.time_on_waiting_list
             ):
                 yield self.env.timeout(patient.time_on_waiting_list)
