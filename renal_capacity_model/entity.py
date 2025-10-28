@@ -10,7 +10,7 @@ class Patient:
         self.id = p_id
         self.time_in_system = 0
         self.patient_type = patient_type
-        self.patient_flag = patient_flag    # "incident" or "prevalent"
+        self.patient_flag = patient_flag  # "incident" or "prevalent"
         self.age_group = int(
             patient_type.split("_")[0]
         )  # Extract age group from patient type
