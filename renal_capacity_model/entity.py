@@ -6,8 +6,7 @@ Contains the Entities to be used in the model
 class Patient:
     """Patient entity"""
 
-
-    def __init__(self, p_id, patient_type, start_time_in_system,patient_flag):
+    def __init__(self, p_id, patient_type, start_time_in_system, patient_flag):
         self.id = p_id
         self.time_in_system = 0
         self.patient_type = patient_type
