@@ -126,6 +126,13 @@ class Model:
             sampled_con_care_time = self.config.ttd_con_care[
                 "scale"
             ] * self.rng.weibull(a=self.config.ttd_con_care["shape"], size=1)
+            self._update_event_log(
+                p,
+                "conservative_care",
+                "death",
+                0,
+                sampled_con_care_time,
+            )
             yield self.env.timeout(sampled_con_care_time)
             self.results_df.loc[p.id, "time_of_death"] = self.env.now
             self.patients_in_system[patient_type] -= 1
@@ -309,6 +316,9 @@ class Model:
                 1 / self.inter_arrival_times[patient_type]
             )
             yield self.env.timeout(start_time_in_system_patient)
+            self.patient_counter += (
+                1  # we use the patient_counter for the ID so this must come first
+            )
             p = Patient(
                 self.patient_counter,
                 patient_type,
@@ -319,7 +329,6 @@ class Model:
                 print(
                     f"Patient {p.id} of age group {p.age_group} entered the system at {self.env.now} time units."
                 )
-            self.patient_counter += 1
             self.patients_in_system[patient_type] += 1
             self.results_df.loc[p.id, "patient_flag"] = p.patient_flag
             self.results_df.loc[p.id, "entry_time"] = start_time_in_system_patient
