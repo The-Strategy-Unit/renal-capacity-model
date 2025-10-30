@@ -21,6 +21,97 @@ class Config:
             "snapshot_interval", int(365)
         )  # how often to take a snapshot of the results_df
 
+        # how many people are in each activity at time zero
+        self.prevalent_counts = config_dict.get(
+            "prevalent_counts",
+            {
+                "conservative_care": {
+                    "1_early": 0,
+                    "2_early": 0,
+                    "3_early": 0,
+                    "4_early": 0,
+                    "5_early": 0,
+                    "6_early": 0,
+                    "1_late": 0,
+                    "2_late": 0,
+                    "3_late": 0,
+                    "4_late": 0,
+                    "5_late": 0,
+                    "6_late": 0,
+                },
+                "ichd": {
+                    "1_early": 0,
+                    "2_early": 1,
+                    "3_early": 0,
+                    "4_early": 0,
+                    "5_early": 0,
+                    "6_early": 0,
+                    "1_late": 0,
+                    "2_late": 0,
+                    "3_late": 0,
+                    "4_late": 0,
+                    "5_late": 0,
+                    "6_late": 0,
+                },
+                "hhd": {
+                    "1_early": 0,
+                    "2_early": 0,
+                    "3_early": 0,
+                    "4_early": 0,
+                    "5_early": 0,
+                    "6_early": 0,
+                    "1_late": 0,
+                    "2_late": 0,
+                    "3_late": 0,
+                    "4_late": 0,
+                    "5_late": 0,
+                    "6_late": 0,
+                },
+                "pd": {
+                    "1_early": 0,
+                    "2_early": 0,
+                    "3_early": 0,
+                    "4_early": 0,
+                    "5_early": 0,
+                    "6_early": 0,
+                    "1_late": 0,
+                    "2_late": 0,
+                    "3_late": 0,
+                    "4_late": 0,
+                    "5_late": 0,
+                    "6_late": 0,
+                },
+                "live_transplant": {
+                    "1_early": 0,
+                    "2_early": 0,
+                    "3_early": 0,
+                    "4_early": 0,
+                    "5_early": 1,
+                    "6_early": 0,
+                    "1_late": 0,
+                    "2_late": 0,
+                    "3_late": 0,
+                    "4_late": 0,
+                    "5_late": 0,
+                    "6_late": 1,
+                },
+                "cadaver_transplant": {
+                    "1_early": 0,
+                    "2_early": 0,
+                    "3_early": 0,
+                    "4_early": 0,
+                    "5_early": 0,
+                    "6_early": 0,
+                    "1_late": 0,
+                    "2_late": 0,
+                    "3_late": 0,
+                    "4_late": 0,
+                    "5_late": 0,
+                    "6_late": 1,
+                },
+            },
+        )
+
         # distributions for calculating interarrival times
         self.age_dist = config_dict.get(
             "age_dist",
@@ -33,10 +124,12 @@ class Config:
                 6: 0.344417708,
             },
         )
+
         self.referral_dist = config_dict.get(
             "referral_dist", {"early": 0.856711916, "late": 0.143288084}
         )
 
+        # routing distributions (to be fed in externally for each geography under study - these are defaults unrelated to any particular geography)
         self.con_care_dist = config_dict.get(
             "con_care_dist",
             {
@@ -107,126 +200,6 @@ class Config:
             },
         )
 
-        self.time_on_waiting_list_mean = config_dict.get(
-            "time_on_waiting_list_mean",
-            {
-                "live": 4.5 * 30,  # 3-6 months on average
-                "cadaver": 365 * 2.5 * 30,  # 2-3 years on average
-            },
-        )
-
-        self.pre_emptive_transplant_live_donor_dist = config_dict.get(
-            "pre_emptive_transplant_live_donor_dist",
-            {"early": 0.5, "late": 0.1},
-        )
-
-        self.pre_emptive_transplant_cadaver_donor_dist = config_dict.get(
-            "pre_emptive_transplant_cadaver_donor_dist",
-            {"early": 0.2, "late": 0.01},
-        )
-
-        self.ttd_con_care_shape = config_dict.get("ttd_con_care_shape", 0.5)
-        self.ttd_con_care_scale = config_dict.get("ttd_con_care_scale", 100)
-
-        self.tw_before_dialysis_shape = config_dict.get("tw_before_dialysis_shape", 1)
-        self.tw_before_dialysis_scale = config_dict.get("tw_before_dialysis_scale", 450)
-
-        self.live_tx_ttd_shape = config_dict.get(
-            "live_tx_ttd_shape",
-            {
-                1: 1,
-                2: 0.5,
-                3: 1,
-                4: 1,
-                5: 1.5,
-                6: 1.5,
-            },
-        )
-
-        self.live_tx_ttd_scale = config_dict.get(
-            "live_tx_ttd_scale",
-            {
-                1: 47000,
-                2: 100000,
-                3: 5000,
-                4: 5000,
-                5: 2500,
-                6: 2500,
-            },
-        )
-
-        self.live_tx_ttgf_shape = config_dict.get(
-            "live_tx_ttgf_shape",
-            {
-                1: 1.0,
-                2: 1,
-                3: 1,
-                4: 2,
-                5: 2,
-                6: 2,
-            },
-        )
-
-        self.live_tx_ttgf_scale = config_dict.get(
-            "live_tx_ttgf_scale",
-            {
-                1: 1500,
-                2: 1500,
-                3: 1500,
-                4: 2000,
-                5: 2000,
-                6: 2000,
-            },
-        )
-
-        self.cadaver_tx_ttd_shape = config_dict.get(
-            "cadaver_tx_ttd_shape",
-            {
-                1: 1.5,
-                2: 1,
-                3: 1,
-                4: 1,
-                5: 1.25,
-                6: 1.25,
-            },
-        )
-
-        self.cadaver_tx_ttd_scale = config_dict.get(
-            "cadaver_tx_ttd_scale",
-            {
-                1: 10000,
-                2: 15000,
-                3: 8000,
-                4: 4000,
-                5: 2500,
-                6: 2500,
-            },
-        )
-
-        self.cadaver_tx_ttgf_shape = config_dict.get(
-            "cadaver_tx_ttgf_shape",
-            {
-                1: 1,
-                2: 1,
-                3: 1,
-                4: 2,
-                5: 2,
-                6: 2,
-            },
-        )
-
-        self.cadaver_tx_ttgf_scale = config_dict.get(
-            "cadaver_tx_ttgf_scale",
-            {
-                1: 1500,
-                2: 1500,
-                3: 1500,
-                4: 2000,
-                5: 2000,
-                6: 2000,
-            },
-        )
-
         self.death_post_dialysis_modality = config_dict.get(
             "death_post_dialysis_modality",
             {
@@ -257,119 +230,704 @@ class Config:
             },
         )
 
-        self.ttd_dialysis_modality_shape = config_dict.get(
-            "ttd_dialysis_modality_shape",
+        self.pre_emptive_transplant_live_donor_dist = config_dict.get(
+            "pre_emptive_transplant_live_donor_dist",
+            {"early": 0.5, "late": 0.1},
+        )
+
+        self.pre_emptive_transplant_cadaver_donor_dist = config_dict.get(
+            "pre_emptive_transplant_cadaver_donor_dist",
+            {"early": 0.2, "late": 0.01},
+        )
+
+        # time to event distribution parameters (these are the same regardless of geography).
+
+        ## initialisation input distributions ##
+        self.ttma_initial_distribution = config_dict.get(
+            "ttma_initial_distribution",
             {
                 "ichd": {
-                    1: 0.9,
-                    2: 0.9,
-                    3: 0.9,
-                    4: 0.9,
-                    5: 0.9,
-                    6: 0.9,
+                    1: {
+                        "proportion_uncensored": 0.86,
+                        "shape": 0.86,
+                        "scale": 647,
+                    },
+                    2: {
+                        "proportion_uncensored": 0.75,
+                        "shape": 0.93,
+                        "scale": 639,
+                    },
+                    3: {
+                        "proportion_uncensored": 0.78,
+                        "shape": 1.09,
+                        "scale": 717,
+                    },
+                    4: {
+                        "proportion_uncensored": 0.78,
+                        "shape": 0.9,
+                        "scale": 542,
+                    },
+                    5: {
+                        "proportion_uncensored": 0.79,
+                        "shape": 0.97,
+                        "scale": 643,
+                    },
+                    6: {
+                        "proportion_uncensored": 0.87,
+                        "shape": 0.9,
+                        "scale": 632,
+                    },
                 },
                 "hhd": {
-                    1: 0.9,
-                    2: 0.9,
-                    3: 0.9,
-                    4: 0.9,
-                    5: 0.9,
-                    6: 0.9,
+                    1: {
+                        "proportion_uncensored": 0.68,
+                        "shape": 0.92,
+                        "scale": 794,
+                    },
+                    2: {
+                        "proportion_uncensored": 0.86,
+                        "shape": 0.92,
+                        "scale": 794,
+                    },
+                    3: {
+                        "proportion_uncensored": 0.92,
+                        "shape": 0.92,
+                        "scale": 794,
+                    },
+                    4: {
+                        "proportion_uncensored": 0.94,
+                        "shape": 0.92,
+                        "scale": 794,
+                    },
+                    5: {
+                        "proportion_uncensored": 1.00,
+                        "shape": 0.92,
+                        "scale": 794,
+                    },
+                    6: {
+                        "proportion_uncensored": 1.00,
+                        "shape": 0.92,
+                        "scale": 794,
+                    },
                 },
                 "pd": {
-                    1: 0.9,
-                    2: 0.9,
-                    3: 0.9,
-                    4: 0.9,
-                    5: 0.9,
-                    6: 0.9,
+                    1: {
+                        "proportion_uncensored": 1.00,
+                        "shape": 0.98,
+                        "scale": 675,
+                    },
+                    2: {
+                        "proportion_uncensored": 1.00,
+                        "shape": 0.97,
+                        "scale": 696,
+                    },
+                    3: {
+                        "proportion_uncensored": 1.00,
+                        "shape": 0.92,
+                        "scale": 655,
+                    },
+                    4: {
+                        "proportion_uncensored": 0.99,
+                        "shape": 1,
+                        "scale": 604,
+                    },
+                    5: {
+                        "proportion_uncensored": 1.00,
+                        "shape": 0.96,
+                        "scale": 694,
+                    },
+                    6: {
+                        "proportion_uncensored": 1.00,
+                        "shape": 1.09,
+                        "scale": 619,
+                    },
                 },
             },
         )
-        self.ttd_dialysis_modality_scale = config_dict.get(
-            "ttd_dialysis_modality_scale",
+
+        self.ttd_initial_distribution = config_dict.get(
+            "ttd_distribution",
             {
                 "ichd": {
-                    1: 1500,
-                    2: 1500,
-                    3: 1500,
-                    4: 1250,
-                    5: 1000,
-                    6: 1000,
+                    1: {
+                        "proportion_uncensored": 0.84,
+                        "shape": 1.02,
+                        "scale": 1123,
+                    },
+                    2: {
+                        "proportion_uncensored": 0.85,
+                        "shape": 1.03,
+                        "scale": 1080,
+                    },
+                    3: {
+                        "proportion_uncensored": 0.92,
+                        "shape": 1.01,
+                        "scale": 1127,
+                    },
+                    4: {
+                        "proportion_uncensored": 0.96,
+                        "shape": 1.05,
+                        "scale": 1192,
+                    },
+                    5: {
+                        "proportion_uncensored": 0.99,
+                        "shape": 1.06,
+                        "scale": 1175,
+                    },
+                    6: {
+                        "proportion_uncensored": 1.00,
+                        "shape": 1.05,
+                        "scale": 1218,
+                    },
                 },
                 "hhd": {
-                    1: 1500,
-                    2: 1500,
-                    3: 1500,
-                    4: 1250,
-                    5: 1000,
-                    6: 1000,
+                    1: {
+                        "proportion_uncensored": 0.3,
+                        "shape": 1.09,
+                        "scale": 1456,
+                    },
+                    2: {
+                        "proportion_uncensored": 0.57,
+                        "shape": 1.09,
+                        "scale": 1456,
+                    },
+                    3: {
+                        "proportion_uncensored": 0.83,
+                        "shape": 1.09,
+                        "scale": 1456,
+                    },
+                    4: {
+                        "proportion_uncensored": 0.91,
+                        "shape": 1.09,
+                        "scale": 1456,
+                    },
+                    5: {
+                        "proportion_uncensored": 1.00,
+                        "shape": 1.09,
+                        "scale": 1456,
+                    },
+                    6: {
+                        "proportion_uncensored": 1.00,
+                        "shape": 1.09,
+                        "scale": 1456,
+                    },
                 },
                 "pd": {
-                    1: 1500,
-                    2: 1500,
-                    3: 1500,
-                    4: 1250,
-                    5: 1000,
-                    6: 1000,
+                    1: {
+                        "proportion_uncensored": 1.00,
+                        "shape": 1.03,
+                        "scale": 847,
+                    },
+                    2: {
+                        "proportion_uncensored": 1.00,
+                        "shape": 1.03,
+                        "scale": 847,
+                    },
+                    3: {
+                        "proportion_uncensored": 0.98,
+                        "shape": 1.03,
+                        "scale": 847,
+                    },
+                    4: {
+                        "proportion_uncensored": 0.98,
+                        "shape": 1.07,
+                        "scale": 702,
+                    },
+                    5: {
+                        "proportion_uncensored": 1.00,
+                        "shape": 1.09,
+                        "scale": 800,
+                    },
+                    6: {
+                        "proportion_uncensored": 1.00,
+                        "shape": 1.04,
+                        "scale": 803,
+                    },
                 },
             },
         )
-        self.ttma_dialysis_modality_shape = config_dict.get(
-            "ttma_dialysis_modality_shape",
+
+        self.ttd_tx_initial_distribution = config_dict.get(
+            "ttd_tx_initial_distribution",
             {
-                "ichd": {
-                    1: 0.5,
-                    2: 0.5,
-                    3: 0.5,
-                    4: 0.5,
-                    5: 0.5,
-                    6: 0.5,
+                "live": {
+                    1: {
+                        "proportion_uncensored": 0.08,
+                        "lower_bound": 0,
+                        "upper_bound": self.sim_duration,
+                    },
+                    2: {
+                        "proportion_uncensored": 0.16,
+                        "lower_bound": 0,
+                        "upper_bound": self.sim_duration,
+                    },
+                    3: {
+                        "proportion_uncensored": 0.27,
+                        "lower_bound": 0,
+                        "upper_bound": self.sim_duration,
+                    },
+                    4: {
+                        "proportion_uncensored": 0.43,
+                        "lower_bound": 0,
+                        "upper_bound": self.sim_duration,
+                    },
+                    5: {
+                        "proportion_uncensored": 0.73,
+                        "lower_bound": 0,
+                        "upper_bound": self.sim_duration,
+                    },
+                    6: {
+                        "proportion_uncensored": 0.95,
+                        "lower_bound": 0,
+                        "upper_bound": self.sim_duration,
+                    },
                 },
-                "hhd": {
-                    1: 0.5,
-                    2: 0.5,
-                    3: 0.5,
-                    4: 0.5,
-                    5: 0.5,
-                    6: 0.5,
-                },
-                "pd": {
-                    1: 0.5,
-                    2: 0.5,
-                    3: 0.5,
-                    4: 0.5,
-                    5: 0.5,
-                    6: 0.5,
+                "cadaver": {
+                    1: {
+                        "proportion_uncensored": 0.1,
+                        "lower_bound": 0,
+                        "upper_bound": self.sim_duration,
+                    },
+                    2: {
+                        "proportion_uncensored": 0.22,
+                        "lower_bound": 0,
+                        "upper_bound": self.sim_duration,
+                    },
+                    3: {
+                        "proportion_uncensored": 0.35,
+                        "lower_bound": 0,
+                        "upper_bound": self.sim_duration,
+                    },
+                    4: {
+                        "proportion_uncensored": 0.59,
+                        "lower_bound": 0,
+                        "upper_bound": self.sim_duration,
+                    },
+                    5: {
+                        "proportion_uncensored": 0.84,
+                        "lower_bound": 0,
+                        "upper_bound": self.sim_duration,
+                    },
+                    6: {
+                        "proportion_uncensored": 0.96,
+                        "lower_bound": 0,
+                        "upper_bound": self.sim_duration,
+                    },
                 },
             },
         )
-        self.ttma_dialysis_modality_scale = config_dict.get(
-            "ttma_dialysis_modality_scale",
+
+        self.ttgf_tx_initial_distribution = config_dict.get(
+            "ttgf_tx_initial_distribution",
+            {
+                "live": {
+                    1: {
+                        "proportion_uncensored": 0.54,
+                        "shape": 1.18,
+                        "scale": 1960,
+                    },
+                    2: {
+                        "proportion_uncensored": 0.45,
+                        "shape": 1.15,
+                        "scale": 1930,
+                    },
+                    3: {
+                        "proportion_uncensored": 0.4,
+                        "shape": 1.21,
+                        "scale": 2088,
+                    },
+                    4: {
+                        "proportion_uncensored": 0.43,
+                        "shape": 1.12,
+                        "scale": 1802,
+                    },
+                    5: {
+                        "proportion_uncensored": 0.58,
+                        "shape": 1.2,
+                        "scale": 1920,
+                    },
+                    6: {
+                        "proportion_uncensored": 0.8,
+                        "shape": 1.2,
+                        "scale": 1920,
+                    },
+                },
+                "cadaver": {
+                    1: {
+                        "proportion_uncensored": 0.54,
+                        "shape": 1.17,
+                        "scale": 1892,
+                    },
+                    2: {
+                        "proportion_uncensored": 0.5,
+                        "shape": 1.11,
+                        "scale": 1864,
+                    },
+                    3: {
+                        "proportion_uncensored": 0.48,
+                        "shape": 1.24,
+                        "scale": 1934,
+                    },
+                    4: {
+                        "proportion_uncensored": 0.53,
+                        "shape": 1.22,
+                        "scale": 1868,
+                    },
+                    5: {
+                        "proportion_uncensored": 0.69,
+                        "shape": 1.23,
+                        "scale": 1881,
+                    },
+                    6: {
+                        "proportion_uncensored": 0.83,
+                        "shape": 1.27,
+                        "scale": 2021,
+                    },
+                },
+            },
+        )
+
+        ## within run input distributions ##
+        self.time_on_waiting_list_mean = config_dict.get(
+            "time_on_waiting_list_mean",
+            {
+                "live": 4.5 * 30,  # 3-6 months on average
+                "cadaver": 365 * 2.5 * 30,  # 2-3 years on average
+            },
+        )
+
+        self.ttd_con_care = config_dict.get(
+            "ttd_con_care",
+            {
+                "shape": 0.5,
+                "scale": 100,
+            },
+        )
+
+        self.tw_before_dialysis = config_dict.get(
+            "tw_before_dialysis",
+            {
+                "shape": 1,
+                "scale": 450,
+            },
+        )
+
+        self.ttd_distribution = config_dict.get(
+            "ttd_distribution",
             {
                 "ichd": {
-                    1: 1500,
-                    2: 1000,
-                    3: 750,
-                    4: 500,
-                    5: 500,
-                    6: 250,
+                    1: {
+                        "shape": 0.76,
+                        "scale": 1 / 0.001,
+                    },
+                    2: {
+                        "shape": 0.66,
+                        "scale": 1 / 0.0005,
+                    },
+                    3: {
+                        "shape": 0.68,
+                        "scale": 1 / 0.0005,
+                    },
+                    4: {
+                        "shape": 0.67,
+                        "scale": 1 / 0.0005,
+                    },
+                    5: {
+                        "shape": 0.76,
+                        "scale": 1 / 0.001,
+                    },
+                    6: {
+                        "shape": 0.67,
+                        "scale": 1 / 0.0004,
+                    },
                 },
                 "hhd": {
-                    1: 1500,
-                    2: 1000,
-                    3: 750,
-                    4: 500,
-                    5: 500,
-                    6: 250,
+                    1: {
+                        "shape": 0.58,
+                        "scale": 1 / 0.000001,
+                    },
+                    2: {
+                        "shape": 0.58,
+                        "scale": 1 / 0.000001,
+                    },
+                    3: {
+                        "shape": 0.58,
+                        "scale": 1 / 0.000001,
+                    },
+                    4: {
+                        "shape": 0.58,
+                        "scale": 1 / 0.000001,
+                    },
+                    5: {
+                        "shape": 0.58,
+                        "scale": 1 / 0.000001,
+                    },
+                    6: {
+                        "shape": 0.58,
+                        "scale": 1 / 0.000001,
+                    },
                 },
                 "pd": {
-                    1: 1500,
-                    2: 1000,
-                    3: 750,
-                    4: 500,
-                    5: 500,
-                    6: 250,
+                    1: {
+                        "shape": 0.9,
+                        "scale": 1 / 0.0008,
+                    },
+                    2: {
+                        "shape": 0.85,
+                        "scale": 1 / 0.0008,
+                    },
+                    3: {
+                        "shape": 0.87,
+                        "scale": 1 / 0.0008,
+                    },
+                    4: {
+                        "shape": 0.9,
+                        "scale": 1 / 0.0009,
+                    },
+                    5: {
+                        "shape": 0.92,
+                        "scale": 1 / 0.0009,
+                    },
+                    6: {
+                        "shape": 0.89,
+                        "scale": 1 / 0.0008,
+                    },
+                },
+            },
+        )
+
+        self.ttma_distribution = config_dict.get(
+            "ttma_distribution",
+            {
+                "ichd": {
+                    1: {
+                        "shape": 0.47,
+                        "scale": 1 / 0.0009,
+                    },
+                    2: {
+                        "shape": 0.51,
+                        "scale": 1 / 0.001,
+                    },
+                    3: {
+                        "shape": 0.51,
+                        "scale": 1 / 0.0009,
+                    },
+                    4: {
+                        "shape": 0.55,
+                        "scale": 1 / 0.0009,
+                    },
+                    5: {
+                        "shape": 0.6,
+                        "scale": 1 / 0.0009,
+                    },
+                    6: {
+                        "shape": 0.6,
+                        "scale": 1 / 0.0009,
+                    },
+                },
+                "hhd": {
+                    1: {
+                        "shape": 0.56,
+                        "scale": 1 / 0.001,
+                    },
+                    2: {
+                        "shape": 0.51,
+                        "scale": 1 / 0.001,
+                    },
+                    3: {
+                        "shape": 0.6,
+                        "scale": 1 / 0.001,
+                    },
+                    4: {
+                        "shape": 0.57,
+                        "scale": 1 / 0.0008,
+                    },
+                    5: {
+                        "shape": 0.58,
+                        "scale": 1 / 0.001,
+                    },
+                    6: {
+                        "shape": 0.54,
+                        "scale": 1 / 0.001,
+                    },
+                },
+                "pd": {
+                    1: {
+                        "shape": 0.86,
+                        "scale": 1 / 0.002,
+                    },
+                    2: {
+                        "shape": 0.82,
+                        "scale": 1 / 0.002,
+                    },
+                    3: {
+                        "shape": 0.81,
+                        "scale": 1 / 0.002,
+                    },
+                    4: {
+                        "shape": 0.89,
+                        "scale": 1 / 0.002,
+                    },
+                    5: {
+                        "shape": 0.87,
+                        "scale": 1 / 0.002,
+                    },
+                    6: {
+                        "shape": 0.88,
+                        "scale": 1 / 0.002,
+                    },
+                },
+            },
+        )
+
+        self.ttd_tx_distribution = config_dict.get(
+            "ttd_tx_distribution",
+            {
+                "live": {
+                    1: {
+                        "shape": 0.99,
+                        "scale": 25138,
+                    },
+                    2: {
+                        "shape": 0.99,
+                        "scale": 25138,
+                    },
+                    3: {
+                        "shape": 0.99,
+                        "scale": 25138,
+                    },
+                    4: {
+                        "shape": 1.21,
+                        "scale": 7077,
+                    },
+                    5: {
+                        "shape": 1.41,
+                        "scale": 4462,
+                    },
+                    6: {
+                        "shape": 1.41,
+                        "scale": 4462,
+                    },
+                },
+                "cadaver": {
+                    1: {
+                        "shape": 0.98,
+                        "scale": 14777,
+                    },
+                    2: {
+                        "shape": 0.98,
+                        "scale": 14777,
+                    },
+                    3: {
+                        "shape": 1.04,
+                        "scale": 6837,
+                    },
+                    4: {
+                        "shape": 1,
+                        "scale": 4830,
+                    },
+                    5: {
+                        "shape": 1.01,
+                        "scale": 3938,
+                    },
+                    6: {
+                        "shape": 0.95,
+                        "scale": 3521,
+                    },
+                },
+            },
+        )
+
+        self.ttgf_tx_distribution = config_dict.get(
+            "ttgf_tx_distribution",
+            {
+                "live": {
+                    1: {
+                        "break_point": 365 / 12,
+                        "mode": 7,
+                        "proportion_below_break": 0.2,
+                        "shape": 0.5,
+                        "scale": 4977,
+                    },
+                    2: {
+                        "break_point": 365 / 12,
+                        "mode": 7,
+                        "proportion_below_break": 0.2,
+                        "shape": 0.5,
+                        "scale": 4977,
+                    },
+                    3: {
+                        "break_point": 365 / 12,
+                        "mode": 7,
+                        "proportion_below_break": 0.2,
+                        "shape": 0.5,
+                        "scale": 4977,
+                    },
+                    4: {
+                        "break_point": 365 / 12,
+                        "mode": 7,
+                        "proportion_below_break": 0.2,
+                        "shape": 0.5,
+                        "scale": 4977,
+                    },
+                    5: {
+                        "break_point": 365 / 12,
+                        "mode": 7,
+                        "proportion_below_break": 0.2,
+                        "shape": 0.5,
+                        "scale": 4977,
+                    },
+                    6: {
+                        "break_point": 365 / 12,
+                        "mode": 7,
+                        "proportion_below_break": 0.2,
+                        "shape": 0.5,
+                        "scale": 4977,
+                    },
+                },
+                "cadaver": {
+                    1: {
+                        "break_point": 365 / 12,
+                        "mode": 1,
+                        "proportion_below_break": 0.24,
+                        "shape": 0.54,
+                        "scale": 2547,
+                    },
+                    2: {
+                        "break_point": 365 / 12,
+                        "mode": 1,
+                        "proportion_below_break": 0.24,
+                        "shape": 0.54,
+                        "scale": 2547,
+                    },
+                    3: {
+                        "break_point": 365 / 12,
+                        "mode": 1,
+                        "proportion_below_break": 0.24,
+                        "shape": 0.54,
+                        "scale": 2547,
+                    },
+                    4: {
+                        "break_point": 365 / 12,
+                        "mode": 1,
+                        "proportion_below_break": 0.24,
+                        "shape": 0.54,
+                        "scale": 2547,
+                    },
+                    5: {
+                        "break_point": 365 / 12,
+                        "mode": 1,
+                        "proportion_below_break": 0.24,
+                        "shape": 0.54,
+                        "scale": 2547,
+                    },
+                    6: {
+                        "break_point": 365 / 12,
+                        "mode": 1,
+                        "proportion_below_break": 0.24,
+                        "shape": 0.54,
+                        "scale": 2547,
+                    },
                 },
             },
         )

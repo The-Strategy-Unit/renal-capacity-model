@@ -67,6 +67,7 @@ class Model:
         results_df = pd.DataFrame(
             columns=pd.Index(
                 [
+                    "patient_flag",
                     "age_group",
                     "referral_type",
                     "entry_time",
@@ -89,6 +90,196 @@ class Model:
 
         return results_df
 
+
+    def generator_prevalent_patient_arrivals(self, patient_type, location):
+        """Generator function for prevalent patients at time zero
+
+        Args:
+            patient_type (str): Type of patient. Used to retrieve correct inter-arrival time.
+
+        Yields:
+            simpy.Environment.process: starts process based on location of the patient at time t=0.
+        """
+        self.patient_counter += 1
+
+        p = Patient(self.patient_counter, patient_type, 0, patient_flag="prevalent")
+
+        self.patients_in_system[patient_type] += 1
+
+        self.results_df.loc[p.id, "patient_flag"] = p.patient_flag
+        self.results_df.loc[p.id, "entry_time"] = 0
+        self.results_df.loc[p.id, "age_group"] = int(p.age_group)
+        self.results_df.loc[p.id, "referral_type"] = p.referral_type
+        self.results_df.loc[p.id, "transplant_count"] = 0
+        self.results_df.loc[p.id, "live_transplant_count"] = 0
+        self.results_df.loc[p.id, "cadaver_transplant_count"] = 0
+        self.results_df.loc[p.id, "ichd_dialysis_count"] = 0
+        self.results_df.loc[p.id, "hhd_dialysis_count"] = 0
+        self.results_df.loc[p.id, "pd_dialysis_count"] = 0
+
+        if location == "conservative_care":
+            # these patients are diverted to conservative care. We don't need a process here as all these patients do is wait a while before leaving the system
+            self.results_df.loc[p.id, "diverted_to_con_care_count"] = True
+            if self.config.trace:
+                print(
+                    f"Patient {p.id} of age group {p.age_group} is in conservative care at time {self.env.now}."
+                )
+            sampled_con_care_time = self.config.ttd_con_care[
+                "scale"
+            ] * self.rng.weibull(a=self.config.ttd_con_care["shape"], size=1)
+            yield self.env.timeout(sampled_con_care_time)
+            self.results_df.loc[p.id, "time_of_death"] = self.env.now
+            self.patients_in_system[patient_type] -= 1
+            self.results_df.loc[p.id, "diverted_to_con_care_count"] = (
+                False  # as they've left conservative care
+            )
+            self.results_df.loc[p.id, "treatment_modality_at_death"] = (
+                "conservative_care"
+            )
+            if self.config.trace:
+                print(
+                    f"Prevalent Patient {p.id} of age group {p.age_group} diverted to conservative care and left the system after {sampled_con_care_time} time units."
+                )
+                # print(self.patients_in_system)
+        elif location == "ichd":
+            p.dialysis_modality = "ichd"
+            self.results_df.loc[p.id, "ichd_dialysis_count"] += 1
+            if (
+                self.rng.uniform(0, 1)
+                > self.config.suitable_for_transplant_dist[p.age_group]
+            ):
+                p.transplant_suitable = False
+                if self.config.trace:
+                    print(
+                        f"Patient {p.id} of age group {p.age_group} is in ICHD dialysis at time {self.env.now}."
+                    )
+            else:
+                p.transplant_suitable = True
+                p.time_enters_waiting_list = self.env.now
+                if self.config.trace:
+                    print(
+                        f"Patient {p.id} of age group {p.age_group} is in ICHD dialysis whilst waiting for transplant at time {self.env.now}."
+                    )
+                if (
+                    self.rng.uniform(0, 1)
+                    < self.config.transplant_type_dist[p.age_group]
+                ):
+                    p.transplant_type = "live"
+                    p.time_on_waiting_list = self.rng.exponential(
+                        scale=self.config.time_on_waiting_list_mean["live"]
+                    )  # due to memoryless property of exponential dist
+                else:
+                    p.transplant_type = "cadaver"
+                    p.time_on_waiting_list = self.rng.exponential(
+                        scale=self.config.time_on_waiting_list_mean["cadaver"]
+                    )  # due to memoryless property of exponential dist
+            self.results_df.loc[p.id, "suitable_for_transplant"] = p.transplant_suitable
+            self.results_df.loc[p.id, "pre_emptive_transplant"] = False
+            self.results_df.loc[p.id, "time_enters_waiting_list"] = (
+                p.time_enters_waiting_list
+            )
+            yield self.env.process(self.start_dialysis_modality(p))
+        elif location == "hhd":
+            p.dialysis_modality = "hhd"
+            self.results_df.loc[p.id, "hhd_dialysis_count"] += 1
+            if (
+                self.rng.uniform(0, 1)
+                > self.config.suitable_for_transplant_dist[p.age_group]
+            ):
+                p.transplant_suitable = False
+                if self.config.trace:
+                    print(
+                        f"Patient {p.id} of age group {p.age_group} is in HHD dialysis at time {self.env.now}."
+                    )
+            else:
+                p.transplant_suitable = True
+                p.time_enters_waiting_list = self.env.now
+                if self.config.trace:
+                    print(
+                        f"Patient {p.id} of age group {p.age_group} is in HHD dialysis whilst waiting for transplant at time {self.env.now}."
+                    )
+                if (
+                    self.rng.uniform(0, 1)
+                    < self.config.transplant_type_dist[p.age_group]
+                ):
+                    p.transplant_type = "live"
+                    p.time_on_waiting_list = self.rng.exponential(
+                        scale=self.config.time_on_waiting_list_mean["live"]
+                    )  # due to memoryless property of exponential dist
+                else:
+                    p.transplant_type = "cadaver"
+                    p.time_on_waiting_list = self.rng.exponential(
+                        scale=self.config.time_on_waiting_list_mean["cadaver"]
+                    )  # due to memoryless property of exponential dist
+            self.results_df.loc[p.id, "suitable_for_transplant"] = p.transplant_suitable
+            self.results_df.loc[p.id, "pre_emptive_transplant"] = False
+            self.results_df.loc[p.id, "time_enters_waiting_list"] = (
+                p.time_enters_waiting_list
+            )
+            yield self.env.process(self.start_dialysis_modality(p))
+        elif location == "pd":
+            p.dialysis_modality = "pd"
+            self.results_df.loc[p.id, "pd_dialysis_count"] += 1
+            if (
+                self.rng.uniform(0, 1)
+                > self.config.suitable_for_transplant_dist[p.age_group]
+            ):
+                p.transplant_suitable = False
+                if self.config.trace:
+                    print(
+                        f"Patient {p.id} of age group {p.age_group} is in PD dialysis at time {self.env.now}."
+                    )
+            else:
+                p.transplant_suitable = True
+                p.time_enters_waiting_list = self.env.now
+                if self.config.trace:
+                    print(
+                        f"Patient {p.id} of age group {p.age_group} is in PD dialysis whilst waiting for transplant at time {self.env.now}."
+                    )
+                if (
+                    self.rng.uniform(0, 1)
+                    < self.config.transplant_type_dist[p.age_group]
+                ):
+                    p.transplant_type = "live"
+                    p.time_on_waiting_list = self.rng.exponential(
+                        scale=self.config.time_on_waiting_list_mean["live"]
+                    )  # due to memoryless property of exponential dist
+                else:
+                    p.transplant_type = "cadaver"
+                    p.time_on_waiting_list = self.rng.exponential(
+                        scale=self.config.time_on_waiting_list_mean["cadaver"]
+                    )  # due to memoryless property of exponential dist
+            self.results_df.loc[p.id, "suitable_for_transplant"] = p.transplant_suitable
+            self.results_df.loc[p.id, "pre_emptive_transplant"] = False
+            self.results_df.loc[p.id, "time_enters_waiting_list"] = (
+                p.time_enters_waiting_list
+            )
+            yield self.env.process(self.start_dialysis_modality(p))
+        elif location == "live_transplant":
+            p.transplant_suitable = True
+            p.pre_emptive_transplant = "NA"
+            p.time_of_transplant = self.env.now
+            p.transplant_type = "live"
+            self.results_df.loc[p.id, "live_transplant_count"] += 1
+            self.results_df.loc[p.id, "transplant_count"] += 1
+            if self.config.trace:
+                print(
+                    f"Patient {p.id} of age group {p.age_group} is living with live donor transplant at time {self.env.now}."
+                )
+            yield self.env.process(self.start_transplant(p))
+        elif location == "cadaver_transplant":
+            p.transplant_suitable = True
+            p.pre_emptive_transplant = "NA"  # unknown for prevalent patients
+            p.time_of_transplant = self.env.now
+            p.transplant_type = "cadaver"
+            self.results_df.loc[p.id, "cadaver_transplant_count"] += 1
+            self.results_df.loc[p.id, "transplant_count"] += 1
+            if self.config.trace:
+                print(
+                    f"Patient {p.id} of age group {p.age_group} is living with live donor transplant at time {self.env.now}."
+                )
+            yield self.env.process(self.start_transplant(p))
+
     def _update_event_log(
         self,
         patient: Patient,
@@ -105,6 +296,7 @@ class Model:
             time_spent_in_activity_from,
         ]
 
+
     def generator_patient_arrivals(self, patient_type):
         """Generator function for arriving patients
 
@@ -115,15 +307,21 @@ class Model:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the sampled inter-arrival time
         """
         while True:
-            self.patient_counter += 1
+            
             start_time_in_system_patient = self.rng.exponential(
                 1 / self.inter_arrival_times[patient_type]
             )
             yield self.env.timeout(start_time_in_system_patient)
             p = Patient(
-                self.patient_counter, patient_type, start_time_in_system_patient
+                self.patient_counter, patient_type, start_time_in_system_patient, patient_flag="incident"
             )
+            if self.config.trace:
+                print(
+                    f"Patient {p.id} of age group {p.age_group} entered the system at {self.env.now} time units."
+                )
+            self.patient_counter += 1
             self.patients_in_system[patient_type] += 1
+            self.results_df.loc[p.id, "patient_flag"] = p.patient_flag
             self.results_df.loc[p.id, "entry_time"] = start_time_in_system_patient
             self.results_df.loc[p.id, "age_group"] = int(p.age_group)
             self.results_df.loc[p.id, "referral_type"] = p.referral_type
@@ -140,10 +338,11 @@ class Model:
             else:
                 # these patients are diverted to conservative care. We don't need a process here as all these patients do is wait a while before leaving the system
                 self.results_df.loc[p.id, "diverted_to_con_care_count"] = True
-                sampled_con_care_time = (
-                    self.config.ttd_con_care_scale
-                    * self.rng.weibull(a=self.config.ttd_con_care_shape, size=1)
-                )
+
+                sampled_con_care_time = self.config.ttd_con_care[
+                    "scale"
+                ] * self.rng.weibull(a=self.config.ttd_con_care["shape"], size=1)
+
                 self._update_event_log(
                     p,
                     "conservative_care",
@@ -151,6 +350,7 @@ class Model:
                     start_time_in_system_patient,
                     sampled_con_care_time,
                 )
+
                 yield self.env.timeout(sampled_con_care_time)
                 self.results_df.loc[p.id, "time_of_death"] = self.env.now
                 self.patients_in_system[patient_type] -= 1
@@ -164,13 +364,7 @@ class Model:
                     print(
                         f"Patient {p.id} of age group {p.age_group} diverted to conservative care and left the system after {sampled_con_care_time} time units."
                     )
-                    print(self.patients_in_system)
-
-            sampled_inter_arrival_time = self.rng.exponential(
-                1 / self.inter_arrival_times[patient_type]
-            )
-
-            yield self.env.timeout(sampled_inter_arrival_time)
+                    # print(self.patients_in_system)
 
     def start_krt(self, patient):
         """Function containing the logic for the Kidney Replacement Therapy pathway
@@ -187,19 +381,19 @@ class Model:
             > self.config.suitable_for_transplant_dist[patient.age_group]
         ):
             # Patient is not suitable for transplant and so starts dialysis only pathway
-            patient.suitable_for_transplant = False
+            patient.transplant_suitable = False
             self.results_df.loc[patient.id, "suitable_for_transplant"] = (
-                patient.suitable_for_transplant
+                patient.transplant_suitable
             )
-
-            yield self.env.process(self.start_dialysis_modality_allocation(patient))
             if self.config.trace:
                 print(
-                    f"Patient {patient.id} of age group {patient.age_group} started dialysis only pathway."
+                    f"Patient {patient.id} of age group {patient.age_group} started dialysis only pathway at time {self.env.now}."
                 )
+            yield self.env.process(self.start_dialysis_modality_allocation(patient))
+
         else:
             # Patient is suitable for transplant and so we need to decide if they start pre-emptive transplant or dialysis whilst waiting for transplant
-            patient.suitable_for_transplant = True
+            patient.transplant_suitable = True
             # We first assign a transplant type: live or cadaver as this impacts the probability of starting pre-emptive transplant
             if (
                 self.rng.uniform(0, 1)
@@ -210,7 +404,7 @@ class Model:
                 patient.transplant_type = "cadaver"
 
             self.results_df.loc[patient.id, "suitable_for_transplant"] = (
-                patient.suitable_for_transplant
+                patient.transplant_suitable
             )
 
             if patient.transplant_type == "live":
@@ -223,18 +417,18 @@ class Model:
                     # Patient starts pre-emptive transplant
                     self.results_df.loc[patient.id, "pre_emptive_transplant"] = True
 
-                    yield self.env.process(self.start_transplant(patient))
                     if self.config.trace:
                         print(
-                            f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with live donor."
+                            f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with live donor at time {self.env.now}."
                         )
+                    yield self.env.process(self.start_transplant(patient))
                 else:
                     # Patient starts dialysis whilst waiting for transplant
                     self.results_df.loc[patient.id, "pre_emptive_transplant"] = False
                     patient.time_enters_waiting_list = self.env.now
                     if self.config.trace:
                         print(
-                            f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with live donor."
+                            f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with live donor at time {self.env.now}."
                         )
                     yield self.env.process(
                         self.start_dialysis_whilst_waiting_for_transplant(patient)
@@ -248,23 +442,22 @@ class Model:
                 ):
                     # Patient starts pre-emptive transplant
                     self.results_df.loc[patient.id, "pre_emptive_transplant"] = True
-
-                    yield self.env.process(self.start_transplant(patient))
                     if self.config.trace:
                         print(
-                            f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with cadaver donor."
+                            f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with cadaver donor at time {self.env.now}."
                         )
+                    yield self.env.process(self.start_transplant(patient))
+
                 else:
                     # Patient starts dialysis whilst waiting for transplant
                     self.results_df.loc[patient.id, "pre_emptive_transplant"] = False
-
+                    if self.config.trace:
+                        print(
+                            f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with cadaver donor at time {self.env.now}."
+                        )
                     yield self.env.process(
                         self.start_dialysis_whilst_waiting_for_transplant(patient)
                     )
-                    if self.config.trace:
-                        print(
-                            f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with cadaver donor."
-                        )
 
     def start_dialysis_modality_allocation(self, patient):
         """Function containing the logic for the dialysis pathway
@@ -353,11 +546,37 @@ class Model:
             # how long the graft lasts depends on where they go next: death or back to start_krt
             if self.rng.uniform(0, 1) < self.config.death_post_transplant["live"]:
                 # patient dies after transplant
-                sampled_wait_time = self.config.live_tx_ttd_scale[
-                    patient.age_group
-                ] * self.rng.weibull(
-                    a=self.config.live_tx_ttd_shape[patient.age_group], size=1
-                )
+
+                ## sampled_wait_time depends on whether patitent is inicident or not
+                if patient.patient_flag == "incident":
+                    sampled_wait_time = self.config.ttd_tx_distribution["live"][
+                        patient.age_group
+                    ]["scale"] * self.rng.weibull(
+                        a=self.config.ttd_tx_distribution["live"][patient.age_group][
+                            "shape"
+                        ],
+                        size=1,
+                    )
+                else:  # prevalent patient
+                    if (
+                        self.rng.uniform(0, 1)
+                        < 1
+                        - self.config.ttd_tx_initial_distribution["live"][
+                            patient.age_group
+                        ]["proportion_uncensored"]
+                    ):
+                        sampled_wait_time = self.config.sim_duration + 1
+                    else:
+                        sampled_wait_time = self.rng.uniform(
+                            self.config.ttd_tx_initial_distribution["live"][
+                                patient.age_group
+                            ]["lower_bound"],
+                            self.config.ttd_tx_initial_distribution["live"][
+                                patient.age_group
+                            ]["upper_bound"],
+                        )
+
+
                 self._update_event_log(
                     patient,
                     patient.transplant_type,
@@ -365,6 +584,7 @@ class Model:
                     self.env.now,
                     sampled_wait_time,
                 )
+
                 yield self.env.timeout(sampled_wait_time)
                 patient.time_living_with_live_transplant = sampled_wait_time
                 self.results_df.loc[patient.id, "live_transplant_count"] -= 1
@@ -380,11 +600,57 @@ class Model:
                 # patient leaves the system
             else:
                 # patient goes back to start_krt after graft fails
-                sampled_wait_time = self.config.live_tx_ttgf_scale[
-                    patient.age_group
-                ] * self.rng.weibull(
-                    a=self.config.live_tx_ttgf_shape[patient.age_group], size=1
-                )
+
+                ## sampled_wait_time depends on whether patitent is inicident or not
+                if patient.patient_flag == "incident":
+                    ## this is a mixture distribution as a patient has a high chance of early graft failure and then a longer tailed component (bathtub shape survial curve)
+                    if (
+                        self.rng.uniform(0, 1)
+                        < self.config.ttgf_tx_distribution["live"][patient.age_group][
+                            "proportion_below_break"
+                        ]
+                    ):
+                        sampled_wait_time = self.rng.triangular(
+                            left=0,
+                            mode=self.config.ttgf_tx_distribution["live"][
+                                patient.age_group
+                            ]["mode"],
+                            right=self.config.ttgf_tx_distribution["live"][
+                                patient.age_group
+                            ]["break_point"],
+                        )
+                    else:
+                        sampled_wait_time = self.config.ttgf_tx_distribution["live"][
+                            patient.age_group
+                        ]["break_point"] + self.config.ttgf_tx_distribution["live"][
+                            patient.age_group
+                        ][
+                            "scale"
+                        ] * self.rng.weibull(
+                            a=self.config.ttgf_tx_distribution["cadaver"][
+                                patient.age_group
+                            ]["shape"],
+                            size=1,
+                        )
+                else:  # prevalent patient
+                    if (
+                        self.rng.uniform(0, 1)
+                        < 1
+                        - self.config.ttgf_tx_initial_distribution["live"][
+                            patient.age_group
+                        ]["proportion_uncensored"]
+                    ):
+                        sampled_wait_time = self.config.sim_duration + 1
+                    else:
+                        sampled_wait_time = self.config.ttgf_tx_initial_distribution[
+                            "live"
+                        ][patient.age_group]["scale"] * self.rng.weibull(
+                            a=self.config.ttgf_tx_initial_distribution["live"][
+                                patient.age_group
+                            ]["shape"],
+                            size=1,
+                        )
+
                 self._update_event_log(
                     patient,
                     patient.transplant_type,
@@ -405,11 +671,36 @@ class Model:
             # how long the graft lasts depends on where they go next: death or back to start_krt
             if self.rng.uniform(0, 1) < self.config.death_post_transplant["cadaver"]:
                 # patient dies after transplant
-                sampled_wait_time = self.config.cadaver_tx_ttd_scale[
-                    patient.age_group
-                ] * self.rng.weibull(
-                    a=self.config.cadaver_tx_ttd_shape[patient.age_group], size=1
-                )
+
+                ## sampled_wait_time depends on whether patitent is inicident or not
+                if patient.patient_flag == "incident":
+                    sampled_wait_time = self.config.ttd_tx_distribution["cadaver"][
+                        patient.age_group
+                    ]["scale"] * self.rng.weibull(
+                        a=self.config.ttd_tx_distribution["cadaver"][patient.age_group][
+                            "shape"
+                        ],
+                        size=1,
+                    )
+                else:  # prevalent patient
+                    if (
+                        self.rng.uniform(0, 1)
+                        < 1
+                        - self.config.ttd_tx_initial_distribution["cadaver"][
+                            patient.age_group
+                        ]["proportion_uncensored"]
+                    ):
+                        sampled_wait_time = self.config.sim_duration + 1
+                    else:
+                        sampled_wait_time = self.rng.uniform(
+                            self.config.ttd_tx_initial_distribution["cadaver"][
+                                patient.age_group
+                            ]["lower_bound"],
+                            self.config.ttd_tx_initial_distribution["cadaver"][
+                                patient.age_group
+                            ]["upper_bound"],
+                        )
+
                 self._update_event_log(
                     patient,
                     patient.transplant_type,
@@ -417,6 +708,7 @@ class Model:
                     self.env.now,
                     sampled_wait_time,
                 )
+
                 yield self.env.timeout(sampled_wait_time)
                 patient.time_living_with_cadaver_transplant = sampled_wait_time
                 self.results_df.loc[patient.id, "cadaver_transplant_count"] -= 1
@@ -432,11 +724,57 @@ class Model:
                 # patient leaves the system
             else:
                 # patient goes back to start_krt after graft fails
-                sampled_wait_time = self.config.cadaver_tx_ttgf_scale[
-                    patient.age_group
-                ] * self.rng.weibull(
-                    a=self.config.cadaver_tx_ttgf_shape[patient.age_group], size=1
-                )
+
+                ## sampled_wait_time depends on whether patitent is inicident or not
+                if patient.patient_flag == "incident":
+                    ## this is a mixture distribution as a patient has initiall a high chance of early graft failure and then a longer tailed component (bathtub shape survial curve)
+                    if (
+                        self.rng.uniform(0, 1)
+                        < self.config.ttgf_tx_distribution["cadaver"][
+                            patient.age_group
+                        ]["proportion_below_break"]
+                    ):
+                        sampled_wait_time = self.rng.triangular(
+                            left=0,
+                            mode=self.config.ttgf_tx_distribution["cadaver"][
+                                patient.age_group
+                            ]["mode"],
+                            right=self.config.ttgf_tx_distribution["cadaver"][
+                                patient.age_group
+                            ]["break_point"],
+                        )
+                    else:
+                        sampled_wait_time = self.config.ttgf_tx_distribution["cadaver"][
+                            patient.age_group
+                        ]["break_point"] + self.config.ttgf_tx_distribution["cadaver"][
+                            patient.age_group
+                        ][
+                            "scale"
+                        ] * self.rng.weibull(
+                            a=self.config.ttgf_tx_distribution["cadaver"][
+                                patient.age_group
+                            ]["shape"],
+                            size=1,
+                        )
+                else:  # prevalent patient
+                    if (
+                        self.rng.uniform(0, 1)
+                        < 1
+                        - self.config.ttgf_tx_initial_distribution["cadaver"][
+                            patient.age_group
+                        ]["proportion_uncensored"]
+                    ):
+                        sampled_wait_time = self.config.sim_duration + 1
+                    else:
+                        sampled_wait_time = self.config.ttgf_tx_initial_distribution[
+                            "cadaver"
+                        ][patient.age_group]["scale"] * self.rng.weibull(
+                            a=self.config.ttgf_tx_initial_distribution["cadaver"][
+                                patient.age_group
+                            ]["shape"],
+                            size=1,
+                        )
+                        
                 self._update_event_log(
                     patient,
                     patient.transplant_type,
@@ -444,6 +782,7 @@ class Model:
                     self.env.now,
                     sampled_wait_time,
                 )
+
                 yield self.env.timeout(sampled_wait_time)
                 patient.time_living_with_cadaver_transplant = sampled_wait_time
                 self.results_df.loc[patient.id, "cadaver_transplant_count"] -= 1
@@ -464,9 +803,8 @@ class Model:
         """
 
         # If they're coming down this pathway then they're listed i.e. pre-emptive = FALSE
-        # We know if they're having a live Tx they wait on average 3 months on the list before Tx
-        # We know if they're having a cadaver Tx they wait on average 2 years on the list before Tx
-        # Let's generate a time on the waiting list based on an exponential distribution with these means
+
+        # Let's generate a time on the waiting list
         # We'll use this within the starts_dialysis function to work out how long they stay in dialysis before Tx
         if patient.transplant_type == "live":
             patient.time_on_waiting_list = self.rng.exponential(
@@ -477,13 +815,13 @@ class Model:
                 scale=self.config.time_on_waiting_list_mean["cadaver"]
             )
 
-        ## if this isn't their first Tx then we need to simulate the time they wait before starting dialysis
+        ## if this isn't their first Tx then we also need to simulate the time they wait before starting dialysis
         if self.results_df.loc[patient.id, "transplant_count"] > 0:
             # we need to check this isn't longer than their time on the waiting list
             # if it is longer than their time on the waiting list they start transplant pre-emptively
-            sampled_wait_time = self.config.tw_before_dialysis_scale * self.rng.weibull(
-                a=self.config.tw_before_dialysis_shape, size=1
-            )
+            sampled_wait_time = self.config.tw_before_dialysis[
+                "scale"
+            ] * self.rng.weibull(a=self.config.tw_before_dialysis["shape"], size=1)
             if sampled_wait_time > patient.time_on_waiting_list:
                 # they go to transplant pre-emptively without starting dialysis
                 self._update_event_log(
@@ -549,15 +887,38 @@ class Model:
             ]
         ):
             # death or transplant
-            sampled_time = self.config.ttd_dialysis_modality_scale[
-                patient.dialysis_modality
-            ][patient.age_group] * self.rng.weibull(
-                self.config.ttd_dialysis_modality_shape[patient.dialysis_modality][
-                    patient.age_group
-                ]
-            )
+            ## sampled_time depends on whether patitent is inicident or not
+            if patient.patient_flag == "incident":
+                sampled_time = self.rng.gamma(
+                    self.config.ttd_distribution[patient.dialysis_modality][
+                        patient.age_group
+                    ]["shape"],
+                    self.config.ttd_distribution[patient.dialysis_modality][
+                        patient.age_group
+                    ]["scale"],
+                    size=1,
+                )
+            else:  ## prevalent patient
+                if (
+                    self.rng.uniform(0, 1)
+                    < 1
+                    - self.config.ttd_initial_distribution[patient.dialysis_modality][
+                        patient.age_group
+                    ]["proportion_uncensored"]
+                ):
+                    sampled_time = (
+                        self.config.sim_duration + 1
+                    )  # this is a censored observation
+                else:
+                    sampled_time = self.config.ttd_initial_distribution[
+                        patient.dialysis_modality
+                    ][patient.age_group]["scale"] * self.rng.weibull(
+                        self.config.ttd_initial_distribution[patient.dialysis_modality][
+                            patient.age_group
+                        ]["shape"]
+                    )
             if (
-                patient.suitable_for_transplant
+                patient.transplant_suitable
                 and sampled_time >= patient.time_on_waiting_list
             ):
                 self._update_event_log(
@@ -605,15 +966,40 @@ class Model:
                     print(self.patients_in_system)
         else:
             # modality change or transplant
-            sampled_time = self.config.ttma_dialysis_modality_scale[
-                patient.dialysis_modality
-            ][patient.age_group] * self.rng.weibull(
-                self.config.ttma_dialysis_modality_shape[patient.dialysis_modality][
-                    patient.age_group
-                ]
-            )
+
+            ## sampled_time depends on whether patitent is inicident or not
+            if patient.patient_flag == "incident":
+                sampled_time = self.rng.gamma(
+                    self.config.ttma_distribution[patient.dialysis_modality][
+                        patient.age_group
+                    ]["shape"],
+                    self.config.ttma_distribution[patient.dialysis_modality][
+                        patient.age_group
+                    ]["scale"],
+                    size=1,
+                )
+            else:  ## prevalent patient
+                if (
+                    self.rng.uniform(0, 1)
+                    < 1
+                    - self.config.ttma_initial_distribution[patient.dialysis_modality][
+                        patient.age_group
+                    ]["proportion_uncensored"]
+                ):
+                    sampled_time = (
+                        self.config.sim_duration + 1
+                    )  # this is a censored observation
+                else:
+                    sampled_time = self.config.ttma_initial_distribution[
+                        patient.dialysis_modality
+                    ][patient.age_group]["scale"] * self.rng.weibull(
+                        self.config.ttma_initial_distribution[
+                            patient.dialysis_modality
+                        ][patient.age_group]["shape"]
+                    )
+            # print(f"SAMPLED TIME was {sampled_time} for {patient.patient_flag} patient {patient.id}")
             if (
-                patient.suitable_for_transplant
+                patient.transplant_suitable
                 and sampled_time >= patient.time_on_waiting_list
             ):
                 self._update_event_log(
@@ -688,9 +1074,50 @@ class Model:
 
     def run(self):
         """Runs the model"""
-        # We set up a generator for each of the patient types we have an IAT for
+        # We first initialize the model with patients that were in the system at time zero - we look at each location in turn (conservative care, ichd, hhd, pd, live transplant, cadaver transplant)
         for patient_type in self.inter_arrival_times.keys():
-            self.env.process(self.generator_patient_arrivals(patient_type))
+            for _ in range(
+                self.config.prevalent_counts["conservative_care"][patient_type]
+            ):
+                self.env.process(
+                    self.generator_prevalent_patient_arrivals(
+                        patient_type, "conservative_care"
+                    )
+                )
+            for _ in range(self.config.prevalent_counts["ichd"][patient_type]):
+                self.env.process(
+                    self.generator_prevalent_patient_arrivals(patient_type, "ichd")
+                )
+            for _ in range(self.config.prevalent_counts["hhd"][patient_type]):
+                self.env.process(
+                    self.generator_prevalent_patient_arrivals(patient_type, "hhd")
+                )
+            for _ in range(self.config.prevalent_counts["pd"][patient_type]):
+                self.env.process(
+                    self.generator_prevalent_patient_arrivals(patient_type, "pd")
+                )
+            for _ in range(
+                self.config.prevalent_counts["live_transplant"][patient_type]
+            ):
+                self.env.process(
+                    self.generator_prevalent_patient_arrivals(
+                        patient_type, "live_transplant"
+                    )
+                )
+            for _ in range(
+                self.config.prevalent_counts["cadaver_transplant"][patient_type]
+            ):
+                self.env.process(
+                    self.generator_prevalent_patient_arrivals(
+                        patient_type, "cadaver_transplant"
+                    )
+                )
+            # We set up a generator for each of the patient types we have an IAT for
+
+        for patient_type in self.inter_arrival_times.keys():
+            self.env.process(
+                self.generator_patient_arrivals(patient_type)
+            )  ## generates the first arrival and subsequent arrivals
 
         self.env.process(self.snapshot_results())
 
