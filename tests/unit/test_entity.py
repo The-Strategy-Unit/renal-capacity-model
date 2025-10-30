@@ -8,11 +8,13 @@ def test_entity_initializes_with_values():
     patient_flag = "incident"
 
     # act
-    patient = Patient(p_id, patient_type, patient_flag)
+
+    patient = Patient(p_id, patient_type,1, patient_flag)
 
     # assert
     assert patient.id == p_id
     assert patient.patient_type == patient_type
     assert patient.patient_flag == patient_flag
     assert patient.age_group == 0
+    assert patient.start_time_in_system == 1
     assert patient.referral_type == "referraltype"

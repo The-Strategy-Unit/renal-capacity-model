@@ -8,6 +8,8 @@ import numpy as np
 from renal_capacity_model.config import Config
 from renal_capacity_model.helpers import get_interarrival_times
 import pandas as pd
+from datetime import datetime
+import os
 
 
 class Model:
@@ -35,6 +37,26 @@ class Model:
         self.snapshot_interval = (
             self.config.snapshot_interval
         )  # how often to take a snapshot of the results_df
+        self.event_log = self._setup_event_log()
+
+    def _setup_event_log(self) -> pd.DataFrame:
+        """Sets up DataFrame for recording model events
+
+        Returns:
+            pd.DataFrame: Empty DataFrame for recording model events
+        """
+        event_log = pd.DataFrame(
+            columns=pd.Index(
+                [
+                    "patient_id",
+                    "activity_from",
+                    "activity_to",
+                    "time_starting_activity_from",
+                    "time_spent_in_activity_from",
+                ]
+            )
+        )
+        return event_log
 
     def _setup_results_df(self) -> pd.DataFrame:
         """Sets up DataFrame for recording model results
@@ -68,6 +90,7 @@ class Model:
 
         return results_df
 
+
     def generator_prevalent_patient_arrivals(self, patient_type, location):
         """Generator function for prevalent patients at time zero
 
@@ -79,7 +102,7 @@ class Model:
         """
         self.patient_counter += 1
 
-        p = Patient(self.patient_counter, patient_type, patient_flag="prevalent")
+        p = Patient(self.patient_counter, patient_type, 0, patient_flag="prevalent")
 
         self.patients_in_system[patient_type] += 1
 
@@ -257,6 +280,23 @@ class Model:
                 )
             yield self.env.process(self.start_transplant(p))
 
+    def _update_event_log(
+        self,
+        patient: Patient,
+        activity_from: str,
+        activity_to: str,
+        time_starting_activity_from: float,
+        time_spent_in_activity_from: float,
+    ) -> None:
+        self.event_log.loc[len(self.event_log)] = [
+            patient.id,
+            activity_from,
+            activity_to,
+            time_starting_activity_from,
+            time_spent_in_activity_from,
+        ]
+
+
     def generator_patient_arrivals(self, patient_type):
         """Generator function for arriving patients
 
@@ -267,26 +307,22 @@ class Model:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the sampled inter-arrival time
         """
         while True:
-            self.patient_counter += 1
-
-            p = Patient(self.patient_counter, patient_type, patient_flag="incident")
-
+            
+            start_time_in_system_patient = self.rng.exponential(
+                1 / self.inter_arrival_times[patient_type]
+            )
+            yield self.env.timeout(start_time_in_system_patient)
+            p = Patient(
+                self.patient_counter, patient_type, start_time_in_system_patient, patient_flag="incident"
+            )
             if self.config.trace:
                 print(
                     f"Patient {p.id} of age group {p.age_group} entered the system at {self.env.now} time units."
                 )
-
-            sampled_inter_arrival_time = self.rng.exponential(
-                1 / self.inter_arrival_times[patient_type]
-            )
-            yield self.env.timeout(sampled_inter_arrival_time)
-
+            self.patient_counter += 1
             self.patients_in_system[patient_type] += 1
-
             self.results_df.loc[p.id, "patient_flag"] = p.patient_flag
-            self.results_df.loc[p.id, "entry_time"] = (
-                self.env.now
-            )  # start_time_in_system_patient
+            self.results_df.loc[p.id, "entry_time"] = start_time_in_system_patient
             self.results_df.loc[p.id, "age_group"] = int(p.age_group)
             self.results_df.loc[p.id, "referral_type"] = p.referral_type
             self.results_df.loc[p.id, "transplant_count"] = 0
@@ -302,9 +338,19 @@ class Model:
             else:
                 # these patients are diverted to conservative care. We don't need a process here as all these patients do is wait a while before leaving the system
                 self.results_df.loc[p.id, "diverted_to_con_care_count"] = True
+
                 sampled_con_care_time = self.config.ttd_con_care[
                     "scale"
                 ] * self.rng.weibull(a=self.config.ttd_con_care["shape"], size=1)
+
+                self._update_event_log(
+                    p,
+                    "conservative_care",
+                    "death",
+                    start_time_in_system_patient,
+                    sampled_con_care_time,
+                )
+
                 yield self.env.timeout(sampled_con_care_time)
                 self.results_df.loc[p.id, "time_of_death"] = self.env.now
                 self.patients_in_system[patient_type] -= 1
@@ -530,6 +576,15 @@ class Model:
                             ]["upper_bound"],
                         )
 
+
+                self._update_event_log(
+                    patient,
+                    patient.transplant_type,
+                    "death",
+                    self.env.now,
+                    sampled_wait_time,
+                )
+
                 yield self.env.timeout(sampled_wait_time)
                 patient.time_living_with_live_transplant = sampled_wait_time
                 self.results_df.loc[patient.id, "live_transplant_count"] -= 1
@@ -545,6 +600,7 @@ class Model:
                 # patient leaves the system
             else:
                 # patient goes back to start_krt after graft fails
+
                 ## sampled_wait_time depends on whether patitent is inicident or not
                 if patient.patient_flag == "incident":
                     ## this is a mixture distribution as a patient has a high chance of early graft failure and then a longer tailed component (bathtub shape survial curve)
@@ -594,6 +650,14 @@ class Model:
                             ]["shape"],
                             size=1,
                         )
+
+                self._update_event_log(
+                    patient,
+                    patient.transplant_type,
+                    "graft_failure",
+                    self.env.now,
+                    sampled_wait_time,
+                )
                 yield self.env.timeout(sampled_wait_time)
                 patient.time_living_with_live_transplant = sampled_wait_time
                 self.results_df.loc[patient.id, "live_transplant_count"] -= 1
@@ -607,6 +671,7 @@ class Model:
             # how long the graft lasts depends on where they go next: death or back to start_krt
             if self.rng.uniform(0, 1) < self.config.death_post_transplant["cadaver"]:
                 # patient dies after transplant
+
                 ## sampled_wait_time depends on whether patitent is inicident or not
                 if patient.patient_flag == "incident":
                     sampled_wait_time = self.config.ttd_tx_distribution["cadaver"][
@@ -636,6 +701,14 @@ class Model:
                             ]["upper_bound"],
                         )
 
+                self._update_event_log(
+                    patient,
+                    patient.transplant_type,
+                    "death",
+                    self.env.now,
+                    sampled_wait_time,
+                )
+
                 yield self.env.timeout(sampled_wait_time)
                 patient.time_living_with_cadaver_transplant = sampled_wait_time
                 self.results_df.loc[patient.id, "cadaver_transplant_count"] -= 1
@@ -651,6 +724,7 @@ class Model:
                 # patient leaves the system
             else:
                 # patient goes back to start_krt after graft fails
+
                 ## sampled_wait_time depends on whether patitent is inicident or not
                 if patient.patient_flag == "incident":
                     ## this is a mixture distribution as a patient has initiall a high chance of early graft failure and then a longer tailed component (bathtub shape survial curve)
@@ -700,6 +774,14 @@ class Model:
                             ]["shape"],
                             size=1,
                         )
+                        
+                self._update_event_log(
+                    patient,
+                    patient.transplant_type,
+                    "graft_failure_modality_allocation",
+                    self.env.now,
+                    sampled_wait_time,
+                )
 
                 yield self.env.timeout(sampled_wait_time)
                 patient.time_living_with_cadaver_transplant = sampled_wait_time
@@ -742,6 +824,13 @@ class Model:
             ] * self.rng.weibull(a=self.config.tw_before_dialysis["shape"], size=1)
             if sampled_wait_time > patient.time_on_waiting_list:
                 # they go to transplant pre-emptively without starting dialysis
+                self._update_event_log(
+                    patient,
+                    "waiting_for_transplant",
+                    patient.transplant_type,
+                    self.env.now,
+                    patient.time_on_waiting_list,
+                )
                 yield self.env.timeout(patient.time_on_waiting_list)
                 if self.config.trace:
                     print(
@@ -751,6 +840,13 @@ class Model:
                 self.results_df.loc[patient.id, "pre_emptive_transplant"] = True
                 yield self.env.process(self.start_transplant(patient))
             else:
+                self._update_event_log(
+                    patient,
+                    "waiting_for_transplant",
+                    "dialysis_modality_allocation",
+                    self.env.now,
+                    sampled_wait_time,
+                )
                 yield self.env.timeout(sampled_wait_time)
                 patient.time_on_waiting_list -= sampled_wait_time  ## remove time waiting from total time on waiting list
                 if self.config.trace:
@@ -825,6 +921,13 @@ class Model:
                 patient.transplant_suitable
                 and sampled_time >= patient.time_on_waiting_list
             ):
+                self._update_event_log(
+                    patient,
+                    patient.dialysis_modality,
+                    patient.transplant_type,
+                    self.env.now,
+                    patient.time_on_waiting_list,
+                )
                 yield self.env.timeout(patient.time_on_waiting_list)
                 patient.time_on_dialysis[patient.dialysis_modality] = (
                     patient.time_on_waiting_list
@@ -839,6 +942,13 @@ class Model:
                 yield self.env.process(self.start_transplant(patient))
             else:
                 # death
+                self._update_event_log(
+                    patient,
+                    patient.dialysis_modality,
+                    "death",
+                    self.env.now,
+                    sampled_time,
+                )
                 yield self.env.timeout(sampled_time)
                 patient.time_on_dialysis[patient.dialysis_modality] = sampled_time
                 self.patients_in_system[patient.patient_type] -= 1
@@ -892,6 +1002,13 @@ class Model:
                 patient.transplant_suitable
                 and sampled_time >= patient.time_on_waiting_list
             ):
+                self._update_event_log(
+                    patient,
+                    patient.dialysis_modality,
+                    patient.transplant_type,
+                    self.env.now,
+                    patient.time_on_waiting_list,
+                )
                 yield self.env.timeout(patient.time_on_waiting_list)
                 patient.time_on_dialysis[patient.dialysis_modality] = (
                     patient.time_on_waiting_list
@@ -906,6 +1023,13 @@ class Model:
                 yield self.env.process(self.start_transplant(patient))
             else:
                 # modality change
+                self._update_event_log(
+                    patient,
+                    patient.dialysis_modality,
+                    "modality_allocation",
+                    self.env.now,
+                    sampled_time,
+                )
                 yield self.env.timeout(sampled_time)
                 patient.time_on_dialysis[patient.dialysis_modality] = sampled_time
                 if self.config.trace:
@@ -932,6 +1056,21 @@ class Model:
             else:
                 self.snapshot_results_df = snapshot_results_df
             yield self.env.timeout(self.snapshot_interval)
+
+    def save_event_log(self):
+        folder_path = "results"
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        today_date = datetime.now().strftime("%Y-%m-%d")
+        filename = f"results/{today_date}_eventlog_{self.run_number}.parquet"
+        event_log = self.event_log.copy()
+        event_log[["time_starting_activity_from", "time_spent_in_activity_from"]] = (
+            event_log[
+                ["time_starting_activity_from", "time_spent_in_activity_from"]
+            ].astype(float)
+        )
+        event_log.to_parquet(filename)
+        print("Event log saved")
 
     def run(self):
         """Runs the model"""
@@ -991,6 +1130,7 @@ class Model:
             print(self.patients_in_system)
             print(self.results_df)
             print(self.snapshot_results_df)
+            self.save_event_log()
 
 
 if __name__ == "__main__":
