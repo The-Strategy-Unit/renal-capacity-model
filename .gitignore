@@ -90,6 +90,7 @@ data/*
 *.xls
 *.csv
 *.parquet
+results/*
 
 # VSCode settings
 .vscode/settings.json
