@@ -63,13 +63,12 @@ class Trial:
     def process_snapshot_results(self, model, run):
         snapshots = []
         for time in model.snapshot_results_df["snapshot_time"].unique():
-            if time > 0:
-                snapshot_df = model.snapshot_results_df[
-                    model.snapshot_results_df["snapshot_time"] == time
-                ]
-                processed_snapshot = self.process_model_results(snapshot_df)
-                processed_snapshot.name = time
-                snapshots.append(processed_snapshot)
+            snapshot_df = model.snapshot_results_df[
+                model.snapshot_results_df["snapshot_time"] == time
+            ]
+            processed_snapshot = self.process_model_results(snapshot_df)
+            processed_snapshot.name = time
+            snapshots.append(processed_snapshot)
         # add final results
         final_snapshot = self.process_model_results(model.results_df)
         final_snapshot.name = model.config.sim_duration
