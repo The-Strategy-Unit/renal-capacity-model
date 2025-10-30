@@ -256,7 +256,7 @@ class Model:
             yield self.env.process(self.start_dialysis_modality(p))
         elif location == "live_transplant":
             p.transplant_suitable = True
-            p.pre_emptive_transplant = "NA"
+            p.pre_emptive_transplant = None  # Unknown for prevalent patients
             p.time_of_transplant = self.env.now
             p.transplant_type = "live"
             self.results_df.loc[p.id, "live_transplant_count"] += 1
@@ -268,7 +268,7 @@ class Model:
             yield self.env.process(self.start_transplant(p))
         elif location == "cadaver_transplant":
             p.transplant_suitable = True
-            p.pre_emptive_transplant = "NA"  # unknown for prevalent patients
+            p.pre_emptive_transplant = None  # Unknown for prevalent patients
             p.time_of_transplant = self.env.now
             p.transplant_type = "cadaver"
             self.results_df.loc[p.id, "cadaver_transplant_count"] += 1

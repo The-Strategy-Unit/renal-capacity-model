@@ -7,7 +7,11 @@ class Patient:
     """Patient entity"""
 
     def __init__(
-        self, p_id: int, patient_type: str, start_time_in_system: int, patient_flag: str
+        self,
+        p_id: int,
+        patient_type: str,
+        start_time_in_system: float,
+        patient_flag: str,
     ):
         self.id = p_id
         self.time_in_system = 0
