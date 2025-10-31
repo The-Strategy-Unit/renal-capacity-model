@@ -25,7 +25,7 @@ class Patient:
         self.transplant_suitable: bool | None = None  # transplant_suitable
         self.transplant_type: str | None = None  # transplant_type  # "live", "cadaver"
         self.pre_emptive_transplant: bool | None = None
-        self.dialysis_modality: str = "none"
+        self.dialysis_modality: str = "none"  # "ichd", "hhd", "pd", "none"
         self.time_starts_dialysis: float | None = None
         self.time_on_dialysis = {"ichd": 0.0, "hhd": 0.0, "pd": 0.0}
         self.time_living_with_live_transplant: float | None = None
