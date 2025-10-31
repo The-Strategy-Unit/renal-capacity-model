@@ -289,10 +289,10 @@ class Model:
     def _update_event_log(
         self,
         patient: Patient,
-        activity_from: str,
-        activity_to: str,
-        time_starting_activity_from: float,
-        time_spent_in_activity_from: float,
+        activity_from: str | None,
+        activity_to: str | None,
+        time_starting_activity_from: float | None,
+        time_spent_in_activity_from: float | None,
     ) -> None:
         self.event_log.loc[len(self.event_log)] = [
             patient.id,
@@ -901,7 +901,7 @@ class Model:
                         patient.age_group
                     ]["scale"],
                     size=1,
-                )
+                )[0]
             else:  ## prevalent patient
                 if (
                     self.rng.uniform(0, 1)
@@ -981,7 +981,7 @@ class Model:
                         patient.age_group
                     ]["scale"],
                     size=1,
-                )
+                )[0]
             else:  ## prevalent patient
                 if (
                     self.rng.uniform(0, 1)
