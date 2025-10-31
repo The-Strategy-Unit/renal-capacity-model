@@ -17,7 +17,7 @@ class Model:
     Model class containing the logic for the simulation
     """
 
-    def __init__(self, run_number, rng, config):
+    def __init__(self, run_number: int, rng: np.random.Generator, config: Config):
         """Initialise the model
 
         Args:
@@ -27,17 +27,17 @@ class Model:
         """
         self.env = simpy.Environment()
         self.config = config
-        self.patient_counter = 0
+        self.patient_counter: int = 0
         self.run_number = run_number
         self.rng = rng
-        self.inter_arrival_times = get_interarrival_times(self.config)
-        self.patients_in_system = {k: 0 for k in self.inter_arrival_times.keys()}
-        self.results_df = self._setup_results_df()
-        self.snapshot_results_df = None
-        self.snapshot_interval = (
+        self.inter_arrival_times: dict = get_interarrival_times(self.config)
+        self.patients_in_system: dict = {k: 0 for k in self.inter_arrival_times.keys()}
+        self.results_df: pd.DataFrame = self._setup_results_df()
+        self.snapshot_results_df: pd.DataFrame | None = None
+        self.snapshot_interval: int = (
             self.config.snapshot_interval
         )  # how often to take a snapshot of the results_df
-        self.event_log = self._setup_event_log()
+        self.event_log: pd.DataFrame = self._setup_event_log()
 
     def _setup_event_log(self) -> pd.DataFrame:
         """Sets up DataFrame for recording model events
@@ -90,7 +90,7 @@ class Model:
 
         return results_df
 
-    def generator_prevalent_patient_arrivals(self, patient_type, location):
+    def generator_prevalent_patient_arrivals(self, patient_type: str, location: str):
         """Generator function for prevalent patients at time zero
 
         Args:
@@ -302,7 +302,7 @@ class Model:
             time_spent_in_activity_from,
         ]
 
-    def generator_patient_arrivals(self, patient_type):
+    def generator_patient_arrivals(self, patient_type: str):
         """Generator function for arriving patients
 
         Args:
@@ -375,7 +375,7 @@ class Model:
                     )
                     # print(self.patients_in_system)
 
-    def start_krt(self, patient):
+    def start_krt(self, patient: Patient):
         """Function containing the logic for the Kidney Replacement Therapy pathway
 
         Args:
@@ -468,7 +468,7 @@ class Model:
                         self.start_dialysis_whilst_waiting_for_transplant(patient)
                     )
 
-    def start_dialysis_modality_allocation(self, patient):
+    def start_dialysis_modality_allocation(self, patient: Patient):
         """Function containing the logic for the dialysis pathway
 
 
@@ -538,7 +538,7 @@ class Model:
         ] += 1
         yield self.env.process(self.start_dialysis_modality(patient))
 
-    def start_transplant(self, patient):
+    def start_transplant(self, patient: Patient):
         """Function containing the logic for the transplant pathway
 
         Args:
@@ -796,7 +796,7 @@ class Model:
                     )
                 yield self.env.process(self.start_krt(patient))
 
-    def start_dialysis_whilst_waiting_for_transplant(self, patient):
+    def start_dialysis_whilst_waiting_for_transplant(self, patient: Patient):
         """Function containing the logic for the mixed pathway where a patient starts on dialysis and then receives a transplant
 
         Args:
@@ -867,7 +867,7 @@ class Model:
                 )
             yield self.env.process(self.start_dialysis_modality_allocation(patient))
 
-    def start_dialysis_modality(self, patient):
+    def start_dialysis_modality(self, patient: Patient):
         """Function containing the logic for all dialysis pathways
 
         Args:
