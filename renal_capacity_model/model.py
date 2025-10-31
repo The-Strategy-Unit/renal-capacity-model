@@ -90,7 +90,6 @@ class Model:
 
         return results_df
 
-
     def generator_prevalent_patient_arrivals(self, patient_type, location):
         """Generator function for prevalent patients at time zero
 
@@ -257,7 +256,7 @@ class Model:
             yield self.env.process(self.start_dialysis_modality(p))
         elif location == "live_transplant":
             p.transplant_suitable = True
-            p.pre_emptive_transplant = "NA"
+            p.pre_emptive_transplant = None  # Unknown for prevalent patients
             p.time_of_transplant = self.env.now
             p.transplant_type = "live"
             self.results_df.loc[p.id, "live_transplant_count"] += 1
@@ -269,7 +268,7 @@ class Model:
             yield self.env.process(self.start_transplant(p))
         elif location == "cadaver_transplant":
             p.transplant_suitable = True
-            p.pre_emptive_transplant = "NA"  # unknown for prevalent patients
+            p.pre_emptive_transplant = None  # Unknown for prevalent patients
             p.time_of_transplant = self.env.now
             p.transplant_type = "cadaver"
             self.results_df.loc[p.id, "cadaver_transplant_count"] += 1
@@ -296,7 +295,6 @@ class Model:
             time_spent_in_activity_from,
         ]
 
-
     def generator_patient_arrivals(self, patient_type):
         """Generator function for arriving patients
 
@@ -307,13 +305,15 @@ class Model:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the sampled inter-arrival time
         """
         while True:
-            
             start_time_in_system_patient = self.rng.exponential(
                 1 / self.inter_arrival_times[patient_type]
             )
             yield self.env.timeout(start_time_in_system_patient)
             p = Patient(
-                self.patient_counter, patient_type, start_time_in_system_patient, patient_flag="incident"
+                self.patient_counter,
+                patient_type,
+                start_time_in_system_patient,
+                patient_flag="incident",
             )
             if self.config.trace:
                 print(
@@ -576,7 +576,6 @@ class Model:
                             ]["upper_bound"],
                         )
 
-
                 self._update_event_log(
                     patient,
                     patient.transplant_type,
@@ -624,9 +623,7 @@ class Model:
                             patient.age_group
                         ]["break_point"] + self.config.ttgf_tx_distribution["live"][
                             patient.age_group
-                        ][
-                            "scale"
-                        ] * self.rng.weibull(
+                        ]["scale"] * self.rng.weibull(
                             a=self.config.ttgf_tx_distribution["cadaver"][
                                 patient.age_group
                             ]["shape"],
@@ -748,9 +745,7 @@ class Model:
                             patient.age_group
                         ]["break_point"] + self.config.ttgf_tx_distribution["cadaver"][
                             patient.age_group
-                        ][
-                            "scale"
-                        ] * self.rng.weibull(
+                        ]["scale"] * self.rng.weibull(
                             a=self.config.ttgf_tx_distribution["cadaver"][
                                 patient.age_group
                             ]["shape"],
@@ -774,7 +769,7 @@ class Model:
                             ]["shape"],
                             size=1,
                         )
-                        
+
                 self._update_event_log(
                     patient,
                     patient.transplant_type,

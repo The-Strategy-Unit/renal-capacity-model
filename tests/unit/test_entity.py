@@ -9,7 +9,7 @@ def test_entity_initializes_with_values():
 
     # act
 
-    patient = Patient(p_id, patient_type,1, patient_flag)
+    patient = Patient(p_id, patient_type, 1, patient_flag)
 
     # assert
     assert patient.id == p_id

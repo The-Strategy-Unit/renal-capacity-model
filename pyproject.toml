@@ -24,6 +24,11 @@ omit=["tests/*"]
 exclude_also = ['if __name__ == .__main__.:', 
                 'if self.config.trace:']
 
+[tool.pyright]
+ignore = [      
+    "build",
+]
+
 [dependency-groups]
 dev = [
     "coverage>=7.10.7",
