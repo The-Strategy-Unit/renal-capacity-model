@@ -19,7 +19,24 @@ class Config:
             "sim_duration", int(1 * 365)
         )  # in days, but should be a multiple of 365 i.e. years
         self.random_seed = config_dict.get("random_seed", 0)
-        self.arrival_rate = config_dict.get("arrival_rate", 1)
+        self.arrival_rate = config_dict.get(
+            "arrival_rate",  # keys are years of the model. must exceed sim_duration years
+            {
+                1: 23.42,
+                2: 24.61,
+                3: 25.76,
+                4: 26.87,
+                5: 27.92,
+                6: 28.90,
+                7: 29.81,
+                8: 30.66,
+                9: 31.45,
+                10: 32.19,
+                11: 32.88,
+                12: 33.52,
+                13: 34.12,
+            },
+        )
         self.snapshot_interval = config_dict.get(
             "snapshot_interval", int(365)
         )  # how often to take a snapshot of the results_df

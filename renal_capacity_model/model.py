@@ -6,7 +6,10 @@ import simpy
 from renal_capacity_model.entity import Patient
 import numpy as np
 from renal_capacity_model.config import Config
-from renal_capacity_model.helpers import get_interarrival_times
+from renal_capacity_model.helpers import (
+    get_interarrival_times,
+    check_config_duration_valid,
+)
 import pandas as pd
 from datetime import datetime
 import os
@@ -26,7 +29,8 @@ class Model:
             config (Config): Config Class containing values to be used for model run
         """
         self.env = simpy.Environment()
-        self.config = config
+        if check_config_duration_valid(config):
+            self.config = config
         self.patient_counter: int = 0
         self.run_number = run_number
         self.rng = rng
