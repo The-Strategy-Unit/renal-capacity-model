@@ -9,6 +9,7 @@ from renal_capacity_model.config import Config
 from renal_capacity_model.helpers import check_config_duration_valid
 import pandas as pd
 from datetime import datetime
+from sim_tools.time_dependent import NSPPThinning
 import os
 
 
@@ -31,8 +32,19 @@ class Model:
         self.patient_counter: int = 0
         self.run_number = run_number
         self.rng = rng
-        self.patients_in_system: dict = {
-            k: 0 for k in self.config.mean_iat_over_time_dfs.keys()
+        self.patient_types = self.config.mean_iat_over_time_dfs.keys()
+        self.patients_in_system: dict = {k: 0 for k in self.patient_types}
+        self.random_numbers_for_NSPPThinning = [
+            int(self.rng.integers(999)),
+            int(self.rng.integers(999)),
+        ]
+        self.arrivals_dist = {
+            patient_type: NSPPThinning(
+                self.config.mean_iat_over_time_dfs[patient_type],
+                self.random_numbers_for_NSPPThinning[0],
+                self.random_numbers_for_NSPPThinning[1],
+            )
+            for patient_type in self.patient_types
         }
         self.results_df: pd.DataFrame = self._setup_results_df()
         self.snapshot_results_df: pd.DataFrame | None = None
@@ -314,8 +326,8 @@ class Model:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the sampled inter-arrival time
         """
         while True:
-            start_time_in_system_patient = self.rng.exponential(
-                1 / self.inter_arrival_times[patient_type]
+            start_time_in_system_patient = self.arrivals_dist[patient_type].sample(
+                simulation_time=self.env.now
             )
             yield self.env.timeout(start_time_in_system_patient)
             self.patient_counter += (
@@ -1082,7 +1094,7 @@ class Model:
         """Runs the model"""
         if self.config.initialise_prevalent_patients:
             # We first initialize the model with patients that were in the system at time zero - we look at each location in turn (conservative care, ichd, hhd, pd, live transplant, cadaver transplant)
-            for patient_type in self.inter_arrival_times.keys():
+            for patient_type in self.patient_types:
                 for _ in range(
                     self.config.prevalent_counts["conservative_care"][patient_type]
                 ):
@@ -1121,7 +1133,7 @@ class Model:
                     )
                 # We set up a generator for each of the patient types we have an IAT for
 
-        for patient_type in self.inter_arrival_times.keys():
+        for patient_type in self.patient_types:
             self.env.process(
                 self.generator_patient_arrivals(patient_type)
             )  ## generates the first arrival and subsequent arrivals
@@ -1141,7 +1153,12 @@ class Model:
 
 
 if __name__ == "__main__":
-    config = Config({"trace": True, "warm_start": False})
+    config = Config(
+        {
+            "trace": True,
+            "initialise_prevalent_patients": False,  # For dev purposes only
+        }
+    )
     rng = np.random.default_rng(config.random_seed)
     model = Model(1, rng, config)
     model.run()
