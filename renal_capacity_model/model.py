@@ -6,10 +6,7 @@ import simpy
 from renal_capacity_model.entity import Patient
 import numpy as np
 from renal_capacity_model.config import Config
-from renal_capacity_model.helpers import (
-    get_interarrival_times,
-    check_config_duration_valid,
-)
+from renal_capacity_model.helpers import check_config_duration_valid
 import pandas as pd
 from datetime import datetime
 import os
@@ -34,8 +31,9 @@ class Model:
         self.patient_counter: int = 0
         self.run_number = run_number
         self.rng = rng
-        self.inter_arrival_times: dict = get_interarrival_times(self.config)
-        self.patients_in_system: dict = {k: 0 for k in self.inter_arrival_times.keys()}
+        self.patients_in_system: dict = {
+            k: 0 for k in self.config.mean_iat_over_time_dfs.keys()
+        }
         self.results_df: pd.DataFrame = self._setup_results_df()
         self.snapshot_results_df: pd.DataFrame | None = None
         self.snapshot_interval: int = (
@@ -1082,7 +1080,7 @@ class Model:
 
     def run(self):
         """Runs the model"""
-        if self.config.initalise_prevalent_patients:
+        if self.config.initialise_prevalent_patients:
             # We first initialize the model with patients that were in the system at time zero - we look at each location in turn (conservative care, ichd, hhd, pd, live transplant, cadaver transplant)
             for patient_type in self.inter_arrival_times.keys():
                 for _ in range(

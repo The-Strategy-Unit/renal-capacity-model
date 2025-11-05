@@ -3,6 +3,11 @@ This module contains the configuration for running the model.
 It can later be adapted to take inputs from users
 """
 
+from renal_capacity_model.helpers import (
+    get_yearly_interarrival_times,
+    transform_mean_iat_over_time,
+)
+
 
 class Config:
     """
@@ -11,12 +16,12 @@ class Config:
 
     def __init__(self, config_dict={}):
         self.trace = config_dict.get("trace", False)
-        self.initalise_prevalent_patients = config_dict.get(
-            "initalise_prevalent_patients", True
+        self.initialise_prevalent_patients = config_dict.get(
+            "initialise_prevalent_patients", True
         )  # whether to initialise model with prevalent counts (takes a long time using default national values)
         self.number_of_runs = config_dict.get("number_of_runs", 10)
         self.sim_duration = config_dict.get(
-            "sim_duration", int(1 * 365)
+            "sim_duration", int(5 * 365)
         )  # in days, but should be a multiple of 365 i.e. years
         self.random_seed = config_dict.get("random_seed", 0)
         self.arrival_rate = config_dict.get(
@@ -147,7 +152,10 @@ class Config:
         self.referral_dist = config_dict.get(
             "referral_dist", {"early": 0.82, "late": 0.18}
         )
-
+        mean_iat_over_time = get_yearly_interarrival_times(self)
+        self.mean_iat_over_time_dfs: dict = transform_mean_iat_over_time(
+            mean_iat_over_time
+        )
         # routing distributions (to be fed in externally for each geography under study - these are defaults relate to the national level model)
         self.con_care_dist = config_dict.get(
             "con_care_dist",
