@@ -7,7 +7,96 @@ from renal_capacity_model.trial import Trial
 
 @pytest.fixture
 def config():
-    return Config()
+    return Config(
+        {
+            "prevalent_counts": {
+                "conservative_care": {
+                    "1_early": 1,
+                    "2_early": 1,
+                    "3_early": 1,
+                    "4_early": 1,
+                    "5_early": 1,
+                    "6_early": 1,
+                    "1_late": 1,
+                    "2_late": 1,
+                    "3_late": 1,
+                    "4_late": 1,
+                    "5_late": 1,
+                    "6_late": 1,
+                },
+                "ichd": {
+                    "1_early": 1,
+                    "2_early": 1,
+                    "3_early": 1,
+                    "4_early": 1,
+                    "5_early": 1,
+                    "6_early": 1,
+                    "1_late": 1,
+                    "2_late": 1,
+                    "3_late": 1,
+                    "4_late": 1,
+                    "5_late": 1,
+                    "6_late": 1,
+                },
+                "hhd": {
+                    "1_early": 1,
+                    "2_early": 1,
+                    "3_early": 1,
+                    "4_early": 1,
+                    "5_early": 1,
+                    "6_early": 1,
+                    "1_late": 1,
+                    "2_late": 1,
+                    "3_late": 1,
+                    "4_late": 1,
+                    "5_late": 1,
+                    "6_late": 1,
+                },
+                "pd": {
+                    "1_early": 1,
+                    "2_early": 1,
+                    "3_early": 1,
+                    "4_early": 1,
+                    "5_early": 1,
+                    "6_early": 1,
+                    "1_late": 1,
+                    "2_late": 1,
+                    "3_late": 1,
+                    "4_late": 1,
+                    "5_late": 1,
+                    "6_late": 1,
+                },
+                "live_transplant": {
+                    "1_early": 1,
+                    "2_early": 1,
+                    "3_early": 1,
+                    "4_early": 1,
+                    "5_early": 1,
+                    "6_early": 1,
+                    "1_late": 1,
+                    "2_late": 1,
+                    "3_late": 1,
+                    "4_late": 1,
+                    "5_late": 1,
+                    "6_late": 1,
+                },
+                "cadaver_transplant": {
+                    "1_early": 1,
+                    "2_early": 1,
+                    "3_early": 1,
+                    "4_early": 1,
+                    "5_early": 1,
+                    "6_early": 1,
+                    "1_late": 1,
+                    "2_late": 1,
+                    "3_late": 1,
+                    "4_late": 1,
+                    "5_late": 1,
+                    "6_late": 1,
+                },
+            }
+        }
+    )
 
 
 @pytest.fixture
