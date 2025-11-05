@@ -11,6 +11,9 @@ class Config:
 
     def __init__(self, config_dict={}):
         self.trace = config_dict.get("trace", False)
+        self.initalise_prevalent_patients = config_dict.get(
+            "initalise_prevalent_patients", True
+        )  # whether to initialise model with prevalent counts (takes a long time using default national values)
         self.number_of_runs = config_dict.get("number_of_runs", 10)
         self.sim_duration = config_dict.get(
             "sim_duration", int(1 * 365)
@@ -20,8 +23,6 @@ class Config:
         self.snapshot_interval = config_dict.get(
             "snapshot_interval", int(365)
         )  # how often to take a snapshot of the results_df
-        self.validation_mode = config_dict.get("validation_mode", False)
-
         # how many people are in each activity at time zero (the default feeds in the national level model)
         self.prevalent_counts = config_dict.get(
             "prevalent_counts",

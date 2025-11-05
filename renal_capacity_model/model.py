@@ -1078,45 +1078,46 @@ class Model:
 
     def run(self):
         """Runs the model"""
-        # We first initialize the model with patients that were in the system at time zero - we look at each location in turn (conservative care, ichd, hhd, pd, live transplant, cadaver transplant)
-        for patient_type in self.inter_arrival_times.keys():
-            for _ in range(
-                self.config.prevalent_counts["conservative_care"][patient_type]
-            ):
-                self.env.process(
-                    self.generator_prevalent_patient_arrivals(
-                        patient_type, "conservative_care"
+        if self.config.initalise_prevalent_patients:
+            # We first initialize the model with patients that were in the system at time zero - we look at each location in turn (conservative care, ichd, hhd, pd, live transplant, cadaver transplant)
+            for patient_type in self.inter_arrival_times.keys():
+                for _ in range(
+                    self.config.prevalent_counts["conservative_care"][patient_type]
+                ):
+                    self.env.process(
+                        self.generator_prevalent_patient_arrivals(
+                            patient_type, "conservative_care"
+                        )
                     )
-                )
-            for _ in range(self.config.prevalent_counts["ichd"][patient_type]):
-                self.env.process(
-                    self.generator_prevalent_patient_arrivals(patient_type, "ichd")
-                )
-            for _ in range(self.config.prevalent_counts["hhd"][patient_type]):
-                self.env.process(
-                    self.generator_prevalent_patient_arrivals(patient_type, "hhd")
-                )
-            for _ in range(self.config.prevalent_counts["pd"][patient_type]):
-                self.env.process(
-                    self.generator_prevalent_patient_arrivals(patient_type, "pd")
-                )
-            for _ in range(
-                self.config.prevalent_counts["live_transplant"][patient_type]
-            ):
-                self.env.process(
-                    self.generator_prevalent_patient_arrivals(
-                        patient_type, "live_transplant"
+                for _ in range(self.config.prevalent_counts["ichd"][patient_type]):
+                    self.env.process(
+                        self.generator_prevalent_patient_arrivals(patient_type, "ichd")
                     )
-                )
-            for _ in range(
-                self.config.prevalent_counts["cadaver_transplant"][patient_type]
-            ):
-                self.env.process(
-                    self.generator_prevalent_patient_arrivals(
-                        patient_type, "cadaver_transplant"
+                for _ in range(self.config.prevalent_counts["hhd"][patient_type]):
+                    self.env.process(
+                        self.generator_prevalent_patient_arrivals(patient_type, "hhd")
                     )
-                )
-            # We set up a generator for each of the patient types we have an IAT for
+                for _ in range(self.config.prevalent_counts["pd"][patient_type]):
+                    self.env.process(
+                        self.generator_prevalent_patient_arrivals(patient_type, "pd")
+                    )
+                for _ in range(
+                    self.config.prevalent_counts["live_transplant"][patient_type]
+                ):
+                    self.env.process(
+                        self.generator_prevalent_patient_arrivals(
+                            patient_type, "live_transplant"
+                        )
+                    )
+                for _ in range(
+                    self.config.prevalent_counts["cadaver_transplant"][patient_type]
+                ):
+                    self.env.process(
+                        self.generator_prevalent_patient_arrivals(
+                            patient_type, "cadaver_transplant"
+                        )
+                    )
+                # We set up a generator for each of the patient types we have an IAT for
 
         for patient_type in self.inter_arrival_times.keys():
             self.env.process(
@@ -1138,7 +1139,7 @@ class Model:
 
 
 if __name__ == "__main__":
-    config = Config({"trace": True})
+    config = Config({"trace": True, "warm_start": False})
     rng = np.random.default_rng(config.random_seed)
     model = Model(1, rng, config)
     model.run()
