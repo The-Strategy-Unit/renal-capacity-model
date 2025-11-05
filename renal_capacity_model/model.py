@@ -887,8 +887,8 @@ class Model:
         if (
             self.rng.uniform(0, 1)
             < self.config.death_post_dialysis_modality[patient.dialysis_modality][
-                patient.age_group
-            ]
+                patient.referral_type
+            ][patient.age_group]
         ):
             # death or transplant
             ## sampled_time depends on whether patitent is inicident or not
