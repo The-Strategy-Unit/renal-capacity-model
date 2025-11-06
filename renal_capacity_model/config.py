@@ -5,7 +5,7 @@ It can later be adapted to take inputs from users
 
 from renal_capacity_model.helpers import (
     get_yearly_arrival_rate,
-    transform_mean_iat_over_time,
+    get_mean_iat_over_time_from_arrival_rate,
 )
 
 
@@ -153,7 +153,7 @@ class Config:
             "referral_dist", {"early": 0.82, "late": 0.18}
         )
         mean_iat_over_time = get_yearly_arrival_rate(self)
-        self.mean_iat_over_time_dfs: dict = transform_mean_iat_over_time(
+        self.mean_iat_over_time_dfs: dict = get_mean_iat_over_time_from_arrival_rate(
             mean_iat_over_time
         )
         # routing distributions (to be fed in externally for each geography under study - these are defaults relate to the national level model)

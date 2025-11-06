@@ -15,9 +15,9 @@ def get_yearly_arrival_rate(config):
     return mean_arrival_rates
 
 
-def transform_mean_iat_over_time(mean_iat_over_time):
+def get_mean_iat_over_time_from_arrival_rate(arrival_rate_dict):
     mean_iat_over_time_dfs = {}
-    df = pd.DataFrame(mean_iat_over_time)
+    df = pd.DataFrame(arrival_rate_dict)
     df.columns = [(col - 1) * 365 for col in df.columns]
     for i in df.index:
         mini_df = pd.DataFrame(df.loc[i])
