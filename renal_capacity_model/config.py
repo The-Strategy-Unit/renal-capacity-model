@@ -152,9 +152,9 @@ class Config:
         self.referral_dist = config_dict.get(
             "referral_dist", {"early": 0.82, "late": 0.18}
         )
-        mean_iat_over_time = get_yearly_arrival_rate(self)
+        yearly_arrival_rate = get_yearly_arrival_rate(self)
         self.mean_iat_over_time_dfs: dict = get_mean_iat_over_time_from_arrival_rate(
-            mean_iat_over_time
+            yearly_arrival_rate
         )
         # routing distributions (to be fed in externally for each geography under study - these are defaults relate to the national level model)
         self.con_care_dist = config_dict.get(
