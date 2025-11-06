@@ -4,7 +4,7 @@ It can later be adapted to take inputs from users
 """
 
 from renal_capacity_model.helpers import (
-    get_yearly_interarrival_times,
+    get_yearly_arrival_rate,
     transform_mean_iat_over_time,
 )
 
@@ -152,7 +152,7 @@ class Config:
         self.referral_dist = config_dict.get(
             "referral_dist", {"early": 0.82, "late": 0.18}
         )
-        mean_iat_over_time = get_yearly_interarrival_times(self)
+        mean_iat_over_time = get_yearly_arrival_rate(self)
         self.mean_iat_over_time_dfs: dict = transform_mean_iat_over_time(
             mean_iat_over_time
         )

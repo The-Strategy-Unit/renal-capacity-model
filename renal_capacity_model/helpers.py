@@ -5,14 +5,14 @@ Module with helper functions
 import pandas as pd
 
 
-def get_yearly_interarrival_times(config):
-    mean_iat_over_time = {}
+def get_yearly_arrival_rate(config):
+    mean_arrival_rates = {}
     years = int(config.sim_duration / 365)
     for year in range(1, years + 1):
-        mean_iat_over_time[year] = get_interarrival_times(
+        mean_arrival_rates[year] = get_arrival_rate(
             config.arrival_rate[year], config.referral_dist, config.age_dist
         )
-    return mean_iat_over_time
+    return mean_arrival_rates
 
 
 def transform_mean_iat_over_time(mean_iat_over_time):
@@ -21,13 +21,15 @@ def transform_mean_iat_over_time(mean_iat_over_time):
     df.columns = [(col - 1) * 365 for col in df.columns]
     for i in df.index:
         mini_df = pd.DataFrame(df.loc[i])
-        mean_iat_over_time_dfs[i] = mini_df.reset_index().rename(
-            columns={"index": "t", i: "mean_iat"}
+        mini_df = mini_df.reset_index().rename(
+            columns={"index": "t", i: "arrival_rate"}
         )
+        mini_df["mean_iat"] = 1 / mini_df["arrival_rate"]
+        mean_iat_over_time_dfs[i] = mini_df
     return mean_iat_over_time_dfs
 
 
-def get_interarrival_times(arrival_rate, referral_dist, age_dist):
+def get_arrival_rate(arrival_rate, referral_dist, age_dist):
     """Calculates interarrival times for different patient groups
 
     Args:
@@ -39,13 +41,13 @@ def get_interarrival_times(arrival_rate, referral_dist, age_dist):
         dict: Dictionary containing different interarrival times for patient groups, given a single arrival rate
     """
 
-    iat_dict = {}
+    arrival_rate_dict = {}
     for referral, referral_value in referral_dist.items():
         for age_group, age_value in age_dist.items():
-            iat_dict[f"{age_group}_{referral}"] = arrival_rate / (
+            arrival_rate_dict[f"{age_group}_{referral}"] = arrival_rate * (
                 age_value * referral_value
             )
-    return iat_dict
+    return arrival_rate_dict
 
 
 def check_config_duration_valid(config):
