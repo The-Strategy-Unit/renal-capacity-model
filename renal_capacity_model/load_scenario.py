@@ -923,4 +923,4 @@ class Scenario:
 
 scenario = Scenario()
 
-print(scenario.daily_costs)
+# print(scenario.daily_costs)
