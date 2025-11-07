@@ -3,6 +3,11 @@ This module contains the configuration for running the model.
 It can later be adapted to take inputs from users
 """
 
+from renal_capacity_model.helpers import (
+    get_yearly_arrival_rate,
+    get_mean_iat_over_time_from_arrival_rate,
+)
+
 
 class Config:
     """
@@ -11,15 +16,32 @@ class Config:
 
     def __init__(self, config_dict={}):
         self.trace = config_dict.get("trace", False)
-        self.initalise_prevalent_patients = config_dict.get(
-            "initalise_prevalent_patients", True
+        self.initialise_prevalent_patients = config_dict.get(
+            "initialise_prevalent_patients", True
         )  # whether to initialise model with prevalent counts (takes a long time using default national values)
         self.number_of_runs = config_dict.get("number_of_runs", 10)
         self.sim_duration = config_dict.get(
-            "sim_duration", int(1 * 365)
+            "sim_duration", int(5 * 365)
         )  # in days, but should be a multiple of 365 i.e. years
         self.random_seed = config_dict.get("random_seed", 0)
-        self.arrival_rate = config_dict.get("arrival_rate", 1)
+        self.arrival_rate = config_dict.get(
+            "arrival_rate",  # keys are years of the model. must exceed sim_duration years
+            {
+                1: 23.42,
+                2: 24.61,
+                3: 25.76,
+                4: 26.87,
+                5: 27.92,
+                6: 28.90,
+                7: 29.81,
+                8: 30.66,
+                9: 31.45,
+                10: 32.19,
+                11: 32.88,
+                12: 33.52,
+                13: 34.12,
+            },
+        )
         self.snapshot_interval = config_dict.get(
             "snapshot_interval", int(365)
         )  # how often to take a snapshot of the results_df
@@ -130,7 +152,10 @@ class Config:
         self.referral_dist = config_dict.get(
             "referral_dist", {"early": 0.82, "late": 0.18}
         )
-
+        yearly_arrival_rate = get_yearly_arrival_rate(self)
+        self.mean_iat_over_time_dfs: dict = get_mean_iat_over_time_from_arrival_rate(
+            yearly_arrival_rate
+        )
         # routing distributions (to be fed in externally for each geography under study - these are defaults relate to the national level model)
         self.con_care_dist = config_dict.get(
             "con_care_dist",
