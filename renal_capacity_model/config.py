@@ -15,7 +15,7 @@ class Config:
     """
 
     def __init__(self, config_dict={}):
-        self.trace = config_dict.get("trace", False)
+        self.trace = config_dict.get("trace", True)
         self.initialise_prevalent_patients = config_dict.get(
             "initialise_prevalent_patients", True
         )  # whether to initialise model with prevalent counts (takes a long time using default national values)
