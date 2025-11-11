@@ -139,12 +139,12 @@ class Model:
                 )
             sampled_con_care_time = self.config.ttd_con_care[
                 "scale"
-            ] * self.rng.weibull(a=self.config.ttd_con_care["shape"], size=1)
+            ] * self.rng.weibull(a=self.config.ttd_con_care["shape"], size=None)
             self._update_event_log(
                 p,
                 "conservative_care",
                 "death",
-                0,
+                0.0,
                 sampled_con_care_time,
             )
             yield self.env.timeout(sampled_con_care_time)
@@ -326,8 +326,8 @@ class Model:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the sampled inter-arrival time
         """
         while True:
-            start_time_in_system_patient = self.arrivals_dist[patient_type].sample(
-                simulation_time=self.env.now
+            start_time_in_system_patient = float(
+                self.arrivals_dist[patient_type].sample(simulation_time=self.env.now)
             )
             yield self.env.timeout(start_time_in_system_patient)
             self.patient_counter += (
@@ -364,7 +364,7 @@ class Model:
 
                 sampled_con_care_time = self.config.ttd_con_care[
                     "scale"
-                ] * self.rng.weibull(a=self.config.ttd_con_care["shape"], size=1)
+                ] * self.rng.weibull(a=self.config.ttd_con_care["shape"], size=None)
 
                 self._update_event_log(
                     p,
@@ -578,7 +578,7 @@ class Model:
                         a=self.config.ttd_tx_distribution["live"][patient.age_group][
                             "shape"
                         ],
-                        size=1,
+                        size=None,
                     )
                 else:  # prevalent patient
                     if (
@@ -603,7 +603,7 @@ class Model:
                     patient,
                     patient.transplant_type,
                     "death",
-                    self.env.now,
+                    float(self.env.now),
                     sampled_wait_time,
                 )
 
@@ -650,7 +650,7 @@ class Model:
                             a=self.config.ttgf_tx_distribution["cadaver"][
                                 patient.age_group
                             ]["shape"],
-                            size=1,
+                            size=None,
                         )
                 else:  # prevalent patient
                     if (
@@ -668,14 +668,14 @@ class Model:
                             a=self.config.ttgf_tx_initial_distribution["live"][
                                 patient.age_group
                             ]["shape"],
-                            size=1,
+                            size=None,
                         )
 
                 self._update_event_log(
                     patient,
                     patient.transplant_type,
                     "graft_failure",
-                    self.env.now,
+                    float(self.env.now),
                     sampled_wait_time,
                 )
                 yield self.env.timeout(sampled_wait_time)
@@ -700,7 +700,7 @@ class Model:
                         a=self.config.ttd_tx_distribution["cadaver"][patient.age_group][
                             "shape"
                         ],
-                        size=1,
+                        size=None,
                     )
                 else:  # prevalent patient
                     if (
@@ -725,7 +725,7 @@ class Model:
                     patient,
                     patient.transplant_type,
                     "death",
-                    self.env.now,
+                    float(self.env.now),
                     sampled_wait_time,
                 )
 
@@ -772,7 +772,7 @@ class Model:
                             a=self.config.ttgf_tx_distribution["cadaver"][
                                 patient.age_group
                             ]["shape"],
-                            size=1,
+                            size=None,
                         )
                 else:  # prevalent patient
                     if (
@@ -790,14 +790,14 @@ class Model:
                             a=self.config.ttgf_tx_initial_distribution["cadaver"][
                                 patient.age_group
                             ]["shape"],
-                            size=1,
+                            size=None,
                         )
 
                 self._update_event_log(
                     patient,
                     patient.transplant_type,
                     "graft_failure_modality_allocation",
-                    self.env.now,
+                    float(self.env.now),
                     sampled_wait_time,
                 )
 
@@ -839,14 +839,14 @@ class Model:
             # if it is longer than their time on the waiting list they start transplant pre-emptively
             sampled_wait_time = self.config.tw_before_dialysis[
                 "scale"
-            ] * self.rng.weibull(a=self.config.tw_before_dialysis["shape"], size=1)
+            ] * self.rng.weibull(a=self.config.tw_before_dialysis["shape"], size=None)
             if sampled_wait_time > patient.time_on_waiting_list:
                 # they go to transplant pre-emptively without starting dialysis
                 self._update_event_log(
                     patient,
                     "waiting_for_transplant",
                     patient.transplant_type,
-                    self.env.now,
+                    float(self.env.now),
                     patient.time_on_waiting_list,
                 )
                 yield self.env.timeout(patient.time_on_waiting_list)
@@ -862,7 +862,7 @@ class Model:
                     patient,
                     "waiting_for_transplant",
                     "dialysis_modality_allocation",
-                    self.env.now,
+                    float(self.env.now),
                     sampled_wait_time,
                 )
                 yield self.env.timeout(sampled_wait_time)
@@ -914,8 +914,8 @@ class Model:
                     self.config.ttd_distribution[patient.dialysis_modality][
                         patient.age_group
                     ]["scale"],
-                    size=1,
-                )[0]
+                    size=None,
+                )
             else:  ## prevalent patient
                 if (
                     self.rng.uniform(0, 1)
@@ -943,7 +943,7 @@ class Model:
                     patient,
                     patient.dialysis_modality,
                     patient.transplant_type,
-                    self.env.now,
+                    float(self.env.now),
                     patient.time_on_waiting_list,
                 )
                 yield self.env.timeout(patient.time_on_waiting_list)
@@ -964,7 +964,7 @@ class Model:
                     patient,
                     patient.dialysis_modality,
                     "death",
-                    self.env.now,
+                    float(self.env.now),
                     sampled_time,
                 )
                 yield self.env.timeout(sampled_time)
@@ -994,8 +994,8 @@ class Model:
                     self.config.ttma_distribution[patient.dialysis_modality][
                         patient.age_group
                     ]["scale"],
-                    size=1,
-                )[0]
+                    size=None,
+                )
             else:  ## prevalent patient
                 if (
                     self.rng.uniform(0, 1)
@@ -1024,7 +1024,7 @@ class Model:
                     patient,
                     patient.dialysis_modality,
                     patient.transplant_type,
-                    self.env.now,
+                    float(self.env.now),
                     patient.time_on_waiting_list,
                 )
                 yield self.env.timeout(patient.time_on_waiting_list)
@@ -1045,7 +1045,7 @@ class Model:
                     patient,
                     patient.dialysis_modality,
                     "modality_allocation",
-                    self.env.now,
+                    float(self.env.now),
                     sampled_time,
                 )
                 yield self.env.timeout(sampled_time)
@@ -1075,20 +1075,15 @@ class Model:
                 self.snapshot_results_df = snapshot_results_df
             yield self.env.timeout(self.snapshot_interval)
 
-    def save_event_log(self):
+    def save_parquet_file(self, data_to_save):
         folder_path = "results"
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
-        today_date = datetime.now().strftime("%Y-%m-%d")
-        filename = f"results/{today_date}_eventlog_{self.run_number}.parquet"
-        event_log = self.event_log.copy()
-        event_log[["time_starting_activity_from", "time_spent_in_activity_from"]] = (
-            event_log[
-                ["time_starting_activity_from", "time_spent_in_activity_from"]
-            ].astype(float)
-        )
-        event_log.to_parquet(filename)
-        print("Event log saved")
+        today_date = datetime.now().strftime("%Y%m%d-%H%M")
+        filename = f"results/{today_date}_{data_to_save}_{self.run_number}.parquet"
+        df_to_save = getattr(self, data_to_save).copy()
+        df_to_save.to_parquet(filename)
+        print(f"{data_to_save} saved")
 
     def run(self):
         """Runs the model"""
@@ -1149,7 +1144,9 @@ class Model:
             print(self.patients_in_system)
             print(self.results_df)
             print(self.snapshot_results_df)
-            self.save_event_log()
+            self.save_parquet_file("event_log")
+            self.save_parquet_file("results_df")
+            self.save_parquet_file("snapshot_results_df")
 
 
 if __name__ == "__main__":
