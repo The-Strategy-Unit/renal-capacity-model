@@ -334,7 +334,7 @@ class Model:
             p = Patient(
                 self.patient_counter,
                 patient_type,
-                sampled_iat,
+                self.env.now,
                 patient_flag="incident",
             )
             if self.config.trace:
