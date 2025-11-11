@@ -339,11 +339,11 @@ class Model:
             )
             if self.config.trace:
                 print(
-                    f"Patient {p.id} of age group {p.age_group} entered the system at {sampled_iat}."
+                    f"Patient {p.id} of age group {p.age_group} entered the system at {self.env.now}."
                 )
             self.patients_in_system[patient_type] += 1
             self.results_df.loc[p.id, "patient_flag"] = p.patient_flag
-            self.results_df.loc[p.id, "entry_time"] = sampled_iat
+            self.results_df.loc[p.id, "entry_time"] = self.env.now
             self.results_df.loc[p.id, "age_group"] = int(p.age_group)
             self.results_df.loc[p.id, "referral_type"] = p.referral_type
             self.results_df.loc[p.id, "transplant_count"] = 0
