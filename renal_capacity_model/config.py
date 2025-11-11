@@ -21,8 +21,8 @@ class Config:
         )  # whether to initialise model with prevalent counts (takes a long time using default national values)
         self.number_of_runs = config_dict.get("number_of_runs", 10)
         self.sim_duration = config_dict.get(
-            "sim_duration", int(5 * 365)
-        )  # in days, but should be a multiple of 365 i.e. years
+            "sim_duration", int(1 * 365 + 1)
+        )  # in days, but should be a multiple of 365 i.e. years. +1 for snapshot to work
         self.random_seed = config_dict.get("random_seed", 0)
         self.arrival_rate = config_dict.get(
             "arrival_rate",  # keys are years of the model. must exceed sim_duration years

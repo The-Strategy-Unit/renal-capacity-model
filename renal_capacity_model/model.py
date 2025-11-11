@@ -327,6 +327,7 @@ class Model:
         """
         while True:
             sampled_iat = float(self.arrivals_dist[patient_type].sample(self.env.now))
+            yield self.env.timeout(sampled_iat)
             self.patient_counter += (
                 1  # we use the patient_counter for the ID so this must come first
             )
@@ -354,26 +355,23 @@ class Model:
 
             if self.rng.uniform(0, 1) > self.config.con_care_dist[p.age_group]:
                 # If the patient is not diverted to conservative care they start KRT
-                self.env.process(self.start_krt(p, sampled_iat))
+                self.env.process(self.start_krt(p))
             else:
-                self.env.process(self.start_conservative_care(p, sampled_iat))
-            yield self.env.timeout(sampled_iat)
+                self.env.process(self.start_conservative_care(p))
 
-    def start_conservative_care(self, p: Patient, sampled_iat):
+    def start_conservative_care(self, p: Patient):
         self.results_df.loc[p.id, "diverted_to_con_care_count"] = True
 
         sampled_con_care_time = self.config.ttd_con_care["scale"] * self.rng.weibull(
             a=self.config.ttd_con_care["shape"], size=None
         )
-
         self._update_event_log(
             p,
             "conservative_care",
             "death",
-            sampled_iat,
+            self.env.now,
             sampled_con_care_time,
         )
-        self.results_df.loc[p.id, "time_of_death"] = self.env.now
         self.patients_in_system[p.patient_type] -= 1
         self.results_df.loc[p.id, "diverted_to_con_care_count"] = (
             False  # as they've left conservative care
@@ -384,8 +382,9 @@ class Model:
                 f"Patient {p.id} of age group {p.age_group} diverted to conservative care and left the system after {sampled_con_care_time} time units."
             )
         yield self.env.timeout(sampled_con_care_time)
+        self.results_df.loc[p.id, "time_of_death"] = self.env.now
 
-    def start_krt(self, patient: Patient, sampled_iat):
+    def start_krt(self, patient: Patient):
         """Function containing the logic for the Kidney Replacement Therapy pathway
 
         Args:
@@ -394,7 +393,6 @@ class Model:
         Yields:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
         """
-        yield self.env.timeout(sampled_iat)
         if (
             self.rng.uniform(0, 1)
             > self.config.suitable_for_transplant_dist[patient.age_group]
@@ -682,7 +680,7 @@ class Model:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} had graft failure after live transplant at time {self.env.now}."
                     )
-                yield self.env.process(self.start_krt(patient, 0))
+                yield self.env.process(self.start_krt(patient))
         else:  # cadaver
             self.results_df.loc[patient.id, "cadaver_transplant_count"] += 1
             # how long the graft lasts depends on where they go next: death or back to start_krt
@@ -805,7 +803,7 @@ class Model:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} had graft failure after cadaver transplant at time {self.env.now}."
                     )
-                yield self.env.process(self.start_krt(patient, 0))
+                yield self.env.process(self.start_krt(patient))
 
     def start_dialysis_whilst_waiting_for_transplant(self, patient: Patient):
         """Function containing the logic for the mixed pathway where a patient starts on dialysis and then receives a transplant
