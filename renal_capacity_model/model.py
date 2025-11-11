@@ -326,26 +326,23 @@ class Model:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the sampled inter-arrival time
         """
         while True:
-            start_time_in_system_patient = float(
-                self.arrivals_dist[patient_type].sample(simulation_time=self.env.now)
-            )
-            yield self.env.timeout(start_time_in_system_patient)
+            sampled_iat = float(self.arrivals_dist[patient_type].sample(self.env.now))
             self.patient_counter += (
                 1  # we use the patient_counter for the ID so this must come first
             )
             p = Patient(
                 self.patient_counter,
                 patient_type,
-                start_time_in_system_patient,
+                sampled_iat,
                 patient_flag="incident",
             )
             if self.config.trace:
                 print(
-                    f"Patient {p.id} of age group {p.age_group} entered the system at {self.env.now} time units."
+                    f"Patient {p.id} of age group {p.age_group} entered the system at {sampled_iat}."
                 )
             self.patients_in_system[patient_type] += 1
             self.results_df.loc[p.id, "patient_flag"] = p.patient_flag
-            self.results_df.loc[p.id, "entry_time"] = start_time_in_system_patient
+            self.results_df.loc[p.id, "entry_time"] = sampled_iat
             self.results_df.loc[p.id, "age_group"] = int(p.age_group)
             self.results_df.loc[p.id, "referral_type"] = p.referral_type
             self.results_df.loc[p.id, "transplant_count"] = 0
@@ -357,39 +354,38 @@ class Model:
 
             if self.rng.uniform(0, 1) > self.config.con_care_dist[p.age_group]:
                 # If the patient is not diverted to conservative care they start KRT
-                self.env.process(self.start_krt(p))
+                self.env.process(self.start_krt(p, sampled_iat))
             else:
-                # these patients are diverted to conservative care. We don't need a process here as all these patients do is wait a while before leaving the system
-                self.results_df.loc[p.id, "diverted_to_con_care_count"] = True
+                self.env.process(self.start_conservative_care(p, sampled_iat))
+            yield self.env.timeout(sampled_iat)
 
-                sampled_con_care_time = self.config.ttd_con_care[
-                    "scale"
-                ] * self.rng.weibull(a=self.config.ttd_con_care["shape"], size=None)
+    def start_conservative_care(self, p: Patient, sampled_iat):
+        self.results_df.loc[p.id, "diverted_to_con_care_count"] = True
 
-                self._update_event_log(
-                    p,
-                    "conservative_care",
-                    "death",
-                    start_time_in_system_patient,
-                    sampled_con_care_time,
-                )
+        sampled_con_care_time = self.config.ttd_con_care["scale"] * self.rng.weibull(
+            a=self.config.ttd_con_care["shape"], size=None
+        )
 
-                yield self.env.timeout(sampled_con_care_time)
-                self.results_df.loc[p.id, "time_of_death"] = self.env.now
-                self.patients_in_system[patient_type] -= 1
-                self.results_df.loc[p.id, "diverted_to_con_care_count"] = (
-                    False  # as they've left conservative care
-                )
-                self.results_df.loc[p.id, "treatment_modality_at_death"] = (
-                    "conservative_care"
-                )
-                if self.config.trace:
-                    print(
-                        f"Patient {p.id} of age group {p.age_group} diverted to conservative care and left the system after {sampled_con_care_time} time units."
-                    )
-                    # print(self.patients_in_system)
+        self._update_event_log(
+            p,
+            "conservative_care",
+            "death",
+            sampled_iat,
+            sampled_con_care_time,
+        )
+        self.results_df.loc[p.id, "time_of_death"] = self.env.now
+        self.patients_in_system[p.patient_type] -= 1
+        self.results_df.loc[p.id, "diverted_to_con_care_count"] = (
+            False  # as they've left conservative care
+        )
+        self.results_df.loc[p.id, "treatment_modality_at_death"] = "conservative_care"
+        if self.config.trace:
+            print(
+                f"Patient {p.id} of age group {p.age_group} diverted to conservative care and left the system after {sampled_con_care_time} time units."
+            )
+        yield self.env.timeout(sampled_con_care_time)
 
-    def start_krt(self, patient: Patient):
+    def start_krt(self, patient: Patient, sampled_iat):
         """Function containing the logic for the Kidney Replacement Therapy pathway
 
         Args:
@@ -398,7 +394,7 @@ class Model:
         Yields:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
         """
-
+        yield self.env.timeout(sampled_iat)
         if (
             self.rng.uniform(0, 1)
             > self.config.suitable_for_transplant_dist[patient.age_group]
@@ -640,6 +636,7 @@ class Model:
                             right=self.config.ttgf_tx_distribution["live"][
                                 patient.age_group
                             ]["break_point"],
+                            size=None,
                         )
                     else:
                         sampled_wait_time = self.config.ttgf_tx_distribution["live"][
@@ -685,7 +682,7 @@ class Model:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} had graft failure after live transplant at time {self.env.now}."
                     )
-                yield self.env.process(self.start_krt(patient))
+                yield self.env.process(self.start_krt(patient, 0))
         else:  # cadaver
             self.results_df.loc[patient.id, "cadaver_transplant_count"] += 1
             # how long the graft lasts depends on where they go next: death or back to start_krt
@@ -808,7 +805,7 @@ class Model:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} had graft failure after cadaver transplant at time {self.env.now}."
                     )
-                yield self.env.process(self.start_krt(patient))
+                yield self.env.process(self.start_krt(patient, 0))
 
     def start_dialysis_whilst_waiting_for_transplant(self, patient: Patient):
         """Function containing the logic for the mixed pathway where a patient starts on dialysis and then receives a transplant
@@ -1126,15 +1123,10 @@ class Model:
                             patient_type, "cadaver_transplant"
                         )
                     )
-                # We set up a generator for each of the patient types we have an IAT for
-
+        # We set up a generator for each of the patient types we have an IAT for
         for patient_type in self.patient_types:
-            self.env.process(
-                self.generator_patient_arrivals(patient_type)
-            )  ## generates the first arrival and subsequent arrivals
-
+            self.env.process(self.generator_patient_arrivals(patient_type))
         self.env.process(self.snapshot_results())
-
         self.env.run(until=self.config.sim_duration)
         # self.calculate_run_results()
 
