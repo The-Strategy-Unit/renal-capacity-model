@@ -2,6 +2,24 @@ from renal_capacity_model.model import Model
 from renal_capacity_model.config import Config
 import numpy as np
 
+validation_arrival_rate = {
+    "arrival_rate": {
+        1: 20.9,
+        2: 21.4,
+        3: 21.8,
+        4: 22.3,
+        5: 23.3,
+        6: 24.1,
+        7: 24.2,
+        8: 24.7,
+        9: 24.6,
+        10: 25.0,
+        11: 22.9,
+        12: 23.6,
+        13: 22.8,
+    },
+}
+
 validation_config = {
     "prevalent_counts": {
         "conservative_care": {
