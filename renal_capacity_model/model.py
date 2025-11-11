@@ -1126,14 +1126,13 @@ class Model:
             self.env.process(self.generator_patient_arrivals(patient_type))
         self.env.process(self.snapshot_results())
         self.env.run(until=self.config.sim_duration)
-        # self.calculate_run_results()
 
         # Show results (optional - set in config)
         if self.config.trace:
             print(f"Run Number {self.run_number}")
             print(self.patients_in_system)
-            print(self.results_df)
             print(self.snapshot_results_df)
+            print(self.results_df)
             self.save_parquet_file("event_log")
             self.save_parquet_file("results_df")
             self.save_parquet_file("snapshot_results_df")
