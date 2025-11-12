@@ -2,7 +2,7 @@ from renal_capacity_model.config import Config
 from renal_capacity_model.main import main
 
 national_validation_config = {
-    "sim_duration": {13 * 365},
+    "sim_duration": 13 * 365,
     "arrival_rate": {
         1: 20.9,
         2: 21.4,
