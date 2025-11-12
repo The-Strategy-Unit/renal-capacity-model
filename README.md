@@ -21,13 +21,38 @@ To install the package:
 1. Clone the repository to your local machine. Open the repository.
 2. Run `uv pip install -e .`
 
-## Running the model
+## Setting model configuration
 
 Once installed, set the configuration for your model run in `config.py`.
+Note that the default values in config are the national values, which are very large - it will take a long time to run unless you amend this.
 
-Run the model using `uv run -m renal_capacity_model.main`. This runs a full trial.
+Regional users of the model will be provided with a Renal Modelling Input Excel file.
 
-To run a single model run, use `uv run -m renal_capacity_model.model`
+## Running the model (experimental version)
+
+### National model
+
+Run the model using `uv run -m renal_capacity_model.main`. This runs a full trial using national values, unless `config.py` has been amended. Note that the size of the national model is very large and will take several hours to complete.
+
+To run a single model run using the national values, use `uv run -m renal_capacity_model.model`.
+Note that this defaults to not initialising the prevalent patients.
+
+### Regional model using input Excel file
+
+1. Save your input Excel file on your local machine. We suggest creating a `data` folder in the root of the renal-capacity-model project directory and saving it there.
+1. Run the full trial using `uv run -m renal_capacity_model.main --input_filepath path/to/excel_file`
+
+## Running the model (validation version)
+
+### National model
+
+Run the validation version of the national model with `uv run python tests/validation/national_validation.py`.
+Ensure that you have not changed any values in `config.py` to use the default national values.
+
+### Regional model using input Excel file
+
+1. Save your input Excel file on your local machine. We suggest creating a `data` folder in the root of the renal-capacity-model project directory and saving it there.
+1. Run the full trial with validation values using `uv run -m renal_capacity_model.main --input_filepath path/to/excel_file --validation`
 
 ## Information for developers
 
@@ -64,3 +89,4 @@ We have set up some linting tools to help maintain good coding practices. To use
 - `uv sync --all-extras` to install the development-only packages
 - `uv run pyright` to run typing checks with pyright
 - `uv run ruff check` to run linting checks with ruff
+- `uv run ruff format` to run formatting checks with ruff
