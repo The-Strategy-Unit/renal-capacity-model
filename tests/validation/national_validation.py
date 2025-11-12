@@ -1,8 +1,8 @@
-from renal_capacity_model.model import Model
 from renal_capacity_model.config import Config
-import numpy as np
+from renal_capacity_model.main import main
 
-validation_arrival_rate = {
+national_validation_config = {
+    "sim_duration": {13 * 365},
     "arrival_rate": {
         1: 20.9,
         2: 21.4,
@@ -18,9 +18,6 @@ validation_arrival_rate = {
         12: 23.6,
         13: 22.8,
     },
-}
-
-validation_config = {
     "prevalent_counts": {
         "conservative_care": {
             "1_early": 396,
@@ -106,11 +103,9 @@ validation_config = {
             "5_late": 352,
             "6_late": 41,
         },
-    }
+    },
 }
 
 if __name__ == "__main__":
-    config = Config(validation_config)
-    rng = np.random.default_rng(config.random_seed)
-    model = Model(1, rng, config)
-    model.run()
+    config = Config(national_validation_config)
+    main(config)
