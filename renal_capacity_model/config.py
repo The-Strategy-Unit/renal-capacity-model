@@ -222,8 +222,22 @@ class Config:
         self.death_post_transplant = config_dict.get(
             "death_post_transplant",
             {
-                "live": 0.39,
-                "cadaver": 0.47,
+                "live": {
+                    1: 0.05,
+                    2: 0.15,
+                    3: 0.26,
+                    4: 0.38,
+                    5: 0.50,
+                    6: 0.63,
+                },
+                "cadaver": {
+                    1: 0.07,
+                    2: 0.17,
+                    3: 0.27,
+                    4: 0.42,
+                    5: 0.54,
+                    6: 0.73,
+                },
             },
         )
 

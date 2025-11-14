@@ -294,8 +294,22 @@ def load_scenario_from_excel(
         },
     }
     config_from_excel["death_post_transplant"] = {
-        "live": input_scenario.iat[119, 3],
-        "cadaver": input_scenario.iat[119, 2],
+        "live": {
+            1: input_scenario.iat[119, 3],
+            2: input_scenario.iat[120, 3],
+            3: input_scenario.iat[121, 3],
+            4: input_scenario.iat[122, 3],
+            5: input_scenario.iat[123, 3],
+            6: input_scenario.iat[124, 3],
+        },
+        "cadaver": {
+            1: input_scenario.iat[119, 2],
+            2: input_scenario.iat[120, 2],
+            3: input_scenario.iat[121, 2],
+            4: input_scenario.iat[122, 2],
+            5: input_scenario.iat[123, 2],
+            6: input_scenario.iat[124, 2],
+        },
     }
     config_from_excel["death_post_dialysis_modality"] = {
         "ichd": {
