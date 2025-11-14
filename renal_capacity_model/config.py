@@ -661,12 +661,14 @@ class Config:
             },
         )
 
-        self.tw_before_dialysis = config_dict.get(
-            "tw_before_dialysis",
-            {
-                "shape": 1,
-                "scale": 450,
-            },
+        self.tw_before_dialysis = (
+            config_dict.get(  ## we don't have any data on this - expert given value
+                "tw_before_dialysis",
+                {
+                    "shape": 1,
+                    "scale": 90,
+                },
+            )
         )
 
         self.ttd_distribution = config_dict.get(
