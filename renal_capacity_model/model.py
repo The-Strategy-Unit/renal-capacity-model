@@ -193,11 +193,11 @@ class Model:
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean["cadaver"]
                     )  # due to memoryless property of exponential dist
+                self.results_df.loc[p.id, "pre_emptive_transplant"] = False
+                self.results_df.loc[p.id, "time_enters_waiting_list"] = (
+                    p.time_enters_waiting_list
+                )
             self.results_df.loc[p.id, "suitable_for_transplant"] = p.transplant_suitable
-            self.results_df.loc[p.id, "pre_emptive_transplant"] = False
-            self.results_df.loc[p.id, "time_enters_waiting_list"] = (
-                p.time_enters_waiting_list
-            )
             yield self.env.process(self.start_dialysis_modality(p))
         elif location == "hhd":
             p.dialysis_modality = "hhd"
@@ -231,11 +231,11 @@ class Model:
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean["cadaver"]
                     )  # due to memoryless property of exponential dist
+                self.results_df.loc[p.id, "pre_emptive_transplant"] = False
+                self.results_df.loc[p.id, "time_enters_waiting_list"] = (
+                    p.time_enters_waiting_list
+                )
             self.results_df.loc[p.id, "suitable_for_transplant"] = p.transplant_suitable
-            self.results_df.loc[p.id, "pre_emptive_transplant"] = False
-            self.results_df.loc[p.id, "time_enters_waiting_list"] = (
-                p.time_enters_waiting_list
-            )
             yield self.env.process(self.start_dialysis_modality(p))
         elif location == "pd":
             p.dialysis_modality = "pd"
@@ -269,11 +269,12 @@ class Model:
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean["cadaver"]
                     )  # due to memoryless property of exponential dist
+                self.results_df.loc[p.id, "pre_emptive_transplant"] = False
+                self.results_df.loc[p.id, "time_enters_waiting_list"] = (
+                    p.time_enters_waiting_list
+                )
             self.results_df.loc[p.id, "suitable_for_transplant"] = p.transplant_suitable
-            self.results_df.loc[p.id, "pre_emptive_transplant"] = False
-            self.results_df.loc[p.id, "time_enters_waiting_list"] = (
-                p.time_enters_waiting_list
-            )
+
             yield self.env.process(self.start_dialysis_modality(p))
         elif location == "live_transplant":
             p.transplant_suitable = True
@@ -641,8 +642,10 @@ class Model:
                             patient.age_group
                         ]["break_point"] + self.config.ttgf_tx_distribution["live"][
                             patient.age_group
-                        ]["scale"] * self.rng.weibull(
-                            a=self.config.ttgf_tx_distribution["cadaver"][
+                        ][
+                            "scale"
+                        ] * self.rng.weibull(
+                            a=self.config.ttgf_tx_distribution["live"][
                                 patient.age_group
                             ]["shape"],
                             size=None,
@@ -763,7 +766,9 @@ class Model:
                             patient.age_group
                         ]["break_point"] + self.config.ttgf_tx_distribution["cadaver"][
                             patient.age_group
-                        ]["scale"] * self.rng.weibull(
+                        ][
+                            "scale"
+                        ] * self.rng.weibull(
                             a=self.config.ttgf_tx_distribution["cadaver"][
                                 patient.age_group
                             ]["shape"],

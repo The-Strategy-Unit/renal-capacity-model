@@ -243,7 +243,7 @@ def load_scenario_from_excel(
 
     config_from_excel["referral_dist"] = {
         "early": input_scenario.iat[9, 1],
-        "late": input_scenario.iat[9, 2],
+        "late": input_scenario.iat[10, 1],
     }
 
     config_from_excel["con_care_dist"] = {
