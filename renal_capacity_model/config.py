@@ -307,7 +307,7 @@ class Config:
 
         self.pre_emptive_transplant_cadaver_donor_dist = config_dict.get(
             "pre_emptive_transplant_cadaver_donor_dist",
-            {"early": 0.22, "late": 0.05},
+            {y: {"early": 0.22, "late": 0.05} for y in range(1, 14)},
         )
 
         # time to event distribution parameters (these are the same regardless of geography).

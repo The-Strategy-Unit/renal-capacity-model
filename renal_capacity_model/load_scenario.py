@@ -787,9 +787,60 @@ def load_scenario_from_excel(
     }
 
     config_from_excel["pre_emptive_transplant_cadaver_donor_dist"] = {
-        "early": input_scenario.iat[55, 2],
-        "late": input_scenario.iat[61, 2],
+        1: {
+            "early": input_scenario.iat[55, 2],
+            "late": input_scenario.iat[61, 2],
+        },
+        2: {
+            "early": input_scenario.iat[55, 3],
+            "late": input_scenario.iat[61, 2],
+        },
+        3: {
+            "early": input_scenario.iat[55, 4],
+            "late": input_scenario.iat[61, 2],
+        },
+        4: {
+            "early": input_scenario.iat[55, 5],
+            "late": input_scenario.iat[61, 2],
+        },
+        5: {
+            "early": input_scenario.iat[55, 6],
+            "late": input_scenario.iat[61, 2],
+        },
+        6: {
+            "early": input_scenario.iat[55, 7],
+            "late": input_scenario.iat[61, 2],
+        },
+        7: {
+            "early": input_scenario.iat[55, 8],
+            "late": input_scenario.iat[61, 2],
+        },
+        8: {
+            "early": input_scenario.iat[55, 9],
+            "late": input_scenario.iat[61, 2],
+        },
+        9: {
+            "early": input_scenario.iat[55, 10],
+            "late": input_scenario.iat[61, 2],
+        },
+        10: {
+            "early": input_scenario.iat[55, 11],
+            "late": input_scenario.iat[61, 2],
+        },
+        11: {
+            "early": input_scenario.iat[55, 12],
+            "late": input_scenario.iat[61, 2],
+        },
+        12: {
+            "early": input_scenario.iat[55, 13],
+            "late": input_scenario.iat[61, 2],
+        },
+        13: {
+            "early": input_scenario.iat[55, 14],
+            "late": input_scenario.iat[61, 2],
+        },
     }
+
     config_from_excel["time_on_waiting_list_mean"] = {
         "live": input_scenario.iat[29, 2],
         "cadaver": input_scenario.iat[30, 2],

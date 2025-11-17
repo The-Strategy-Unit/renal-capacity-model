@@ -61,6 +61,7 @@ def check_config_duration_valid(config):
         "con_care_dist",
         "modality_allocation_distributions",
         "pre_emptive_transplant_live_donor_dist",
+        "pre_emptive_transplant_cadaver_donor_dist",
     ]
     sim_years = config.sim_duration / 365
     for config_value in config_values_to_check:
