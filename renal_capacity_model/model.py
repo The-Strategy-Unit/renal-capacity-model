@@ -645,9 +645,7 @@ class Model:
                             patient.age_group
                         ]["break_point"] + self.config.ttgf_tx_distribution["live"][
                             patient.age_group
-                        ][
-                            "scale"
-                        ] * self.rng.weibull(
+                        ]["scale"] * self.rng.weibull(
                             a=self.config.ttgf_tx_distribution["live"][
                                 patient.age_group
                             ]["shape"],
@@ -772,9 +770,7 @@ class Model:
                             patient.age_group
                         ]["break_point"] + self.config.ttgf_tx_distribution["cadaver"][
                             patient.age_group
-                        ][
-                            "scale"
-                        ] * self.rng.weibull(
+                        ]["scale"] * self.rng.weibull(
                             a=self.config.ttgf_tx_distribution["cadaver"][
                                 patient.age_group
                             ]["shape"],

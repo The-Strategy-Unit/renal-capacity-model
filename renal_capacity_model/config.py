@@ -17,7 +17,7 @@ class Config:
     def __init__(self, config_dict={}):
         self.trace = config_dict.get("trace", False)
         self.initialise_prevalent_patients = config_dict.get(
-            "initialise_prevalent_patients", True
+            "initialise_prevalent_patients", False
         )  # whether to initialise model with prevalent counts (takes a long time using default national values)
         self.number_of_runs = config_dict.get("number_of_runs", 1)
         self.sim_duration = config_dict.get(

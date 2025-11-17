@@ -1,7 +1,6 @@
 from renal_capacity_model.model import Model
 from renal_capacity_model.config import Config
 import numpy as np
-import pandas as pd
 import statistics
 
 ## Note ## All variate generation working as expected. Independent check of means of distribution was carried out.
