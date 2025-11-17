@@ -302,7 +302,7 @@ class Config:
 
         self.pre_emptive_transplant_live_donor_dist = config_dict.get(
             "pre_emptive_transplant_live_donor_dist",
-            {"early": 0.49, "late": 0.07},
+            {y: {"early": 0.49, "late": 0.07} for y in range(1, 14)},
         )
 
         self.pre_emptive_transplant_cadaver_donor_dist = config_dict.get(
