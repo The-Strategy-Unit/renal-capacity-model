@@ -193,11 +193,11 @@ class Model:
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean["cadaver"]
                     )  # due to memoryless property of exponential dist
+                self.results_df.loc[p.id, "pre_emptive_transplant"] = False
+                self.results_df.loc[p.id, "time_enters_waiting_list"] = (
+                    p.time_enters_waiting_list
+                )
             self.results_df.loc[p.id, "suitable_for_transplant"] = p.transplant_suitable
-            self.results_df.loc[p.id, "pre_emptive_transplant"] = False
-            self.results_df.loc[p.id, "time_enters_waiting_list"] = (
-                p.time_enters_waiting_list
-            )
             yield self.env.process(self.start_dialysis_modality(p))
         elif location == "hhd":
             p.dialysis_modality = "hhd"
@@ -231,11 +231,11 @@ class Model:
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean["cadaver"]
                     )  # due to memoryless property of exponential dist
+                self.results_df.loc[p.id, "pre_emptive_transplant"] = False
+                self.results_df.loc[p.id, "time_enters_waiting_list"] = (
+                    p.time_enters_waiting_list
+                )
             self.results_df.loc[p.id, "suitable_for_transplant"] = p.transplant_suitable
-            self.results_df.loc[p.id, "pre_emptive_transplant"] = False
-            self.results_df.loc[p.id, "time_enters_waiting_list"] = (
-                p.time_enters_waiting_list
-            )
             yield self.env.process(self.start_dialysis_modality(p))
         elif location == "pd":
             p.dialysis_modality = "pd"
@@ -269,11 +269,12 @@ class Model:
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean["cadaver"]
                     )  # due to memoryless property of exponential dist
+                self.results_df.loc[p.id, "pre_emptive_transplant"] = False
+                self.results_df.loc[p.id, "time_enters_waiting_list"] = (
+                    p.time_enters_waiting_list
+                )
             self.results_df.loc[p.id, "suitable_for_transplant"] = p.transplant_suitable
-            self.results_df.loc[p.id, "pre_emptive_transplant"] = False
-            self.results_df.loc[p.id, "time_enters_waiting_list"] = (
-                p.time_enters_waiting_list
-            )
+
             yield self.env.process(self.start_dialysis_modality(p))
         elif location == "live_transplant":
             p.transplant_suitable = True
@@ -561,7 +562,10 @@ class Model:
         if patient.transplant_type == "live":
             self.results_df.loc[patient.id, "live_transplant_count"] += 1
             # how long the graft lasts depends on where they go next: death or back to start_krt
-            if self.rng.uniform(0, 1) < self.config.death_post_transplant["live"]:
+            if (
+                self.rng.uniform(0, 1)
+                < self.config.death_post_transplant["live"][patient.age_group]
+            ):
                 # patient dies after transplant
 
                 ## sampled_wait_time depends on whether patitent is inicident or not
@@ -642,7 +646,7 @@ class Model:
                         ]["break_point"] + self.config.ttgf_tx_distribution["live"][
                             patient.age_group
                         ]["scale"] * self.rng.weibull(
-                            a=self.config.ttgf_tx_distribution["cadaver"][
+                            a=self.config.ttgf_tx_distribution["live"][
                                 patient.age_group
                             ]["shape"],
                             size=None,
@@ -684,7 +688,10 @@ class Model:
         else:  # cadaver
             self.results_df.loc[patient.id, "cadaver_transplant_count"] += 1
             # how long the graft lasts depends on where they go next: death or back to start_krt
-            if self.rng.uniform(0, 1) < self.config.death_post_transplant["cadaver"]:
+            if (
+                self.rng.uniform(0, 1)
+                < self.config.death_post_transplant["cadaver"][patient.age_group]
+            ):
                 # patient dies after transplant
 
                 ## sampled_wait_time depends on whether patitent is inicident or not
@@ -1082,6 +1089,11 @@ class Model:
 
     def run(self):
         """Runs the model"""
+        print(self.config.death_post_transplant)
+        print(self.config.death_post_dialysis_modality)
+        print(self.config.pre_emptive_transplant_live_donor_dist)
+        print(self.config.pre_emptive_transplant_cadaver_donor_dist)
+
         if self.config.initialise_prevalent_patients:
             # We first initialize the model with patients that were in the system at time zero - we look at each location in turn (conservative care, ichd, hhd, pd, live transplant, cadaver transplant)
             for patient_type in self.patient_types:

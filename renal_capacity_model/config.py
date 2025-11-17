@@ -15,11 +15,11 @@ class Config:
     """
 
     def __init__(self, config_dict={}):
-        self.trace = config_dict.get("trace", True)
+        self.trace = config_dict.get("trace", False)
         self.initialise_prevalent_patients = config_dict.get(
-            "initialise_prevalent_patients", True
+            "initialise_prevalent_patients", False
         )  # whether to initialise model with prevalent counts (takes a long time using default national values)
-        self.number_of_runs = config_dict.get("number_of_runs", 10)
+        self.number_of_runs = config_dict.get("number_of_runs", 1)
         self.sim_duration = config_dict.get(
             "sim_duration", int(1 * 365)
         )  # in days, but should be a multiple of 365 i.e. years.
@@ -222,8 +222,22 @@ class Config:
         self.death_post_transplant = config_dict.get(
             "death_post_transplant",
             {
-                "live": 0.39,
-                "cadaver": 0.47,
+                "live": {
+                    1: 0.05,
+                    2: 0.15,
+                    3: 0.26,
+                    4: 0.38,
+                    5: 0.50,
+                    6: 0.63,
+                },
+                "cadaver": {
+                    1: 0.07,
+                    2: 0.17,
+                    3: 0.27,
+                    4: 0.42,
+                    5: 0.54,
+                    6: 0.73,
+                },
             },
         )
 
@@ -661,12 +675,14 @@ class Config:
             },
         )
 
-        self.tw_before_dialysis = config_dict.get(
-            "tw_before_dialysis",
-            {
-                "shape": 1,
-                "scale": 450,
-            },
+        self.tw_before_dialysis = (
+            config_dict.get(  ## we don't have any data on this - expert given value
+                "tw_before_dialysis",
+                {
+                    "shape": 1,
+                    "scale": 90,
+                },
+            )
         )
 
         self.ttd_distribution = config_dict.get(
