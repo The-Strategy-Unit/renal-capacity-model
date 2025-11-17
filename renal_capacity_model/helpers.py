@@ -59,7 +59,8 @@ def check_config_duration_valid(config):
     config_values_to_check = [
         "arrival_rate",
         "con_care_dist",
-    ]  # we'll add more here - see issue #86
+        "modality_allocation_distributions",
+    ]
     sim_years = config.sim_duration / 365
     for config_value in config_values_to_check:
         if len(getattr(config, config_value)) < sim_years:

@@ -192,26 +192,29 @@ class Config:
         self.modality_allocation_distributions = config_dict.get(
             "modality_allocation_distributions",
             {
-                "none": {
-                    "ichd": 0.79,
-                    "hhd": 0.01,
-                    "pd": 0.20,
-                },
-                "ichd": {
-                    "ichd": 0,
-                    "hhd": 0.46,
-                    "pd": 0.54,
-                },
-                "hhd": {
-                    "ichd": 0.99,
-                    "hhd": 0,
-                    "pd": 0.01,
-                },
-                "pd": {
-                    "ichd": 0.99,
-                    "hhd": 0.01,
-                    "pd": 0,
-                },
+                y: {
+                    "none": {
+                        "ichd": 0.79,
+                        "hhd": 0.01,
+                        "pd": 0.20,
+                    },
+                    "ichd": {
+                        "ichd": 0,
+                        "hhd": 0.46,
+                        "pd": 0.54,
+                    },
+                    "hhd": {
+                        "ichd": 0.99,
+                        "hhd": 0,
+                        "pd": 0.01,
+                    },
+                    "pd": {
+                        "ichd": 0.99,
+                        "hhd": 0.01,
+                        "pd": 0,
+                    },
+                }
+                for y in range(1, 14)
             },
         )
 
