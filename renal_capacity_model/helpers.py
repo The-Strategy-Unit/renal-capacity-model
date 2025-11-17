@@ -56,7 +56,10 @@ def check_config_duration_valid(config):
     Args:
         config (Config): Config Class containing values to be used for model run
     """
-    config_values_to_check = ["arrival_rate"]  # we'll add more here - see issue #86
+    config_values_to_check = [
+        "arrival_rate",
+        "con_care_dist",
+    ]  # we'll add more here - see issue #86
     sim_years = config.sim_duration / 365
     for config_value in config_values_to_check:
         if len(getattr(config, config_value)) < sim_years:

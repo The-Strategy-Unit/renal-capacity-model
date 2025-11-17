@@ -160,12 +160,8 @@ class Config:
         self.con_care_dist = config_dict.get(
             "con_care_dist",
             {
-                1: 0.1,
-                2: 0.1,
-                3: 0.1,
-                4: 0.1,
-                5: 0.25,
-                6: 0.5,
+                y: {1: 0.1, 2: 0.1, 3: 0.1, 4: 0.1, 5: 0.25, 6: 0.5}
+                for y in range(1, 14)
             },
         )
 
