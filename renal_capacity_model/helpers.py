@@ -66,7 +66,7 @@ def check_config_duration_valid(config):
     ]
     sim_years = config.sim_duration / 365
     for config_value in config_values_to_check:
-        if len(getattr(config, config_value)) < sim_years:
+        if max(getattr(config, config_value).keys()) < sim_years:
             raise ValueError(
                 f"{config_value} does not include enough years for sim duration"
             )
