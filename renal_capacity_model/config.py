@@ -661,8 +661,11 @@ class Config:
         self.time_on_waiting_list_mean = config_dict.get(
             "time_on_waiting_list_mean",
             {
-                "live": 4.5 * 30,  # 3-6 months on average
-                "cadaver": 365 * 2.5 * 30,  # 2-3 years on average
+                y: {
+                    "live": 4.5 * 30,  # 3-6 months on average
+                    "cadaver": 365 * 2.5 * 30,  # 2-3 years on average
+                }
+                for y in range(1, 14)
             },
         )
 

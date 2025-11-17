@@ -842,8 +842,58 @@ def load_scenario_from_excel(
     }
 
     config_from_excel["time_on_waiting_list_mean"] = {
-        "live": input_scenario.iat[29, 2],
-        "cadaver": input_scenario.iat[30, 2],
+        1: {
+            "live": input_scenario.iat[29, 2],
+            "cadaver": input_scenario.iat[30, 2],
+        },
+        2: {
+            "live": input_scenario.iat[29, 3],
+            "cadaver": input_scenario.iat[30, 3],
+        },
+        3: {
+            "live": input_scenario.iat[29, 4],
+            "cadaver": input_scenario.iat[30, 4],
+        },
+        4: {
+            "live": input_scenario.iat[29, 5],
+            "cadaver": input_scenario.iat[30, 5],
+        },
+        5: {
+            "live": input_scenario.iat[29, 6],
+            "cadaver": input_scenario.iat[30, 6],
+        },
+        6: {
+            "live": input_scenario.iat[29, 7],
+            "cadaver": input_scenario.iat[30, 7],
+        },
+        7: {
+            "live": input_scenario.iat[29, 8],
+            "cadaver": input_scenario.iat[30, 8],
+        },
+        8: {
+            "live": input_scenario.iat[29, 9],
+            "cadaver": input_scenario.iat[30, 9],
+        },
+        9: {
+            "live": input_scenario.iat[29, 10],
+            "cadaver": input_scenario.iat[30, 10],
+        },
+        10: {
+            "live": input_scenario.iat[29, 11],
+            "cadaver": input_scenario.iat[30, 11],
+        },
+        11: {
+            "live": input_scenario.iat[29, 12],
+            "cadaver": input_scenario.iat[30, 12],
+        },
+        12: {
+            "live": input_scenario.iat[29, 13],
+            "cadaver": input_scenario.iat[30, 13],
+        },
+        13: {
+            "live": input_scenario.iat[29, 14],
+            "cadaver": input_scenario.iat[30, 14],
+        },
     }
     config_from_excel["daily_costs"] = {
         "ichd": input_scenario.iat[36, 1],
