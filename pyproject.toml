@@ -19,7 +19,7 @@ addopts = "--ignore=tests"
 testpaths = ["tests/unit"]
 
 [tool.coverage.run]
-omit=["tests/*"]
+omit=["tests/*", "renal_capacity_model/config_values.py"]
 
 [tool.coverage.report]
 exclude_also = ['if __name__ == .__main__.:', 
