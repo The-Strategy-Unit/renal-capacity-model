@@ -1155,12 +1155,9 @@ class Model:
 
 
 if __name__ == "__main__":
-    config = Config(
-        {
-            "trace": True,
-            "initialise_prevalent_patients": False,  # For dev purposes only
-        }
-    )
+    config = Config()
+    config.trace = True
+    config.initialise_prevalent_patients = False
     rng = np.random.default_rng(config.random_seed)
     model = Model(1, rng, config)
     model.run()
