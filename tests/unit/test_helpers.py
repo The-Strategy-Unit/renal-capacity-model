@@ -4,6 +4,7 @@ from renal_capacity_model.helpers import (
     calculate_lookup_year,
 )
 from renal_capacity_model.config import Config
+from renal_capacity_model.config_values import national_config_dict
 
 
 @pytest.mark.parametrize(
@@ -15,18 +16,24 @@ def test_calculate_lookup_year(time_units, expected):
 
 
 def test_check_config_duration_valid_passes(
-    config_dict={"sim_duration": 730, "time_on_waiting_list_mean": {1: {}, 2: {}}},
+    config_values={"sim_duration": 730, "time_on_waiting_list_mean": {1: {}, 2: {}}},
 ):
     # arrange
+    config_dict = national_config_dict.copy()
+    for k, v in config_values.items():
+        config_dict[k] = v
     config = Config(config_dict)
     # act, assert
     assert check_config_duration_valid(config)
 
 
 def test_check_config_duration_valid_raises_error(
-    config_dict={"sim_duration": 730, "time_on_waiting_list_mean": {1: {}}},
+    config_values={"sim_duration": 730, "time_on_waiting_list_mean": {1: {}}},
 ):
     # arrange
+    config_dict = national_config_dict.copy()
+    for k, v in config_values.items():
+        config_dict[k] = v
     config = Config(config_dict)
     # act, assert
     with pytest.raises(ValueError):
