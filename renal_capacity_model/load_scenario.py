@@ -435,225 +435,225 @@ def load_scenario_from_excel(
                 "hhd": input_scenario.iat[87, 3],
                 "pd": input_scenario.iat[87, 4],
             },
-            4: {  # year
-                "none": {
-                    "ichd": input_scenario.iat[69, 14],
-                    "hhd": input_scenario.iat[69, 15],
-                    "pd": input_scenario.iat[69, 16],
-                },
-                "ichd": {
-                    "ichd": input_scenario.iat[75, 2],
-                    "hhd": input_scenario.iat[75, 3],
-                    "pd": input_scenario.iat[75, 4],
-                },
-                "hhd": {
-                    "ichd": input_scenario.iat[81, 2],
-                    "hhd": input_scenario.iat[81, 3],
-                    "pd": input_scenario.iat[81, 4],
-                },
-                "pd": {
-                    "ichd": input_scenario.iat[87, 2],
-                    "hhd": input_scenario.iat[87, 3],
-                    "pd": input_scenario.iat[87, 4],
-                },
+        },
+        4: {  # year
+            "none": {
+                "ichd": input_scenario.iat[69, 14],
+                "hhd": input_scenario.iat[69, 15],
+                "pd": input_scenario.iat[69, 16],
             },
-            5: {  # year
-                "none": {
-                    "ichd": input_scenario.iat[69, 17],
-                    "hhd": input_scenario.iat[69, 18],
-                    "pd": input_scenario.iat[69, 19],
-                },
-                "ichd": {
-                    "ichd": input_scenario.iat[75, 2],
-                    "hhd": input_scenario.iat[75, 3],
-                    "pd": input_scenario.iat[75, 4],
-                },
-                "hhd": {
-                    "ichd": input_scenario.iat[81, 2],
-                    "hhd": input_scenario.iat[81, 3],
-                    "pd": input_scenario.iat[81, 4],
-                },
-                "pd": {
-                    "ichd": input_scenario.iat[87, 2],
-                    "hhd": input_scenario.iat[87, 3],
-                    "pd": input_scenario.iat[87, 4],
-                },
+            "ichd": {
+                "ichd": input_scenario.iat[75, 2],
+                "hhd": input_scenario.iat[75, 3],
+                "pd": input_scenario.iat[75, 4],
             },
-            6: {  # year
-                "none": {
-                    "ichd": input_scenario.iat[69, 20],
-                    "hhd": input_scenario.iat[69, 21],
-                    "pd": input_scenario.iat[69, 22],
-                },
-                "ichd": {
-                    "ichd": input_scenario.iat[75, 2],
-                    "hhd": input_scenario.iat[75, 3],
-                    "pd": input_scenario.iat[75, 4],
-                },
-                "hhd": {
-                    "ichd": input_scenario.iat[81, 2],
-                    "hhd": input_scenario.iat[81, 3],
-                    "pd": input_scenario.iat[81, 4],
-                },
-                "pd": {
-                    "ichd": input_scenario.iat[87, 2],
-                    "hhd": input_scenario.iat[87, 3],
-                    "pd": input_scenario.iat[87, 4],
-                },
+            "hhd": {
+                "ichd": input_scenario.iat[81, 2],
+                "hhd": input_scenario.iat[81, 3],
+                "pd": input_scenario.iat[81, 4],
             },
-            7: {  # year
-                "none": {
-                    "ichd": input_scenario.iat[69, 23],
-                    "hhd": input_scenario.iat[69, 24],
-                    "pd": input_scenario.iat[69, 25],
-                },
-                "ichd": {
-                    "ichd": input_scenario.iat[75, 2],
-                    "hhd": input_scenario.iat[75, 3],
-                    "pd": input_scenario.iat[75, 4],
-                },
-                "hhd": {
-                    "ichd": input_scenario.iat[81, 2],
-                    "hhd": input_scenario.iat[81, 3],
-                    "pd": input_scenario.iat[81, 4],
-                },
-                "pd": {
-                    "ichd": input_scenario.iat[87, 2],
-                    "hhd": input_scenario.iat[87, 3],
-                    "pd": input_scenario.iat[87, 4],
-                },
+            "pd": {
+                "ichd": input_scenario.iat[87, 2],
+                "hhd": input_scenario.iat[87, 3],
+                "pd": input_scenario.iat[87, 4],
             },
-            8: {  # year
-                "none": {
-                    "ichd": input_scenario.iat[69, 26],
-                    "hhd": input_scenario.iat[69, 27],
-                    "pd": input_scenario.iat[69, 28],
-                },
-                "ichd": {
-                    "ichd": input_scenario.iat[75, 2],
-                    "hhd": input_scenario.iat[75, 3],
-                    "pd": input_scenario.iat[75, 4],
-                },
-                "hhd": {
-                    "ichd": input_scenario.iat[81, 2],
-                    "hhd": input_scenario.iat[81, 3],
-                    "pd": input_scenario.iat[81, 4],
-                },
-                "pd": {
-                    "ichd": input_scenario.iat[87, 2],
-                    "hhd": input_scenario.iat[87, 3],
-                    "pd": input_scenario.iat[87, 4],
-                },
+        },
+        5: {  # year
+            "none": {
+                "ichd": input_scenario.iat[69, 17],
+                "hhd": input_scenario.iat[69, 18],
+                "pd": input_scenario.iat[69, 19],
             },
-            9: {  # year
-                "none": {
-                    "ichd": input_scenario.iat[69, 29],
-                    "hhd": input_scenario.iat[69, 30],
-                    "pd": input_scenario.iat[69, 31],
-                },
-                "ichd": {
-                    "ichd": input_scenario.iat[75, 2],
-                    "hhd": input_scenario.iat[75, 3],
-                    "pd": input_scenario.iat[75, 4],
-                },
-                "hhd": {
-                    "ichd": input_scenario.iat[81, 2],
-                    "hhd": input_scenario.iat[81, 3],
-                    "pd": input_scenario.iat[81, 4],
-                },
-                "pd": {
-                    "ichd": input_scenario.iat[87, 2],
-                    "hhd": input_scenario.iat[87, 3],
-                    "pd": input_scenario.iat[87, 4],
-                },
+            "ichd": {
+                "ichd": input_scenario.iat[75, 2],
+                "hhd": input_scenario.iat[75, 3],
+                "pd": input_scenario.iat[75, 4],
             },
-            10: {  # year
-                "none": {
-                    "ichd": input_scenario.iat[69, 32],
-                    "hhd": input_scenario.iat[69, 33],
-                    "pd": input_scenario.iat[69, 34],
-                },
-                "ichd": {
-                    "ichd": input_scenario.iat[75, 2],
-                    "hhd": input_scenario.iat[75, 3],
-                    "pd": input_scenario.iat[75, 4],
-                },
-                "hhd": {
-                    "ichd": input_scenario.iat[81, 2],
-                    "hhd": input_scenario.iat[81, 3],
-                    "pd": input_scenario.iat[81, 4],
-                },
-                "pd": {
-                    "ichd": input_scenario.iat[87, 2],
-                    "hhd": input_scenario.iat[87, 3],
-                    "pd": input_scenario.iat[87, 4],
-                },
+            "hhd": {
+                "ichd": input_scenario.iat[81, 2],
+                "hhd": input_scenario.iat[81, 3],
+                "pd": input_scenario.iat[81, 4],
             },
-            11: {  # year
-                "none": {
-                    "ichd": input_scenario.iat[69, 35],
-                    "hhd": input_scenario.iat[69, 36],
-                    "pd": input_scenario.iat[69, 37],
-                },
-                "ichd": {
-                    "ichd": input_scenario.iat[75, 2],
-                    "hhd": input_scenario.iat[75, 3],
-                    "pd": input_scenario.iat[75, 4],
-                },
-                "hhd": {
-                    "ichd": input_scenario.iat[81, 2],
-                    "hhd": input_scenario.iat[81, 3],
-                    "pd": input_scenario.iat[81, 4],
-                },
-                "pd": {
-                    "ichd": input_scenario.iat[87, 2],
-                    "hhd": input_scenario.iat[87, 3],
-                    "pd": input_scenario.iat[87, 4],
-                },
+            "pd": {
+                "ichd": input_scenario.iat[87, 2],
+                "hhd": input_scenario.iat[87, 3],
+                "pd": input_scenario.iat[87, 4],
             },
-            12: {  # year
-                "none": {
-                    "ichd": input_scenario.iat[69, 38],
-                    "hhd": input_scenario.iat[69, 39],
-                    "pd": input_scenario.iat[69, 40],
-                },
-                "ichd": {
-                    "ichd": input_scenario.iat[75, 2],
-                    "hhd": input_scenario.iat[75, 3],
-                    "pd": input_scenario.iat[75, 4],
-                },
-                "hhd": {
-                    "ichd": input_scenario.iat[81, 2],
-                    "hhd": input_scenario.iat[81, 3],
-                    "pd": input_scenario.iat[81, 4],
-                },
-                "pd": {
-                    "ichd": input_scenario.iat[87, 2],
-                    "hhd": input_scenario.iat[87, 3],
-                    "pd": input_scenario.iat[87, 4],
-                },
+        },
+        6: {  # year
+            "none": {
+                "ichd": input_scenario.iat[69, 20],
+                "hhd": input_scenario.iat[69, 21],
+                "pd": input_scenario.iat[69, 22],
             },
-            13: {  # year
-                "none": {
-                    "ichd": input_scenario.iat[69, 41],
-                    "hhd": input_scenario.iat[69, 42],
-                    "pd": input_scenario.iat[69, 43],
-                },
-                "ichd": {
-                    "ichd": input_scenario.iat[75, 2],
-                    "hhd": input_scenario.iat[75, 3],
-                    "pd": input_scenario.iat[75, 4],
-                },
-                "hhd": {
-                    "ichd": input_scenario.iat[81, 2],
-                    "hhd": input_scenario.iat[81, 3],
-                    "pd": input_scenario.iat[81, 4],
-                },
-                "pd": {
-                    "ichd": input_scenario.iat[87, 2],
-                    "hhd": input_scenario.iat[87, 3],
-                    "pd": input_scenario.iat[87, 4],
-                },
+            "ichd": {
+                "ichd": input_scenario.iat[75, 2],
+                "hhd": input_scenario.iat[75, 3],
+                "pd": input_scenario.iat[75, 4],
+            },
+            "hhd": {
+                "ichd": input_scenario.iat[81, 2],
+                "hhd": input_scenario.iat[81, 3],
+                "pd": input_scenario.iat[81, 4],
+            },
+            "pd": {
+                "ichd": input_scenario.iat[87, 2],
+                "hhd": input_scenario.iat[87, 3],
+                "pd": input_scenario.iat[87, 4],
+            },
+        },
+        7: {  # year
+            "none": {
+                "ichd": input_scenario.iat[69, 23],
+                "hhd": input_scenario.iat[69, 24],
+                "pd": input_scenario.iat[69, 25],
+            },
+            "ichd": {
+                "ichd": input_scenario.iat[75, 2],
+                "hhd": input_scenario.iat[75, 3],
+                "pd": input_scenario.iat[75, 4],
+            },
+            "hhd": {
+                "ichd": input_scenario.iat[81, 2],
+                "hhd": input_scenario.iat[81, 3],
+                "pd": input_scenario.iat[81, 4],
+            },
+            "pd": {
+                "ichd": input_scenario.iat[87, 2],
+                "hhd": input_scenario.iat[87, 3],
+                "pd": input_scenario.iat[87, 4],
+            },
+        },
+        8: {  # year
+            "none": {
+                "ichd": input_scenario.iat[69, 26],
+                "hhd": input_scenario.iat[69, 27],
+                "pd": input_scenario.iat[69, 28],
+            },
+            "ichd": {
+                "ichd": input_scenario.iat[75, 2],
+                "hhd": input_scenario.iat[75, 3],
+                "pd": input_scenario.iat[75, 4],
+            },
+            "hhd": {
+                "ichd": input_scenario.iat[81, 2],
+                "hhd": input_scenario.iat[81, 3],
+                "pd": input_scenario.iat[81, 4],
+            },
+            "pd": {
+                "ichd": input_scenario.iat[87, 2],
+                "hhd": input_scenario.iat[87, 3],
+                "pd": input_scenario.iat[87, 4],
+            },
+        },
+        9: {  # year
+            "none": {
+                "ichd": input_scenario.iat[69, 29],
+                "hhd": input_scenario.iat[69, 30],
+                "pd": input_scenario.iat[69, 31],
+            },
+            "ichd": {
+                "ichd": input_scenario.iat[75, 2],
+                "hhd": input_scenario.iat[75, 3],
+                "pd": input_scenario.iat[75, 4],
+            },
+            "hhd": {
+                "ichd": input_scenario.iat[81, 2],
+                "hhd": input_scenario.iat[81, 3],
+                "pd": input_scenario.iat[81, 4],
+            },
+            "pd": {
+                "ichd": input_scenario.iat[87, 2],
+                "hhd": input_scenario.iat[87, 3],
+                "pd": input_scenario.iat[87, 4],
+            },
+        },
+        10: {  # year
+            "none": {
+                "ichd": input_scenario.iat[69, 32],
+                "hhd": input_scenario.iat[69, 33],
+                "pd": input_scenario.iat[69, 34],
+            },
+            "ichd": {
+                "ichd": input_scenario.iat[75, 2],
+                "hhd": input_scenario.iat[75, 3],
+                "pd": input_scenario.iat[75, 4],
+            },
+            "hhd": {
+                "ichd": input_scenario.iat[81, 2],
+                "hhd": input_scenario.iat[81, 3],
+                "pd": input_scenario.iat[81, 4],
+            },
+            "pd": {
+                "ichd": input_scenario.iat[87, 2],
+                "hhd": input_scenario.iat[87, 3],
+                "pd": input_scenario.iat[87, 4],
+            },
+        },
+        11: {  # year
+            "none": {
+                "ichd": input_scenario.iat[69, 35],
+                "hhd": input_scenario.iat[69, 36],
+                "pd": input_scenario.iat[69, 37],
+            },
+            "ichd": {
+                "ichd": input_scenario.iat[75, 2],
+                "hhd": input_scenario.iat[75, 3],
+                "pd": input_scenario.iat[75, 4],
+            },
+            "hhd": {
+                "ichd": input_scenario.iat[81, 2],
+                "hhd": input_scenario.iat[81, 3],
+                "pd": input_scenario.iat[81, 4],
+            },
+            "pd": {
+                "ichd": input_scenario.iat[87, 2],
+                "hhd": input_scenario.iat[87, 3],
+                "pd": input_scenario.iat[87, 4],
+            },
+        },
+        12: {  # year
+            "none": {
+                "ichd": input_scenario.iat[69, 38],
+                "hhd": input_scenario.iat[69, 39],
+                "pd": input_scenario.iat[69, 40],
+            },
+            "ichd": {
+                "ichd": input_scenario.iat[75, 2],
+                "hhd": input_scenario.iat[75, 3],
+                "pd": input_scenario.iat[75, 4],
+            },
+            "hhd": {
+                "ichd": input_scenario.iat[81, 2],
+                "hhd": input_scenario.iat[81, 3],
+                "pd": input_scenario.iat[81, 4],
+            },
+            "pd": {
+                "ichd": input_scenario.iat[87, 2],
+                "hhd": input_scenario.iat[87, 3],
+                "pd": input_scenario.iat[87, 4],
+            },
+        },
+        13: {  # year
+            "none": {
+                "ichd": input_scenario.iat[69, 41],
+                "hhd": input_scenario.iat[69, 42],
+                "pd": input_scenario.iat[69, 43],
+            },
+            "ichd": {
+                "ichd": input_scenario.iat[75, 2],
+                "hhd": input_scenario.iat[75, 3],
+                "pd": input_scenario.iat[75, 4],
+            },
+            "hhd": {
+                "ichd": input_scenario.iat[81, 2],
+                "hhd": input_scenario.iat[81, 3],
+                "pd": input_scenario.iat[81, 4],
+            },
+            "pd": {
+                "ichd": input_scenario.iat[87, 2],
+                "hhd": input_scenario.iat[87, 3],
+                "pd": input_scenario.iat[87, 4],
             },
         },
     }
