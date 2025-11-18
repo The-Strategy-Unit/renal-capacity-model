@@ -23,7 +23,7 @@
             "type": "debugpy",
             "request": "launch",
             "module": "renal_capacity_model.main",
-            "args": "--input_filepath 'data/Renal_Modelling_Input_File - Midlands.xlsx'"
+            "args": "--input_filepath 'data/Renal_Modelling_Input_File - Midlands.xlsx' --validation"
         }
     ]
 }

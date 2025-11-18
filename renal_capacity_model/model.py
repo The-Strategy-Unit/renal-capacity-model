@@ -413,7 +413,8 @@ class Model:
                 print(
                     f"Patient {patient.id} of age group {patient.age_group} started dialysis only pathway at time {self.env.now}."
                 )
-            yield self.env.process(self.start_dialysis_modality_allocation(patient))
+            self.env.process(self.start_dialysis_modality_allocation(patient))
+            yield self.env.timeout(0)
 
         else:
             # Patient is suitable for transplant and so we need to decide if they start pre-emptive transplant or dialysis whilst waiting for transplant
@@ -445,7 +446,7 @@ class Model:
                         print(
                             f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with live donor at time {self.env.now}."
                         )
-                    yield self.env.process(self.start_transplant(patient))
+                    self.env.process(self.start_transplant(patient))
                 else:
                     # Patient starts dialysis whilst waiting for transplant
                     self.results_df.loc[patient.id, "pre_emptive_transplant"] = False
@@ -454,7 +455,7 @@ class Model:
                         print(
                             f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with live donor at time {self.env.now}."
                         )
-                    yield self.env.process(
+                    self.env.process(
                         self.start_dialysis_whilst_waiting_for_transplant(patient)
                     )
             else:  # cadaver
@@ -470,7 +471,7 @@ class Model:
                         print(
                             f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with cadaver donor at time {self.env.now}."
                         )
-                    yield self.env.process(self.start_transplant(patient))
+                    self.env.process(self.start_transplant(patient))
 
                 else:
                     # Patient starts dialysis whilst waiting for transplant
@@ -479,7 +480,7 @@ class Model:
                         print(
                             f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with cadaver donor at time {self.env.now}."
                         )
-                    yield self.env.process(
+                    self.env.process(
                         self.start_dialysis_whilst_waiting_for_transplant(patient)
                     )
 
@@ -547,7 +548,8 @@ class Model:
         self.results_df.loc[
             patient.id, f"{patient.dialysis_modality}_dialysis_count"
         ] += 1
-        yield self.env.process(self.start_dialysis_modality(patient))
+        self.env.process(self.start_dialysis_modality(patient))
+        yield self.env.timeout(0)
 
     def start_transplant(self, patient: Patient):
         """Function containing the logic for the transplant pathway
@@ -686,7 +688,7 @@ class Model:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} had graft failure after live transplant at time {self.env.now}."
                     )
-                yield self.env.process(self.start_krt(patient))
+                self.env.process(self.start_krt(patient))
         else:  # cadaver
             self.results_df.loc[patient.id, "cadaver_transplant_count"] += 1
             # how long the graft lasts depends on where they go next: death or back to start_krt
@@ -812,7 +814,7 @@ class Model:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} had graft failure after cadaver transplant at time {self.env.now}."
                     )
-                yield self.env.process(self.start_krt(patient))
+                self.env.process(self.start_krt(patient))
 
     def start_dialysis_whilst_waiting_for_transplant(self, patient: Patient):
         """Function containing the logic for the mixed pathway where a patient starts on dialysis and then receives a transplant
@@ -861,7 +863,7 @@ class Model:
                     )
                 patient.pre_emptive_transplant = True
                 self.results_df.loc[patient.id, "pre_emptive_transplant"] = True
-                yield self.env.process(self.start_transplant(patient))
+                self.env.process(self.start_transplant(patient))
             else:
                 self._update_event_log(
                     patient,
@@ -876,7 +878,7 @@ class Model:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant at time {self.env.now}."
                     )
-                yield self.env.process(self.start_dialysis_modality_allocation(patient))
+                self.env.process(self.start_dialysis_modality_allocation(patient))
         else:
             # if this is the first time in the model then there should be no wait before starting dialysis as they
             # are assumed to enter the model at the point of starting dialysis
@@ -884,7 +886,8 @@ class Model:
                 print(
                     f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant at time {self.env.now}."
                 )
-            yield self.env.process(self.start_dialysis_modality_allocation(patient))
+            yield self.env.timeout(0)
+            self.env.process(self.start_dialysis_modality_allocation(patient))
 
     def start_dialysis_modality(self, patient: Patient):
         """Function containing the logic for all dialysis pathways
@@ -962,7 +965,8 @@ class Model:
                 self.results_df.loc[
                     patient.id, f"{patient.dialysis_modality}_dialysis_count"
                 ] -= 1
-                yield self.env.process(self.start_transplant(patient))
+                yield self.env.timeout(0)
+                self.env.process(self.start_transplant(patient))
             else:
                 # death
                 self._update_event_log(
@@ -1043,7 +1047,7 @@ class Model:
                 self.results_df.loc[
                     patient.id, f"{patient.dialysis_modality}_dialysis_count"
                 ] -= 1
-                yield self.env.process(self.start_transplant(patient))
+                self.env.process(self.start_transplant(patient))
             else:
                 # modality change
                 self._update_event_log(
@@ -1062,7 +1066,7 @@ class Model:
                 self.results_df.loc[
                     patient.id, f"{patient.dialysis_modality}_dialysis_count"
                 ] -= 1
-                yield self.env.process(self.start_dialysis_modality_allocation(patient))
+                self.env.process(self.start_dialysis_modality_allocation(patient))
 
     def snapshot_results(self):
         while True:
