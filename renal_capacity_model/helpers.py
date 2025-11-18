@@ -3,11 +3,12 @@ Module with helper functions
 """
 
 import pandas as pd
+import math
 
 
 def get_yearly_arrival_rate(config):
     mean_arrival_rates = {}
-    years = int(config.sim_duration / 365)
+    years = calculate_lookup_year(config.sim_duration)
     for year in range(1, years + 1):
         mean_arrival_rates[year] = get_arrival_rate(
             config.arrival_rate[year], config.referral_dist, config.age_dist
@@ -56,11 +57,31 @@ def check_config_duration_valid(config):
     Args:
         config (Config): Config Class containing values to be used for model run
     """
-    config_values_to_check = ["arrival_rate"]  # we'll add more here - see issue #86
-    sim_years = config.sim_duration / 365
+    config_values_to_check = [
+        "arrival_rate",
+        "con_care_dist",
+        "modality_allocation_distributions",
+        "pre_emptive_transplant_live_donor_dist",
+        "pre_emptive_transplant_cadaver_donor_dist",
+        "time_on_waiting_list_mean",
+    ]
+    sim_years = calculate_lookup_year(config.sim_duration)
     for config_value in config_values_to_check:
-        if len(getattr(config, config_value)) < sim_years:
+        if max(getattr(config, config_value).keys()) < sim_years:
             raise ValueError(
                 f"{config_value} does not include enough years for sim duration"
             )
     return True
+
+
+def calculate_lookup_year(time_units: float) -> int:
+    """Calculates which year of the simulation the model is in, so that relevant values can be obtained from config
+
+    Args:
+        time_units (float): Current time in model, in days
+
+    Returns:
+        int: Which year of the model the model is in. Starts at 1.
+    """
+    year = year = math.ceil(time_units / 365) or 1
+    return year

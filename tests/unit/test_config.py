@@ -4,7 +4,7 @@ from renal_capacity_model.config import Config
 
 @pytest.mark.parametrize(
     "config_dict, expected",
-    [({}, (True, 0)), ({"trace": False, "random_seed": 99}, (False, 99))],
+    [({}, (365, 0)), ({"snapshot_interval": 100, "random_seed": 99}, (100, 99))],
 )
 def test_config_initialises_with_values(config_dict, expected):
     # arrange
@@ -12,5 +12,5 @@ def test_config_initialises_with_values(config_dict, expected):
     config = Config(config_dict)
 
     # assert
-    assert config.trace == expected[0]
+    assert config.snapshot_interval == expected[0]
     assert config.random_seed == expected[1]

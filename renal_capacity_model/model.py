@@ -6,7 +6,10 @@ import simpy
 from renal_capacity_model.entity import Patient
 import numpy as np
 from renal_capacity_model.config import Config
-from renal_capacity_model.helpers import check_config_duration_valid
+from renal_capacity_model.helpers import (
+    check_config_duration_valid,
+    calculate_lookup_year,
+)
 import pandas as pd
 from datetime import datetime
 from sim_tools.time_dependent import NSPPThinning
@@ -176,6 +179,7 @@ class Model:
             else:
                 p.transplant_suitable = True
                 p.time_enters_waiting_list = self.env.now
+                year = calculate_lookup_year(self.env.now)
                 if self.config.trace:
                     print(
                         f"Patient {p.id} of age group {p.age_group} is in ICHD dialysis whilst waiting for transplant at time {self.env.now}."
@@ -186,12 +190,12 @@ class Model:
                 ):
                     p.transplant_type = "live"
                     p.time_on_waiting_list = self.rng.exponential(
-                        scale=self.config.time_on_waiting_list_mean["live"]
+                        scale=self.config.time_on_waiting_list_mean[year]["live"]
                     )  # due to memoryless property of exponential dist
                 else:
                     p.transplant_type = "cadaver"
                     p.time_on_waiting_list = self.rng.exponential(
-                        scale=self.config.time_on_waiting_list_mean["cadaver"]
+                        scale=self.config.time_on_waiting_list_mean[year]["cadaver"]
                     )  # due to memoryless property of exponential dist
                 self.results_df.loc[p.id, "pre_emptive_transplant"] = False
                 self.results_df.loc[p.id, "time_enters_waiting_list"] = (
@@ -214,6 +218,7 @@ class Model:
             else:
                 p.transplant_suitable = True
                 p.time_enters_waiting_list = self.env.now
+                year = calculate_lookup_year(self.env.now)
                 if self.config.trace:
                     print(
                         f"Patient {p.id} of age group {p.age_group} is in HHD dialysis whilst waiting for transplant at time {self.env.now}."
@@ -224,12 +229,12 @@ class Model:
                 ):
                     p.transplant_type = "live"
                     p.time_on_waiting_list = self.rng.exponential(
-                        scale=self.config.time_on_waiting_list_mean["live"]
+                        scale=self.config.time_on_waiting_list_mean[year]["live"]
                     )  # due to memoryless property of exponential dist
                 else:
                     p.transplant_type = "cadaver"
                     p.time_on_waiting_list = self.rng.exponential(
-                        scale=self.config.time_on_waiting_list_mean["cadaver"]
+                        scale=self.config.time_on_waiting_list_mean[year]["cadaver"]
                     )  # due to memoryless property of exponential dist
                 self.results_df.loc[p.id, "pre_emptive_transplant"] = False
                 self.results_df.loc[p.id, "time_enters_waiting_list"] = (
@@ -252,6 +257,7 @@ class Model:
             else:
                 p.transplant_suitable = True
                 p.time_enters_waiting_list = self.env.now
+                year = calculate_lookup_year(self.env.now)
                 if self.config.trace:
                     print(
                         f"Patient {p.id} of age group {p.age_group} is in PD dialysis whilst waiting for transplant at time {self.env.now}."
@@ -262,12 +268,12 @@ class Model:
                 ):
                     p.transplant_type = "live"
                     p.time_on_waiting_list = self.rng.exponential(
-                        scale=self.config.time_on_waiting_list_mean["live"]
+                        scale=self.config.time_on_waiting_list_mean[year]["live"]
                     )  # due to memoryless property of exponential dist
                 else:
                     p.transplant_type = "cadaver"
                     p.time_on_waiting_list = self.rng.exponential(
-                        scale=self.config.time_on_waiting_list_mean["cadaver"]
+                        scale=self.config.time_on_waiting_list_mean[year]["cadaver"]
                     )  # due to memoryless property of exponential dist
                 self.results_df.loc[p.id, "pre_emptive_transplant"] = False
                 self.results_df.loc[p.id, "time_enters_waiting_list"] = (
@@ -353,8 +359,8 @@ class Model:
             self.results_df.loc[p.id, "ichd_dialysis_count"] = 0
             self.results_df.loc[p.id, "hhd_dialysis_count"] = 0
             self.results_df.loc[p.id, "pd_dialysis_count"] = 0
-
-            if self.rng.uniform(0, 1) > self.config.con_care_dist[p.age_group]:
+            year = calculate_lookup_year(self.env.now)
+            if self.rng.uniform(0, 1) > self.config.con_care_dist[year][p.age_group]:
                 # If the patient is not diverted to conservative care they start KRT
                 self.env.process(self.start_krt(p))
             else:
@@ -394,6 +400,7 @@ class Model:
         Yields:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
         """
+        year = calculate_lookup_year(self.env.now)
         if (
             self.rng.uniform(0, 1)
             > self.config.suitable_for_transplant_dist[patient.age_group]
@@ -428,7 +435,7 @@ class Model:
             if patient.transplant_type == "live":
                 if (
                     self.rng.uniform(0, 1)
-                    < self.config.pre_emptive_transplant_live_donor_dist[
+                    < self.config.pre_emptive_transplant_live_donor_dist[year][
                         patient.referral_type
                     ]
                 ):
@@ -454,7 +461,7 @@ class Model:
             else:  # cadaver
                 if (
                     self.rng.uniform(0, 1)
-                    < self.config.pre_emptive_transplant_cadaver_donor_dist[
+                    < self.config.pre_emptive_transplant_cadaver_donor_dist[year][
                         patient.referral_type
                     ]
                 ):
@@ -490,6 +497,10 @@ class Model:
 
         ## which modality do they start on?
         patient.time_starts_dialysis = self.env.now
+        year = calculate_lookup_year(self.env.now)
+        modality_allocation_distributions = (
+            self.config.modality_allocation_distributions[year]
+        )
         random_number = self.rng.uniform(0, 1)
         if not patient.dialysis_modality:  # no modality
             current_modality = "none"
@@ -498,18 +509,14 @@ class Model:
         if current_modality == "none":
             if (
                 random_number
-                < self.config.modality_allocation_distributions[current_modality][
-                    "ichd"
-                ]
+                < modality_allocation_distributions[current_modality]["ichd"]
             ):
                 patient.dialysis_modality = "ichd"
 
             elif (
                 random_number
-                < self.config.modality_allocation_distributions[current_modality][
-                    "ichd"
-                ]
-                + self.config.modality_allocation_distributions[current_modality]["hhd"]
+                < modality_allocation_distributions[current_modality]["ichd"]
+                + modality_allocation_distributions[current_modality]["hhd"]
             ):
                 patient.dialysis_modality = "hhd"
             else:
@@ -517,7 +524,7 @@ class Model:
         elif current_modality == "ichd":
             if (
                 self.rng.uniform(0, 1)
-                < self.config.modality_allocation_distributions[current_modality]["hhd"]
+                < modality_allocation_distributions[current_modality]["hhd"]
             ):
                 patient.dialysis_modality = "hhd"
             else:
@@ -525,9 +532,7 @@ class Model:
         elif current_modality == "hhd":
             if (
                 self.rng.uniform(0, 1)
-                < self.config.modality_allocation_distributions[current_modality][
-                    "ichd"
-                ]
+                < modality_allocation_distributions[current_modality]["ichd"]
             ):
                 patient.dialysis_modality = "ichd"
             else:
@@ -535,9 +540,7 @@ class Model:
         elif current_modality == "pd":
             if (
                 self.rng.uniform(0, 1)
-                < self.config.modality_allocation_distributions[current_modality][
-                    "ichd"
-                ]
+                < modality_allocation_distributions[current_modality]["ichd"]
             ):
                 patient.dialysis_modality = "ichd"
             else:
@@ -826,13 +829,14 @@ class Model:
 
         # Let's generate a time on the waiting list
         # We'll use this within the starts_dialysis function to work out how long they stay in dialysis before Tx
+        year = calculate_lookup_year(self.env.now)
         if patient.transplant_type == "live":
             patient.time_on_waiting_list = self.rng.exponential(
-                scale=self.config.time_on_waiting_list_mean["live"]
+                scale=self.config.time_on_waiting_list_mean[year]["live"]
             )
         else:  # cadaver
             patient.time_on_waiting_list = self.rng.exponential(
-                scale=self.config.time_on_waiting_list_mean["cadaver"]
+                scale=self.config.time_on_waiting_list_mean[year]["cadaver"]
             )
 
         ## if this isn't their first Tx then we also need to simulate the time they wait before starting dialysis

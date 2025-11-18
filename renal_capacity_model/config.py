@@ -160,12 +160,8 @@ class Config:
         self.con_care_dist = config_dict.get(
             "con_care_dist",
             {
-                1: 0.1,
-                2: 0.1,
-                3: 0.1,
-                4: 0.1,
-                5: 0.25,
-                6: 0.5,
+                y: {1: 0.1, 2: 0.1, 3: 0.1, 4: 0.1, 5: 0.25, 6: 0.5}
+                for y in range(1, 14)
             },
         )
 
@@ -196,26 +192,29 @@ class Config:
         self.modality_allocation_distributions = config_dict.get(
             "modality_allocation_distributions",
             {
-                "none": {
-                    "ichd": 0.79,
-                    "hhd": 0.01,
-                    "pd": 0.20,
-                },
-                "ichd": {
-                    "ichd": 0,
-                    "hhd": 0.46,
-                    "pd": 0.54,
-                },
-                "hhd": {
-                    "ichd": 0.99,
-                    "hhd": 0,
-                    "pd": 0.01,
-                },
-                "pd": {
-                    "ichd": 0.99,
-                    "hhd": 0.01,
-                    "pd": 0,
-                },
+                y: {
+                    "none": {
+                        "ichd": 0.79,
+                        "hhd": 0.01,
+                        "pd": 0.20,
+                    },
+                    "ichd": {
+                        "ichd": 0,
+                        "hhd": 0.46,
+                        "pd": 0.54,
+                    },
+                    "hhd": {
+                        "ichd": 0.99,
+                        "hhd": 0,
+                        "pd": 0.01,
+                    },
+                    "pd": {
+                        "ichd": 0.99,
+                        "hhd": 0.01,
+                        "pd": 0,
+                    },
+                }
+                for y in range(1, 14)
             },
         )
 
@@ -303,12 +302,12 @@ class Config:
 
         self.pre_emptive_transplant_live_donor_dist = config_dict.get(
             "pre_emptive_transplant_live_donor_dist",
-            {"early": 0.49, "late": 0.07},
+            {y: {"early": 0.49, "late": 0.07} for y in range(1, 14)},
         )
 
         self.pre_emptive_transplant_cadaver_donor_dist = config_dict.get(
             "pre_emptive_transplant_cadaver_donor_dist",
-            {"early": 0.22, "late": 0.05},
+            {y: {"early": 0.22, "late": 0.05} for y in range(1, 14)},
         )
 
         # time to event distribution parameters (these are the same regardless of geography).
@@ -662,8 +661,11 @@ class Config:
         self.time_on_waiting_list_mean = config_dict.get(
             "time_on_waiting_list_mean",
             {
-                "live": 4.5 * 30,  # 3-6 months on average
-                "cadaver": 365 * 2.5 * 30,  # 2-3 years on average
+                y: {
+                    "live": 4.5 * 30,  # 3-6 months on average
+                    "cadaver": 365 * 2.5 * 30,  # 2-3 years on average
+                }
+                for y in range(1, 14)
             },
         )
 
