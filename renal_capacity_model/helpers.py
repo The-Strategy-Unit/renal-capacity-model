@@ -5,12 +5,10 @@ Module with helper functions
 import pandas as pd
 import math
 
-from pandas.core.frame import frame_sub_kwargs
-
 
 def get_yearly_arrival_rate(config):
     mean_arrival_rates = {}
-    years = int(math.ceil(config.sim_duration / 365) or 1)
+    years = calculate_lookup_year(config.sim_duration)
     for year in range(1, years + 1):
         mean_arrival_rates[year] = get_arrival_rate(
             config.arrival_rate[year], config.referral_dist, config.age_dist
@@ -67,7 +65,7 @@ def check_config_duration_valid(config):
         "pre_emptive_transplant_cadaver_donor_dist",
         "time_on_waiting_list_mean",
     ]
-    sim_years = math.ceil(config.sim_duration / 365) or 1
+    sim_years = calculate_lookup_year(config.sim_duration)
     for config_value in config_values_to_check:
         if max(getattr(config, config_value).keys()) < sim_years:
             raise ValueError(
