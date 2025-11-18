@@ -8,6 +8,7 @@ from renal_capacity_model.trial import Trial
 @pytest.fixture
 def config():
     config = Config()  # use national values
+    config.initialise_prevalent_patients = True
     config.prevalent_counts = {
         "conservative_care": {
             "1_early": 1,

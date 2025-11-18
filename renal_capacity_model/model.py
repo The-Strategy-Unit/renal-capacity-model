@@ -202,7 +202,7 @@ class Model:
                     p.time_enters_waiting_list
                 )
             self.results_df.loc[p.id, "suitable_for_transplant"] = p.transplant_suitable
-            yield self.env.process(self.start_dialysis_modality(p))
+            self.env.process(self.start_dialysis_modality(p))
         elif location == "hhd":
             p.dialysis_modality = "hhd"
             self.results_df.loc[p.id, "hhd_dialysis_count"] += 1
@@ -241,7 +241,7 @@ class Model:
                     p.time_enters_waiting_list
                 )
             self.results_df.loc[p.id, "suitable_for_transplant"] = p.transplant_suitable
-            yield self.env.process(self.start_dialysis_modality(p))
+            self.env.process(self.start_dialysis_modality(p))
         elif location == "pd":
             p.dialysis_modality = "pd"
             self.results_df.loc[p.id, "pd_dialysis_count"] += 1
@@ -280,8 +280,7 @@ class Model:
                     p.time_enters_waiting_list
                 )
             self.results_df.loc[p.id, "suitable_for_transplant"] = p.transplant_suitable
-
-            yield self.env.process(self.start_dialysis_modality(p))
+            self.env.process(self.start_dialysis_modality(p))
         elif location == "live_transplant":
             p.transplant_suitable = True
             p.pre_emptive_transplant = None  # Unknown for prevalent patients
@@ -293,7 +292,7 @@ class Model:
                 print(
                     f"Patient {p.id} of age group {p.age_group} is living with live donor transplant at time {self.env.now}."
                 )
-            yield self.env.process(self.start_transplant(p))
+            self.env.process(self.start_transplant(p))
         elif location == "cadaver_transplant":
             p.transplant_suitable = True
             p.pre_emptive_transplant = None  # Unknown for prevalent patients
@@ -305,7 +304,7 @@ class Model:
                 print(
                     f"Patient {p.id} of age group {p.age_group} is living with live donor transplant at time {self.env.now}."
                 )
-            yield self.env.process(self.start_transplant(p))
+            self.env.process(self.start_transplant(p))
 
     def _update_event_log(
         self,
