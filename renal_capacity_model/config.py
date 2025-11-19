@@ -19,7 +19,7 @@ class Config:
     """
 
     def __init__(self, config_dict=national_config_dict):
-        self.trace = config_dict.get("trace", False)
+        self.trace = config_dict.get("trace", True)
         self.initialise_prevalent_patients = config_dict.get(
             "initialise_prevalent_patients", True
         )  # whether to initialise model with prevalent counts (takes a long time using default national values)
@@ -73,9 +73,9 @@ class Config:
         # fix upper_bound
         for tx_type in ["live", "cadaver"]:
             for i in range(1, 7):
-                self.ttd_tx_initial_distribution[tx_type][i]["upper_bound"] = (
-                    self.sim_duration
-                )
+                self.ttd_tx_initial_distribution[tx_type][i][
+                    "upper_bound"
+                ] = self.sim_duration
         self.ttgf_tx_initial_distribution = time_to_event_distribution_parameters[
             "ttgf_tx_initial_distribution"
         ]
