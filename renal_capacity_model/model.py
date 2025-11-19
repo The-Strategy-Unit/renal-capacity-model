@@ -192,11 +192,13 @@ class Model:
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean[year]["live"]
                     )  # due to memoryless property of exponential dist
+
                 else:
                     p.transplant_type = "cadaver"
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean[year]["cadaver"]
                     )  # due to memoryless property of exponential dist
+
                 self.results_df.loc[p.id, "pre_emptive_transplant"] = False
                 self.results_df.loc[p.id, "time_enters_waiting_list"] = (
                     p.time_enters_waiting_list
@@ -231,11 +233,13 @@ class Model:
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean[year]["live"]
                     )  # due to memoryless property of exponential dist
+
                 else:
                     p.transplant_type = "cadaver"
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean[year]["cadaver"]
                     )  # due to memoryless property of exponential dist
+
                 self.results_df.loc[p.id, "pre_emptive_transplant"] = False
                 self.results_df.loc[p.id, "time_enters_waiting_list"] = (
                     p.time_enters_waiting_list
@@ -270,11 +274,13 @@ class Model:
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean[year]["live"]
                     )  # due to memoryless property of exponential dist
+
                 else:
                     p.transplant_type = "cadaver"
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean[year]["cadaver"]
                     )  # due to memoryless property of exponential dist
+
                 self.results_df.loc[p.id, "pre_emptive_transplant"] = False
                 self.results_df.loc[p.id, "time_enters_waiting_list"] = (
                     p.time_enters_waiting_list
@@ -843,6 +849,7 @@ class Model:
             patient.time_on_waiting_list = self.rng.exponential(
                 scale=self.config.time_on_waiting_list_mean[year]["live"]
             )
+
         else:  # cadaver
             patient.time_on_waiting_list = self.rng.exponential(
                 scale=self.config.time_on_waiting_list_mean[year]["cadaver"]
@@ -923,22 +930,15 @@ class Model:
             # death or transplant
             ## sampled_time depends on whether patitent is inicident or not
             if patient.patient_flag == "incident":
-                sampled_time = self.config.ttd_initial_distribution[
-                    patient.dialysis_modality
-                ][patient.age_group]["scale"] * self.rng.weibull(
-                    self.config.ttd_initial_distribution[patient.dialysis_modality][
+                sampled_time = self.rng.gamma(
+                    self.config.ttd_distribution[patient.dialysis_modality][
                         patient.age_group
-                    ]["shape"]
+                    ]["shape"],
+                    self.config.ttd_distribution[patient.dialysis_modality][
+                        patient.age_group
+                    ]["scale"],
+                    size=None,
                 )
-                # self.rng.gamma(
-                # self.config.ttd_distribution[patient.dialysis_modality][
-                #    patient.age_group
-                # ]["shape"],
-                # self.config.ttd_distribution[patient.dialysis_modality][
-                #    patient.age_group
-                # ]["scale"],
-                # size=None,
-                # )
             else:  ## prevalent patient
                 if (
                     self.rng.uniform(0, 1)
@@ -1012,22 +1012,15 @@ class Model:
 
             ## sampled_time depends on whether patitent is inicident or not
             if patient.patient_flag == "incident":
-                sampled_time = self.config.ttma_initial_distribution[
-                    patient.dialysis_modality
-                ][patient.age_group]["scale"] * self.rng.weibull(
-                    self.config.ttma_initial_distribution[patient.dialysis_modality][
+                sampled_time = self.rng.gamma(
+                    self.config.ttma_distribution[patient.dialysis_modality][
                         patient.age_group
-                    ]["shape"]
+                    ]["shape"],
+                    self.config.ttma_distribution[patient.dialysis_modality][
+                        patient.age_group
+                    ]["scale"],
+                    size=None,
                 )
-                # self.rng.gamma(
-                # self.config.ttma_distribution[patient.dialysis_modality][
-                #    patient.age_group
-                # ]["shape"],
-                # self.config.ttma_distribution[patient.dialysis_modality][
-                #    patient.age_group
-                # ]["scale"],
-                # size=None,
-                # )
             else:  ## prevalent patient
                 if (
                     self.rng.uniform(0, 1)
@@ -1120,7 +1113,6 @@ class Model:
 
     def run(self):
         """Runs the model"""
-        # print(self.config.death_post_transplant)
         # print(self.config.death_post_dialysis_modality)
         # print(self.config.pre_emptive_transplant_live_donor_dist)
         # print(self.config.pre_emptive_transplant_cadaver_donor_dist)
