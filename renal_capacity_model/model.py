@@ -9,6 +9,7 @@ from renal_capacity_model.config import Config
 from renal_capacity_model.helpers import (
     check_config_duration_valid,
     calculate_lookup_year,
+    process_event_log,
 )
 import pandas as pd
 from datetime import datetime
@@ -1097,14 +1098,15 @@ class Model:
                 self.snapshot_results_df = snapshot_results_df
             yield self.env.timeout(self.snapshot_interval)
 
-    def save_parquet_file(self, data_to_save):
+    def save_result_files(self, data_to_save):
         folder_path = "results"
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
         today_date = datetime.now().strftime("%Y%m%d-%H%M")
-        filename = f"results/{today_date}_{data_to_save}_{self.run_number}.parquet"
+        filename = f"results/{today_date}_{data_to_save}_{self.run_number}"
         df_to_save = getattr(self, data_to_save).copy()
-        df_to_save.to_parquet(filename)
+        df_to_save.to_parquet(filename.join(".parquet"))
+        df_to_save.to_csv(filename.join(".csv"))
         print(f"{data_to_save} saved")
 
     def run(self):
@@ -1157,6 +1159,9 @@ class Model:
             self.env.process(self.generator_patient_arrivals(patient_type))
         self.env.process(self.snapshot_results())
         self.env.run(until=self.config.sim_duration)
+        incidence, activity_change = process_event_log(self.event_log)
+        self.incidence = incidence
+        self.activity_change = activity_change
 
         # Show results (optional - set in config)
         if self.config.trace:
@@ -1164,9 +1169,9 @@ class Model:
             print(self.patients_in_system)
             print(self.snapshot_results_df)
             print(self.results_df)
-            self.save_parquet_file("event_log")
-            self.save_parquet_file("results_df")
-            self.save_parquet_file("snapshot_results_df")
+            self.save_result_files("event_log")
+            self.save_result_files("results_df")
+            self.save_result_files("snapshot_results_df")
 
 
 if __name__ == "__main__":

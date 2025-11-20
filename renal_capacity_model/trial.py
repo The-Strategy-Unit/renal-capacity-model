@@ -7,6 +7,7 @@ from renal_capacity_model.model import Model
 import numpy as np
 from tqdm import tqdm
 from typing import Optional
+from datetime import datetime
 
 pd.set_option("display.max_columns", None)
 
@@ -20,6 +21,8 @@ class Trial:
         self.config = config
         self.rng = np.random.default_rng(self.config.random_seed)
         self.df_trial_results: Optional[pd.DataFrame] = None
+        self.incidence_dfs = []
+        self.activity_change_dfs = []
 
     def print_trial_results(self):
         print("Trial Results")
@@ -85,10 +88,31 @@ class Trial:
         else:
             self.df_trial_results = all_processed_snapshots
 
+    def process_eventlog_dfs(self, eventlog_dfs):
+        combined_df = pd.concat(eventlog_dfs)
+        columns_to_groupby = list(combined_df.index.names)
+        aggregated_combined_df = pd.DataFrame(
+            combined_df.reset_index().groupby(columns_to_groupby).mean()
+        )
+        return aggregated_combined_df
+
+    def save_eventlog_dfs(self, df_to_save, name_of_df_to_save):
+        today_date = datetime.now().strftime("%Y%m%d-%H%M")
+        filename = f"results/{today_date}_{name_of_df_to_save}.csv"
+        df_to_save.to_csv(filename)
+
     def run_trial(self):
         for run in tqdm(range(self.config.number_of_runs)):
             model = Model(run, self.rng, self.config)
             model.run()
             self.process_snapshot_results(model, run)
+            self.activity_change_dfs.append(model.activity_change)
+            self.incidence_dfs.append(model.incidence)
 
         self.print_trial_results()
+        self.save_eventlog_dfs(
+            self.process_eventlog_dfs(self.activity_change_dfs), "activity_change"
+        )
+        self.save_eventlog_dfs(
+            self.process_eventlog_dfs(self.incidence_dfs), "incidence"
+        )

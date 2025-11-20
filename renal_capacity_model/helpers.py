@@ -101,22 +101,20 @@ def process_event_log(event_log: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFra
     event_log["year"] = event_log["time_starting_activity_from"].apply(
         calculate_lookup_year
     )
-    incidence = pd.DataFrame(
-        event_log.groupby("year")["activity_from"].value_counts()
-    ).rename(columns={"count": "incidence"})
-    activity_change = (
-        event_log.groupby(["year", "activity_from", "activity_to"])
-        .agg(
-            {
-                "time_starting_activity_from": "count",
-                "time_spent_in_activity_from": "mean",
-            }
-        )
-        .rename(
-            columns={
-                "time_starting_activity_from": "change_counts",
-                "time_spent_in_activity_from": "mean_time",
-            }
-        )
+    incidence = event_log.groupby("year")["activity_from"].value_counts()
+    incidence = pd.DataFrame(incidence, index=incidence.index).rename(
+        columns={"count": "incidence"}
+    )
+    activity_change = event_log.groupby(["year", "activity_from", "activity_to"]).agg(
+        {
+            "time_starting_activity_from": "count",
+            "time_spent_in_activity_from": "mean",
+        }
+    )
+    activity_change = pd.DataFrame(activity_change, index=activity_change.index).rename(
+        columns={
+            "time_starting_activity_from": "change_counts",
+            "time_spent_in_activity_from": "mean_time",
+        }
     )
     return incidence, activity_change
