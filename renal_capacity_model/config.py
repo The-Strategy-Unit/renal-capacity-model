@@ -73,9 +73,9 @@ class Config:
         # fix upper_bound
         for tx_type in ["live", "cadaver"]:
             for i in range(1, 7):
-                self.ttd_tx_initial_distribution[tx_type][i][
-                    "upper_bound"
-                ] = self.sim_duration
+                self.ttd_tx_initial_distribution[tx_type][i]["upper_bound"] = (
+                    self.sim_duration
+                )
         self.ttgf_tx_initial_distribution = time_to_event_distribution_parameters[
             "ttgf_tx_initial_distribution"
         ]
