@@ -85,3 +85,38 @@ def calculate_lookup_year(time_units: float) -> int:
     """
     year = year = math.ceil(time_units / 365) or 1
     return year
+
+
+def process_event_log(event_log: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Processes event log for easier validation and debugging
+
+    Args:
+        event_log (pd.DataFrame): event log
+
+    Returns:
+        tuple with two Pandas dataframes: one recording incidence of patients in each
+        treatment modality for each year of simulation, and the other recording changes
+        in activity for each year of simulation.
+    """
+    event_log["year"] = event_log["time_starting_activity_from"].apply(
+        calculate_lookup_year
+    )
+    incidence = pd.DataFrame(
+        event_log.groupby("year")["activity_from"].value_counts()
+    ).rename(columns={"count": "incidence"})
+    activity_change = (
+        event_log.groupby(["year", "activity_from", "activity_to"])
+        .agg(
+            {
+                "time_starting_activity_from": "count",
+                "time_spent_in_activity_from": "mean",
+            }
+        )
+        .rename(
+            columns={
+                "time_starting_activity_from": "change_counts",
+                "time_spent_in_activity_from": "mean_time",
+            }
+        )
+    )
+    return incidence, activity_change
