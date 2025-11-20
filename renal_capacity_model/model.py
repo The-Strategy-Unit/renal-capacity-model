@@ -1105,8 +1105,8 @@ class Model:
         today_date = datetime.now().strftime("%Y%m%d-%H%M")
         filename = f"results/{today_date}_{data_to_save}_{self.run_number}"
         df_to_save = getattr(self, data_to_save).copy()
-        df_to_save.to_parquet(filename.join(".parquet"))
-        df_to_save.to_csv(filename.join(".csv"))
+        df_to_save.to_parquet(filename + ".parquet")
+        df_to_save.to_csv(filename + ".csv")
         print(f"{data_to_save} saved")
 
     def run(self):
