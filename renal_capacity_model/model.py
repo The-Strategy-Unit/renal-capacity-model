@@ -309,7 +309,7 @@ class Model:
             self.results_df.loc[p.id, "transplant_count"] += 1
             if self.config.trace:
                 print(
-                    f"Patient {p.id} of age group {p.age_group} is living with live donor transplant at time {self.env.now}."
+                    f"Patient {p.id} of age group {p.age_group} is living with cadaver donor transplant at time {self.env.now}."
                 )
             self.env.process(self.start_transplant(p))
 
