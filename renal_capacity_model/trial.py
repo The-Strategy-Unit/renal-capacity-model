@@ -8,6 +8,7 @@ import numpy as np
 from tqdm import tqdm
 from typing import Optional
 from datetime import datetime
+import os
 
 pd.set_option("display.max_columns", None)
 
@@ -98,6 +99,8 @@ class Trial:
 
     def save_eventlog_dfs(self, df_to_save, name_of_df_to_save):
         today_date = datetime.now().strftime("%Y%m%d-%H%M")
+        if not os.path.exists("results"):
+            os.makedirs("results")
         filename = f"results/{today_date}_{name_of_df_to_save}.csv"
         df_to_save.to_csv(filename)
 

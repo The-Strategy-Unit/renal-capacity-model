@@ -96,6 +96,7 @@ def config():
         },
     }  # overwrite prevalent_counts
     config.number_of_runs = 2
+    config.sim_duration = int(3 * 365)
     return config
 
 
