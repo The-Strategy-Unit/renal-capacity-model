@@ -199,7 +199,7 @@ class Model:
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean[year]["cadaver"]
                     )  # due to memoryless property of exponential dist
-
+                p.pre_emptive_transplant = False
                 self.results_df.loc[p.id, "pre_emptive_transplant"] = False
                 self.results_df.loc[p.id, "time_enters_waiting_list"] = (
                     p.time_enters_waiting_list
@@ -240,7 +240,7 @@ class Model:
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean[year]["cadaver"]
                     )  # due to memoryless property of exponential dist
-
+                p.pre_emptive_transplant = False
                 self.results_df.loc[p.id, "pre_emptive_transplant"] = False
                 self.results_df.loc[p.id, "time_enters_waiting_list"] = (
                     p.time_enters_waiting_list
@@ -281,7 +281,7 @@ class Model:
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean[year]["cadaver"]
                     )  # due to memoryless property of exponential dist
-
+                p.pre_emptive_transplant = False
                 self.results_df.loc[p.id, "pre_emptive_transplant"] = False
                 self.results_df.loc[p.id, "time_enters_waiting_list"] = (
                     p.time_enters_waiting_list
@@ -309,7 +309,7 @@ class Model:
             self.results_df.loc[p.id, "transplant_count"] += 1
             if self.config.trace:
                 print(
-                    f"Patient {p.id} of age group {p.age_group} is living with live donor transplant at time {self.env.now}."
+                    f"Patient {p.id} of age group {p.age_group} is living with cadaver donor transplant at time {self.env.now}."
                 )
             self.env.process(self.start_transplant(p))
 
@@ -486,6 +486,8 @@ class Model:
 
                 else:
                     # Patient starts dialysis whilst waiting for transplant
+                    patient.pre_emptive_transplant = False
+                    patient.time_enters_waiting_list = self.env.now
                     self.results_df.loc[patient.id, "pre_emptive_transplant"] = False
                     if self.config.trace:
                         print(
@@ -660,7 +662,9 @@ class Model:
                             patient.age_group
                         ]["break_point"] + self.config.ttgf_tx_distribution["live"][
                             patient.age_group
-                        ]["scale"] * self.rng.weibull(
+                        ][
+                            "scale"
+                        ] * self.rng.weibull(
                             a=self.config.ttgf_tx_distribution["live"][
                                 patient.age_group
                             ]["shape"],
@@ -699,6 +703,19 @@ class Model:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} had graft failure after live transplant at time {self.env.now}."
                     )
+                ## they're returning to start_krt so we want to reset a bunch of starting variables
+                self.transplant_suitable = None
+                self.transplant_type = None
+                self.pre_emptive_transplant = None
+                self.dialysis_modality = "none"
+                self.time_starts_dialysis = None
+                self.time_on_dialysis = {"ichd": 0.0, "hhd": 0.0, "pd": 0.0}
+                self.time_living_with_live_transplant = None
+                self.time_living_with_cadaver_transplant = None
+                self.time_on_waiting_list = 0
+                self.time_enters_waiting_list = None
+                self.time_of_transplant = None
+
                 self.env.process(self.start_krt(patient))
         else:  # cadaver
             self.results_df.loc[patient.id, "cadaver_transplant_count"] += 1
@@ -785,7 +802,9 @@ class Model:
                             patient.age_group
                         ]["break_point"] + self.config.ttgf_tx_distribution["cadaver"][
                             patient.age_group
-                        ]["scale"] * self.rng.weibull(
+                        ][
+                            "scale"
+                        ] * self.rng.weibull(
                             a=self.config.ttgf_tx_distribution["cadaver"][
                                 patient.age_group
                             ]["shape"],
@@ -825,6 +844,19 @@ class Model:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} had graft failure after cadaver transplant at time {self.env.now}."
                     )
+                ## they're returning to start_krt so we want to reset a bunch of starting variables
+                self.transplant_suitable = None
+                self.transplant_type = None
+                self.pre_emptive_transplant = None
+                self.dialysis_modality = "none"
+                self.time_starts_dialysis = None
+                self.time_on_dialysis = {"ichd": 0.0, "hhd": 0.0, "pd": 0.0}
+                self.time_living_with_live_transplant = None
+                self.time_living_with_cadaver_transplant = None
+                self.time_on_waiting_list = 0
+                self.time_enters_waiting_list = None
+                self.time_of_transplant = None
+
                 self.env.process(self.start_krt(patient))
 
     def start_dialysis_whilst_waiting_for_transplant(self, patient: Patient):
@@ -1072,6 +1104,7 @@ class Model:
                     sampled_time,
                 )
                 yield self.env.timeout(sampled_time)
+                patient.time_on_waiting_list -= sampled_time
                 patient.time_on_dialysis[patient.dialysis_modality] = sampled_time
                 if self.config.trace:
                     print(
