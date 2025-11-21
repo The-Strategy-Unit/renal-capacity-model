@@ -128,6 +128,20 @@ def calculate_prevalence(event_log):
     return prevalence
 
 
+def calculate_mortality(event_log):
+    years = list(range(1, event_log["year_end"].max()))
+    rows = []
+    for y in years:
+        mask = (event_log["activity_to"] == "death") & (event_log["year_end"] == y)
+        counts = event_log[mask].groupby("activity_from")["patient_id"].nunique()
+        counts.name = y
+        rows.append(counts)
+    mortality = pd.DataFrame(rows).fillna(0).astype(int)
+    mortality = mortality.T
+    mortality.index = ["mortality_" + activity for activity in mortality.index]
+    return mortality
+
+
 def process_event_log(event_log: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Processes event log for easier validation and debugging
 
@@ -135,10 +149,11 @@ def process_event_log(event_log: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFra
         event_log (pd.DataFrame): event log
 
     Returns:
-        tuple with two Pandas dataframes: one recording incidence of patients in each
-        treatment modality for each year of simulation, and the other recording changes
-        in activity for each year of simulation.
+        tuple with two Pandas dataframes: one recording incidence, mortality, and prevalence
+        of patients in each treatment modality for each year of simulation, and the
+        other recording changes in activity for each year of simulation.
     """
+    print("Calculating model run results from event log...")
     event_log["year_start"] = event_log["time_starting_activity_from"].apply(
         calculate_lookup_year
     )
@@ -148,5 +163,8 @@ def process_event_log(event_log: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFra
     )
     event_log["year_end"] = event_log["end_time"].apply(calculate_lookup_year)
     incidence = calculate_incidence(event_log)
+    mortality = calculate_mortality(event_log)
+    prevalence = calculate_prevalence(event_log)
+    results_df = pd.concat([incidence, mortality, prevalence]).fillna(0)
     activity_change = calculate_activity_change(event_log)
-    return incidence, activity_change
+    return results_df, activity_change

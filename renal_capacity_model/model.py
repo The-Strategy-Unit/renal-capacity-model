@@ -1045,8 +1045,8 @@ class Model:
         for patient_type in self.patient_types:
             self.env.process(self.generator_patient_arrivals(patient_type))
         self.env.run(until=self.config.sim_duration)
-        incidence, activity_change = process_event_log(self.event_log)
-        self.incidence = incidence
+        results_df, activity_change = process_event_log(self.event_log)
+        self.results_df = results_df
         self.activity_change = activity_change
 
         # Show results (optional - set in config)
