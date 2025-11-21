@@ -88,9 +88,11 @@ def calculate_lookup_year(time_units: float) -> int:
 
 
 def calculate_incidence(event_log):
-    incidence = event_log.groupby("year_start")["activity_from"].value_counts()
+    incidence = event_log.groupby(["year_start", "patient_flag"])[
+        "activity_from"
+    ].value_counts()
     incidence = incidence.unstack(level="year_start")
-    incidence.index = ["incidence_" + activity for activity in incidence.index]
+    incidence.index = ["incidence_" + "_".join(i) for i in incidence.index]
     return pd.DataFrame(incidence)
 
 
@@ -118,13 +120,17 @@ def calculate_prevalence(event_log):
     rows = []
     for y in years:
         mask = (event_log["year_start"] <= y) & (event_log["year_end"] > y)
-        counts = event_log[mask].groupby("activity_from")["patient_id"].nunique()
+        counts = (
+            event_log[mask]
+            .groupby(["activity_from", "patient_flag"])["patient_id"]
+            .nunique()
+        )
         counts.name = y
         rows.append(counts)
 
     prevalence = pd.DataFrame(rows).fillna(0).astype(int)
     prevalence = prevalence.T
-    prevalence.index = ["prevalence_" + activity for activity in prevalence.index]
+    prevalence.index = ["prevalence_" + "_".join(i) for i in prevalence.index]
     return prevalence
 
 
@@ -133,12 +139,16 @@ def calculate_mortality(event_log):
     rows = []
     for y in years:
         mask = (event_log["activity_to"] == "death") & (event_log["year_end"] == y)
-        counts = event_log[mask].groupby("activity_from")["patient_id"].nunique()
+        counts = (
+            event_log[mask]
+            .groupby(["activity_from", "patient_flag"])["patient_id"]
+            .nunique()
+        )
         counts.name = y
         rows.append(counts)
     mortality = pd.DataFrame(rows).fillna(0).astype(int)
     mortality = mortality.T
-    mortality.index = ["mortality_" + activity for activity in mortality.index]
+    mortality.index = ["mortality_" + "_".join(i) for i in mortality.index]
     return mortality
 
 
