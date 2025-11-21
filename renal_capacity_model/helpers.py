@@ -87,25 +87,19 @@ def calculate_lookup_year(time_units: float) -> int:
     return year
 
 
-def process_event_log(event_log: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Processes event log for easier validation and debugging
+def calculate_incidence(event_log):
+    incidence = event_log.groupby(["year_start", "patient_flag"])[
+        "activity_from"
+    ].value_counts()
+    incidence = incidence.unstack(level="year_start")
+    incidence.index = ["incidence_" + "_".join(i) for i in incidence.index]
+    return pd.DataFrame(incidence)
 
-    Args:
-        event_log (pd.DataFrame): event log
 
-    Returns:
-        tuple with two Pandas dataframes: one recording incidence of patients in each
-        treatment modality for each year of simulation, and the other recording changes
-        in activity for each year of simulation.
-    """
-    event_log["year"] = event_log["time_starting_activity_from"].apply(
-        calculate_lookup_year
-    )
-    incidence = event_log.groupby("year")["activity_from"].value_counts()
-    incidence = pd.DataFrame(incidence, index=incidence.index).rename(
-        columns={"count": "incidence"}
-    )
-    activity_change = event_log.groupby(["year", "activity_from", "activity_to"]).agg(
+def calculate_activity_change(event_log):
+    activity_change = event_log.groupby(
+        ["year_start", "activity_from", "activity_to"]
+    ).agg(
         {
             "time_starting_activity_from": "count",
             "time_spent_in_activity_from": "mean",
@@ -117,4 +111,70 @@ def process_event_log(event_log: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFra
             "time_spent_in_activity_from": "mean_time",
         }
     )
-    return incidence, activity_change
+    return activity_change
+
+
+def calculate_prevalence(event_log):
+    years = list(range(1, event_log["year_end"].max()))
+
+    rows = []
+    for y in years:
+        mask = (event_log["year_start"] <= y) & (event_log["year_end"] > y)
+        counts = (
+            event_log[mask]
+            .groupby(["activity_from", "patient_flag"])["patient_id"]
+            .nunique()
+        )
+        counts.name = y
+        rows.append(counts)
+
+    prevalence = pd.DataFrame(rows).fillna(0).astype(int)
+    prevalence = prevalence.T
+    prevalence.index = ["prevalence_" + "_".join(i) for i in prevalence.index]
+    return prevalence
+
+
+def calculate_mortality(event_log):
+    years = list(range(1, event_log["year_end"].max()))
+    rows = []
+    for y in years:
+        mask = (event_log["activity_to"] == "death") & (event_log["year_end"] == y)
+        counts = (
+            event_log[mask]
+            .groupby(["activity_from", "patient_flag"])["patient_id"]
+            .nunique()
+        )
+        counts.name = y
+        rows.append(counts)
+    mortality = pd.DataFrame(rows).fillna(0).astype(int)
+    mortality = mortality.T
+    mortality.index = ["mortality_" + "_".join(i) for i in mortality.index]
+    return mortality
+
+
+def process_event_log(event_log: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Processes event log for easier validation and debugging
+
+    Args:
+        event_log (pd.DataFrame): event log
+
+    Returns:
+        tuple with two Pandas dataframes: one recording incidence, mortality, and prevalence
+        of patients in each treatment modality for each year of simulation, and the
+        other recording changes in activity for each year of simulation.
+    """
+    print("Calculating model run results from event log...")
+    event_log["year_start"] = event_log["time_starting_activity_from"].apply(
+        calculate_lookup_year
+    )
+    event_log["end_time"] = (
+        event_log["time_starting_activity_from"]
+        + event_log["time_spent_in_activity_from"]
+    )
+    event_log["year_end"] = event_log["end_time"].apply(calculate_lookup_year)
+    incidence = calculate_incidence(event_log)
+    mortality = calculate_mortality(event_log)
+    prevalence = calculate_prevalence(event_log)
+    results_df = pd.concat([incidence, mortality, prevalence]).fillna(0)
+    activity_change = calculate_activity_change(event_log)
+    return results_df, activity_change
