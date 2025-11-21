@@ -10,6 +10,7 @@ from renal_capacity_model.helpers import (
     check_config_duration_valid,
     calculate_lookup_year,
     process_event_log,
+    calculate_model_results,
 )
 import pandas as pd
 from datetime import datetime
@@ -1045,7 +1046,8 @@ class Model:
         for patient_type in self.patient_types:
             self.env.process(self.generator_patient_arrivals(patient_type))
         self.env.run(until=self.config.sim_duration)
-        results_df, activity_change = process_event_log(self.event_log)
+        self.event_log = process_event_log(self.event_log)
+        results_df, activity_change = calculate_model_results(self.event_log)
         self.results_df = results_df
         self.activity_change = activity_change
 

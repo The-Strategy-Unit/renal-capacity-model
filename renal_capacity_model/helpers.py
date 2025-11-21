@@ -98,7 +98,7 @@ def calculate_incidence(event_log):
 
 def calculate_activity_change(event_log):
     activity_change = event_log.groupby(
-        ["year_start", "activity_from", "activity_to"]
+        ["year_start", "patient_type", "patient_flag", "activity_from", "activity_to"]
     ).agg(
         {
             "time_starting_activity_from": "count",
@@ -152,18 +152,38 @@ def calculate_mortality(event_log):
     return mortality
 
 
-def process_event_log(event_log: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+def adjust_next_modality(event_log: pd.DataFrame) -> pd.DataFrame:
+    """
+    The event_log records how long each patient spent in each modality before moving to
+    modality_allocation. It would be more useful to report, instead of "modality_allocation",
+    the specific modality they were allocated to.
+
+    Args:
+        event_log (pd.DataFrame): Event log
+    """
+    event_log_sorted = event_log.sort_values(
+        by=["patient_id", "time_starting_activity_from"]
+    ).reset_index(drop=True)
+    # if modality_allocation is the last activity recorded then leave it as is
+    last_idx = event_log_sorted.groupby("patient_id").tail(1).index
+    mask = (event_log_sorted["activity_to"].str.contains("modality")) & (
+        ~event_log_sorted.index.isin(last_idx)
+    )
+    adjusted = event_log_sorted.groupby("patient_id")["activity_from"].shift(-1)
+    event_log_sorted.loc[mask, "activity_to"] = adjusted[mask]
+    return event_log_sorted
+
+
+def process_event_log(event_log: pd.DataFrame) -> pd.DataFrame:
     """Processes event log for easier validation and debugging
 
     Args:
         event_log (pd.DataFrame): event log
 
     Returns:
-        tuple with two Pandas dataframes: one recording incidence, mortality, and prevalence
-        of patients in each treatment modality for each year of simulation, and the
-        other recording changes in activity for each year of simulation.
+        pd.DataFrame with additional columns ("year_start", "end_time", "year_end")
+        and clearer information on which modality was next
     """
-    print("Calculating model run results from event log...")
     event_log["year_start"] = event_log["time_starting_activity_from"].apply(
         calculate_lookup_year
     )
@@ -172,9 +192,17 @@ def process_event_log(event_log: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFra
         + event_log["time_spent_in_activity_from"]
     )
     event_log["year_end"] = event_log["end_time"].apply(calculate_lookup_year)
-    incidence = calculate_incidence(event_log)
-    mortality = calculate_mortality(event_log)
-    prevalence = calculate_prevalence(event_log)
+    event_log = adjust_next_modality(event_log)
+    return event_log
+
+
+def calculate_model_results(
+    processed_event_log: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    print("\n Calculating model run results from event log...")
+    incidence = calculate_incidence(processed_event_log)
+    mortality = calculate_mortality(processed_event_log)
+    prevalence = calculate_prevalence(processed_event_log)
     results_df = pd.concat([incidence, mortality, prevalence]).fillna(0)
-    activity_change = calculate_activity_change(event_log)
+    activity_change = calculate_activity_change(processed_event_log)
     return results_df, activity_change
