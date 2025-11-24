@@ -1,6 +1,5 @@
 from renal_capacity_model.model import Model
 from renal_capacity_model.config import Config
-from renal_capacity_model.load_scenario import load_scenario_from_excel
 import numpy as np
 import pandas as pd
 
