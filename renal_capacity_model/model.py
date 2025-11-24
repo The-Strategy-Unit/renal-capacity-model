@@ -413,10 +413,7 @@ class Model:
             self.config.modality_allocation_distributions[year]
         )
         random_number = self.rng.uniform(0, 1)
-        if not patient.dialysis_modality:  # no modality
-            current_modality = "none"
-        else:
-            current_modality = patient.dialysis_modality
+        current_modality = patient.dialysis_modality
         if current_modality == "none":
             if (
                 random_number
