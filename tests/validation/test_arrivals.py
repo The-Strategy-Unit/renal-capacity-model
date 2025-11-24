@@ -1,5 +1,6 @@
 from renal_capacity_model.model import Model
 from renal_capacity_model.config import Config
+from renal_capacity_model.load_scenario import load_scenario_from_excel
 import numpy as np
 import pandas as pd
 
@@ -22,8 +23,11 @@ def compare_modelled_arrivals_with_expected(event_log, config):
 if __name__ == "__main__":
     config = Config()
     config.initialise_prevalent_patients = False
+    config.trace = True
     rng = np.random.default_rng(config.random_seed)
     model = Model(1, rng, config)
     model.run()
     event_log = model.event_log
-    print(compare_modelled_arrivals_with_expected(event_log, config))
+    compare_modelled_arrivals_with_expected(event_log, config).to_csv(
+        "results/test_arrival_rates.csv"
+    )
