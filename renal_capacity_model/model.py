@@ -14,7 +14,6 @@ from renal_capacity_model.helpers import (
 )
 import pandas as pd
 from datetime import datetime
-from sim_tools.time_dependent import NSPPThinning
 import os
 
 
@@ -39,18 +38,6 @@ class Model:
         self.rng = rng
         self.patient_types = self.config.mean_iat_over_time_dfs.keys()
         self.patients_in_system: dict = {k: 0 for k in self.patient_types}
-        self.random_numbers_for_NSPPThinning = [
-            int(self.rng.integers(999)),
-            int(self.rng.integers(999)),
-        ]
-        self.arrivals_dist = {
-            patient_type: NSPPThinning(
-                self.config.mean_iat_over_time_dfs[patient_type],
-                self.random_numbers_for_NSPPThinning[0],
-                self.random_numbers_for_NSPPThinning[1],
-            )
-            for patient_type in self.patient_types
-        }
         self.event_log: pd.DataFrame = self._setup_event_log()
 
     def _setup_event_log(self) -> pd.DataFrame:
@@ -268,7 +255,11 @@ class Model:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the sampled inter-arrival time
         """
         while True:
-            sampled_iat = float(self.arrivals_dist[patient_type].sample(self.env.now))
+            year = calculate_lookup_year(self.env.now)
+            mean_iat = self.config.mean_iat_over_time_dfs[patient_type].loc[
+                year, "mean_iat"
+            ]
+            sampled_iat = self.rng.exponential(mean_iat)
             yield self.env.timeout(sampled_iat)
             self.patient_counter += (
                 1  # we use the patient_counter for the ID so this must come first
@@ -422,10 +413,7 @@ class Model:
             self.config.modality_allocation_distributions[year]
         )
         random_number = self.rng.uniform(0, 1)
-        if not patient.dialysis_modality:  # no modality
-            current_modality = "none"
-        else:
-            current_modality = patient.dialysis_modality
+        current_modality = patient.dialysis_modality
         if current_modality == "none":
             if (
                 random_number
