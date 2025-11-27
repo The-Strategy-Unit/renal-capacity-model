@@ -4,13 +4,16 @@ Module containing Trial class with logic for running multiple model iterations
 
 import pandas as pd
 from renal_capacity_model.model import Model
+from renal_capacity_model.utils import get_logger
 import numpy as np
 from tqdm import tqdm
 from typing import Optional
 from datetime import datetime
 import os
 
-pd.set_option("display.max_columns", None)
+pd.set_option("display.max_columns", 13)
+
+logger = get_logger(__name__)
 
 
 class Trial:
@@ -34,6 +37,7 @@ class Trial:
             raise TypeError("No trial results available")
 
     def process_model_results(self, results_dfs: list[pd.DataFrame]) -> pd.DataFrame:
+        logger.info("Processing combined results")
         combined_results = pd.concat(results_dfs)
         aggregated_combined_results = pd.DataFrame(
             combined_results.groupby(combined_results.index).mean()
@@ -61,8 +65,9 @@ class Trial:
             model.run()
             self.activity_change_dfs.append(model.activity_change)
             self.results_dfs.append(model.results_df)
+        logger.info("✅🥳 Trial complete!")
         self.df_trial_results = self.process_model_results(self.results_dfs)
-        self.print_trial_results()
+        logger.info("💾 Saving full trial results")
         self.save_dfs(
             self.process_eventlog_dfs(self.activity_change_dfs), "activity_change"
         )

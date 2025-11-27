@@ -12,9 +12,12 @@ from renal_capacity_model.helpers import (
     process_event_log,
     calculate_model_results,
 )
+from renal_capacity_model.utils import get_logger
 import pandas as pd
 from datetime import datetime
 import os
+
+logger = get_logger(__name__)
 
 
 class Model:
@@ -978,7 +981,14 @@ class Model:
 
                 self.env.process(self.start_dialysis_modality_allocation(patient))
 
+    def time_tracker(self):
+        years = calculate_lookup_year(self.config.sim_duration)
+        for i in range(1, years + 1):
+            yield (self.env.timeout(365))
+            logger.info(f"{i} year(s) of simulation complete")
+
     def save_result_files(self, data_to_save):
+        logger.info(f"💾 Saving {data_to_save}")
         folder_path = "results"
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -987,11 +997,11 @@ class Model:
         df_to_save = getattr(self, data_to_save).copy()
         df_to_save.to_parquet(filename + ".parquet")
         df_to_save.to_csv(filename + ".csv")
-        print(f"{data_to_save} saved")
 
     def run(self):
         """Runs the model"""
         if self.config.initialise_prevalent_patients:
+            logger.info("Initialising prevalent patients...")
             # We first initialize the model with patients that were in the system at time zero - we look at each location in turn (conservative care, ichd, hhd, pd, live transplant, cadaver transplant)
             for patient_type in self.patient_types:
                 for _ in range(
@@ -1030,25 +1040,28 @@ class Model:
                             patient_type, "cadaver_transplant"
                         )
                     )
+        logger.info("🏃‍➡️ Beginning simulation with incident patients")
         # We set up a generator for each of the patient types we have an IAT for
+        self.env.process(self.time_tracker())
         for patient_type in self.patient_types:
             self.env.process(self.generator_patient_arrivals(patient_type))
         self.env.run(until=self.config.sim_duration)
+        logger.info("✅ Model run complete!")
         self.event_log = process_event_log(self.event_log)
         results_df, activity_change = calculate_model_results(self.event_log)
         self.results_df = results_df
         self.activity_change = activity_change
-
+        self.save_result_files("event_log")
+        self.save_result_files("results_df")
         # Show results (optional - set in config)
         if self.config.trace:
             print(f"Run Number {self.run_number}")
             print(self.patients_in_system)
-            self.save_result_files("event_log")
 
 
 if __name__ == "__main__":
     config = Config()
-    config.trace = True
+    config.trace = False
     config.initialise_prevalent_patients = False
     rng = np.random.default_rng(config.random_seed)
     model = Model(1, rng, config)
