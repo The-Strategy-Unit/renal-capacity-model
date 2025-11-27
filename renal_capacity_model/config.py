@@ -9,7 +9,7 @@ from renal_capacity_model.helpers import (
 )
 from renal_capacity_model.config_values import (
     national_config_dict,
-    time_to_event_distribution_parameters,
+    load_time_to_event_curves,
 )
 
 
@@ -18,7 +18,11 @@ class Config:
     Config class for storing values
     """
 
-    def __init__(self, config_dict=national_config_dict):
+    def __init__(
+        self,
+        config_dict=national_config_dict,
+        path_to_time_to_event_curves="reference/survival_time_to_event_curves",
+    ):
         self.trace = config_dict.get("trace", False)
         self.initialise_prevalent_patients = config_dict.get(
             "initialise_prevalent_patients", True
@@ -58,42 +62,8 @@ class Config:
         self.pre_emptive_transplant_cadaver_donor_dist = config_dict[
             "pre_emptive_transplant_cadaver_donor_dist"
         ]
-        self.time_on_waiting_list_mean = config_dict["time_on_waiting_list_mean"]
         # time to event distribution parameters (these are the same regardless of geography)
         ## initialisation input distributions ##
-        self.ttma_initial_distribution = time_to_event_distribution_parameters[
-            "ttma_initial_distribution"
-        ]
-        self.ttd_initial_distribution = time_to_event_distribution_parameters[
-            "ttd_initial_distribution"
-        ]
-        self.ttd_tx_initial_distribution = time_to_event_distribution_parameters[
-            "ttd_tx_initial_distribution"
-        ]
-        # fix upper_bound
-        for tx_type in ["live", "cadaver"]:
-            for i in range(1, 7):
-                self.ttd_tx_initial_distribution[tx_type][i]["upper_bound"] = (
-                    self.sim_duration
-                )
-        self.ttgf_tx_initial_distribution = time_to_event_distribution_parameters[
-            "ttgf_tx_initial_distribution"
-        ]
-        self.ttd_con_care = time_to_event_distribution_parameters["ttd_con_care"]
-
-        self.tw_before_dialysis = time_to_event_distribution_parameters[
-            "tw_before_dialysis"
-        ]
-
-        self.ttd_distribution = time_to_event_distribution_parameters[
-            "ttd_distribution"
-        ]
-        self.ttma_distribution = time_to_event_distribution_parameters[
-            "ttma_distribution"
-        ]
-        self.ttd_tx_distribution = time_to_event_distribution_parameters[
-            "ttd_tx_distribution"
-        ]
-        self.ttgf_tx_distribution = time_to_event_distribution_parameters[
-            "ttgf_tx_distribution"
-        ]
+        self.time_to_event_curves = load_time_to_event_curves(
+            path_to_time_to_event_curves
+        )

@@ -63,7 +63,6 @@ def check_config_duration_valid(config):
         "modality_allocation_distributions",
         "pre_emptive_transplant_live_donor_dist",
         "pre_emptive_transplant_cadaver_donor_dist",
-        "time_on_waiting_list_mean",
     ]
     sim_years = calculate_lookup_year(config.sim_duration)
     for config_value in config_values_to_check:
