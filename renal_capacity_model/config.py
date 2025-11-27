@@ -11,6 +11,9 @@ from renal_capacity_model.config_values import (
     national_config_dict,
     load_time_to_event_curves,
 )
+from renal_capacity_model.utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class Config:
@@ -63,7 +66,7 @@ class Config:
             "pre_emptive_transplant_cadaver_donor_dist"
         ]
         # time to event distribution parameters (these are the same regardless of geography)
-        ## initialisation input distributions ##
         self.time_to_event_curves = load_time_to_event_curves(
             path_to_time_to_event_curves
         )
+        logger.info("🔧 Config loaded successfully")

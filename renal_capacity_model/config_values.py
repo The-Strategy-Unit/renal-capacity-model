@@ -1,5 +1,7 @@
 import pandas as pd
-from renal_capacity_model.utils import get_time_to_event_curve_filepaths
+from renal_capacity_model.utils import get_time_to_event_curve_filepaths, get_logger
+
+logger = get_logger(__name__)
 
 national_config_dict = {
     "arrival_rate": {
@@ -241,6 +243,7 @@ national_config_dict = {
 
 # These are used for all the model runs regardless of geography
 def load_time_to_event_curves(filepath):
+    logger.info(f"Loading time to event curves from {filepath}")
     time_to_event_filepaths = get_time_to_event_curve_filepaths(filepath)
     time_to_event_curves = {
         filepath.stem: pd.read_csv(filepath, index_col=0)
