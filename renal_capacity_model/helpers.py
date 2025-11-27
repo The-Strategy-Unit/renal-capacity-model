@@ -2,8 +2,11 @@
 Module with helper functions
 """
 
+from renal_capacity_model.utils import get_logger
 import pandas as pd
 import math
+
+logger = get_logger(__name__)
 
 
 def get_yearly_arrival_rate(config):
@@ -196,7 +199,7 @@ def process_event_log(event_log: pd.DataFrame) -> pd.DataFrame:
 def calculate_model_results(
     processed_event_log: pd.DataFrame,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    print("\n Calculating model run results from event log...")
+    logger.info("Calculating model run results from event log")
     incidence = calculate_incidence(processed_event_log)
     mortality = calculate_mortality(processed_event_log)
     prevalence = calculate_prevalence(processed_event_log)
