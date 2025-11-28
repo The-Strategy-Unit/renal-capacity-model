@@ -244,6 +244,10 @@ ttd_con_care_values = {
     "shape": 0.5,
     "scale": 100,
 }
+tw_before_dialysis_values = {
+    "shape": 1,
+    "scale": 90,
+}
 
 
 # These are used for all the model runs regardless of geography

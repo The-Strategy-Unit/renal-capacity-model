@@ -117,7 +117,6 @@ class Model:
             else:
                 p.transplant_suitable = True
                 p.time_enters_waiting_list = self.env.now
-                year = calculate_lookup_year(self.env.now)
                 if self.config.trace:
                     print(
                         f"Patient {p.id} of age group {p.age_group} is in ICHD dialysis whilst waiting for transplant at time {self.env.now}."
@@ -127,16 +126,17 @@ class Model:
                     < self.config.transplant_type_dist[p.age_group]
                 ):
                     p.transplant_type = "live"
-
-                    p.time_on_waiting_list = self.rng.exponential(
-                        scale=self.config.time_on_waiting_list_mean[year]["live"]
-                    )  # due to memoryless property of exponential dist
+                    random_number = truncate_2dp(self.rng.uniform(0, 1))
+                    p.time_on_waiting_list = self.config.time_to_event_curves[
+                        "tw_liveTx_England"
+                    ].loc[random_number, p.patient_type]
 
                 else:
                     p.transplant_type = "cadaver"
-                    p.time_on_waiting_list = self.rng.exponential(
-                        scale=self.config.time_on_waiting_list_mean[year]["cadaver"]
-                    )  # due to memoryless property of exponential dist
+                    random_number = truncate_2dp(self.rng.uniform(0, 1))
+                    p.time_on_waiting_list = self.config.time_to_event_curves[
+                        "tw_cadTx_England"
+                    ].loc[random_number, p.patient_type]
                 p.pre_emptive_transplant = False
             self.env.process(self.start_dialysis_modality(p))
         elif location == "hhd":
@@ -153,7 +153,6 @@ class Model:
             else:
                 p.transplant_suitable = True
                 p.time_enters_waiting_list = self.env.now
-                year = calculate_lookup_year(self.env.now)
                 if self.config.trace:
                     print(
                         f"Patient {p.id} of age group {p.age_group} is in HHD dialysis whilst waiting for transplant at time {self.env.now}."
@@ -163,15 +162,16 @@ class Model:
                     < self.config.transplant_type_dist[p.age_group]
                 ):
                     p.transplant_type = "live"
-                    p.time_on_waiting_list = self.rng.exponential(
-                        scale=self.config.time_on_waiting_list_mean[year]["live"]
-                    )  # due to memoryless property of exponential dist
-
+                    random_number = truncate_2dp(self.rng.uniform(0, 1))
+                    p.time_on_waiting_list = self.config.time_to_event_curves[
+                        "tw_liveTx_England"
+                    ].loc[random_number, p.patient_type]
                 else:
                     p.transplant_type = "cadaver"
-                    p.time_on_waiting_list = self.rng.exponential(
-                        scale=self.config.time_on_waiting_list_mean[year]["cadaver"]
-                    )  # due to memoryless property of exponential dist
+                    random_number = truncate_2dp(self.rng.uniform(0, 1))
+                    p.time_on_waiting_list = self.config.time_to_event_curves[
+                        "tw_cadTx_England"
+                    ].loc[random_number, p.patient_type]
                 p.pre_emptive_transplant = False
             self.env.process(self.start_dialysis_modality(p))
         elif location == "pd":
@@ -188,7 +188,6 @@ class Model:
             else:
                 p.transplant_suitable = True
                 p.time_enters_waiting_list = self.env.now
-                year = calculate_lookup_year(self.env.now)
                 if self.config.trace:
                     print(
                         f"Patient {p.id} of age group {p.age_group} is in PD dialysis whilst waiting for transplant at time {self.env.now}."
@@ -198,15 +197,16 @@ class Model:
                     < self.config.transplant_type_dist[p.age_group]
                 ):
                     p.transplant_type = "live"
-                    p.time_on_waiting_list = self.rng.exponential(
-                        scale=self.config.time_on_waiting_list_mean[year]["live"]
-                    )  # due to memoryless property of exponential dist
-
+                    random_number = truncate_2dp(self.rng.uniform(0, 1))
+                    p.time_on_waiting_list = self.config.time_to_event_curves[
+                        "tw_liveTx_England"
+                    ].loc[random_number, p.patient_type]
                 else:
                     p.transplant_type = "cadaver"
-                    p.time_on_waiting_list = self.rng.exponential(
-                        scale=self.config.time_on_waiting_list_mean[year]["cadaver"]
-                    )  # due to memoryless property of exponential dist
+                    random_number = truncate_2dp(self.rng.uniform(0, 1))
+                    p.time_on_waiting_list = self.config.time_to_event_curves[
+                        "tw_cadTx_England"
+                    ].loc[random_number, p.patient_type]
                 p.pre_emptive_transplant = False
             self.env.process(self.start_dialysis_modality(p))
         elif location == "live_transplant":
@@ -482,35 +482,17 @@ class Model:
             ):
                 # patient dies after transplant
 
-                ## sampled_wait_time depends on whether patitent is inicident or not
+                ## sampled_wait_time depends on whether patient is incident or not
                 if patient.patient_flag == "incident":
-                    sampled_wait_time = self.config.ttd_tx_distribution["live"][
-                        patient.age_group
-                    ]["scale"] * self.rng.weibull(
-                        a=self.config.ttd_tx_distribution["live"][patient.age_group][
-                            "shape"
-                        ],
-                        size=None,
-                    )
+                    random_number = truncate_2dp(self.rng.uniform(0, 1))
+                    sampled_wait_time = self.config.time_to_event_curves[
+                        "ttd_liveTx"
+                    ].loc[random_number, patient.patient_type]
                 else:  # prevalent patient
-                    if (
-                        self.rng.uniform(0, 1)
-                        < 1
-                        - self.config.ttd_tx_initial_distribution["live"][
-                            patient.age_group
-                        ]["proportion_uncensored"]
-                    ):
-                        sampled_wait_time = self.config.sim_duration + 1
-                    else:
-                        sampled_wait_time = self.rng.uniform(
-                            self.config.ttd_tx_initial_distribution["live"][
-                                patient.age_group
-                            ]["lower_bound"],
-                            self.config.ttd_tx_initial_distribution["live"][
-                                patient.age_group
-                            ]["upper_bound"],
-                        )
-
+                    random_number = truncate_2dp(self.rng.uniform(0, 1))
+                    sampled_wait_time = self.config.time_to_event_curves[
+                        "ttd_liveTx_initialisation"
+                    ].loc[random_number, patient.patient_type]
                 self._update_event_log(
                     patient,
                     patient.transplant_type,
@@ -531,56 +513,17 @@ class Model:
                 # patient leaves the system
             else:
                 # patient goes back to start_krt after graft fails
-
-                ## sampled_wait_time depends on whether patitent is inicident or not
+                ## sampled_wait_time depends on whether patient is incident or not
                 if patient.patient_flag == "incident":
-                    ## this is a mixture distribution as a patient has a high chance of early graft failure and then a longer tailed component (bathtub shape survial curve)
-                    if (
-                        self.rng.uniform(0, 1)
-                        < self.config.ttgf_tx_distribution["live"][patient.age_group][
-                            "proportion_below_break"
-                        ]
-                    ):
-                        sampled_wait_time = self.rng.triangular(
-                            left=0,
-                            mode=self.config.ttgf_tx_distribution["live"][
-                                patient.age_group
-                            ]["mode"],
-                            right=self.config.ttgf_tx_distribution["live"][
-                                patient.age_group
-                            ]["break_point"],
-                            size=None,
-                        )
-                    else:
-                        sampled_wait_time = self.config.ttgf_tx_distribution["live"][
-                            patient.age_group
-                        ]["break_point"] + self.config.ttgf_tx_distribution["live"][
-                            patient.age_group
-                        ]["scale"] * self.rng.weibull(
-                            a=self.config.ttgf_tx_distribution["live"][
-                                patient.age_group
-                            ]["shape"],
-                            size=None,
-                        )
+                    random_number = truncate_2dp(self.rng.uniform(0, 1))
+                    sampled_wait_time = self.config.time_to_event_curves[
+                        "ttgf_liveTx"
+                    ].loc[random_number, patient.patient_type]
                 else:  # prevalent patient
-                    if (
-                        self.rng.uniform(0, 1)
-                        < 1
-                        - self.config.ttgf_tx_initial_distribution["live"][
-                            patient.age_group
-                        ]["proportion_uncensored"]
-                    ):
-                        sampled_wait_time = self.config.sim_duration + 1
-                    else:
-                        sampled_wait_time = self.config.ttgf_tx_initial_distribution[
-                            "live"
-                        ][patient.age_group]["scale"] * self.rng.weibull(
-                            a=self.config.ttgf_tx_initial_distribution["live"][
-                                patient.age_group
-                            ]["shape"],
-                            size=None,
-                        )
-
+                    random_number = truncate_2dp(self.rng.uniform(0, 1))
+                    sampled_wait_time = self.config.time_to_event_curves[
+                        "ttgf_liveTx_initialisation"
+                    ].loc[random_number, patient.patient_type]
                 self._update_event_log(
                     patient,
                     patient.transplant_type,
@@ -616,35 +559,17 @@ class Model:
             ):
                 # patient dies after transplant
 
-                ## sampled_wait_time depends on whether patitent is inicident or not
+                ## sampled_wait_time depends on whether patient is incident or not
                 if patient.patient_flag == "incident":
-                    sampled_wait_time = self.config.ttd_tx_distribution["cadaver"][
-                        patient.age_group
-                    ]["scale"] * self.rng.weibull(
-                        a=self.config.ttd_tx_distribution["cadaver"][patient.age_group][
-                            "shape"
-                        ],
-                        size=None,
-                    )
+                    random_number = truncate_2dp(self.rng.uniform(0, 1))
+                    sampled_wait_time = self.config.time_to_event_curves[
+                        "ttgf_cadTx"
+                    ].loc[random_number, patient.patient_type]
                 else:  # prevalent patient
-                    if (
-                        self.rng.uniform(0, 1)
-                        < 1
-                        - self.config.ttd_tx_initial_distribution["cadaver"][
-                            patient.age_group
-                        ]["proportion_uncensored"]
-                    ):
-                        sampled_wait_time = self.config.sim_duration + 1
-                    else:
-                        sampled_wait_time = self.rng.uniform(
-                            self.config.ttd_tx_initial_distribution["cadaver"][
-                                patient.age_group
-                            ]["lower_bound"],
-                            self.config.ttd_tx_initial_distribution["cadaver"][
-                                patient.age_group
-                            ]["upper_bound"],
-                        )
-
+                    random_number = truncate_2dp(self.rng.uniform(0, 1))
+                    sampled_wait_time = self.config.time_to_event_curves[
+                        "ttgf_liveTx_initialisation"
+                    ].loc[random_number, patient.patient_type]
                 self._update_event_log(
                     patient,
                     patient.transplant_type,
@@ -668,52 +593,15 @@ class Model:
 
                 ## sampled_wait_time depends on whether patitent is inicident or not
                 if patient.patient_flag == "incident":
-                    ## this is a mixture distribution as a patient has initiall a high chance of early graft failure and then a longer tailed component (bathtub shape survial curve)
-                    if (
-                        self.rng.uniform(0, 1)
-                        < self.config.ttgf_tx_distribution["cadaver"][
-                            patient.age_group
-                        ]["proportion_below_break"]
-                    ):
-                        sampled_wait_time = self.rng.triangular(
-                            left=0,
-                            mode=self.config.ttgf_tx_distribution["cadaver"][
-                                patient.age_group
-                            ]["mode"],
-                            right=self.config.ttgf_tx_distribution["cadaver"][
-                                patient.age_group
-                            ]["break_point"],
-                        )
-                    else:
-                        sampled_wait_time = self.config.ttgf_tx_distribution["cadaver"][
-                            patient.age_group
-                        ]["break_point"] + self.config.ttgf_tx_distribution["cadaver"][
-                            patient.age_group
-                        ]["scale"] * self.rng.weibull(
-                            a=self.config.ttgf_tx_distribution["cadaver"][
-                                patient.age_group
-                            ]["shape"],
-                            size=None,
-                        )
+                    random_number = truncate_2dp(self.rng.uniform(0, 1))
+                    sampled_wait_time = self.config.time_to_event_curves[
+                        "ttgf_cadTx"
+                    ].loc[random_number, patient.patient_type]
                 else:  # prevalent patient
-                    if (
-                        self.rng.uniform(0, 1)
-                        < 1
-                        - self.config.ttgf_tx_initial_distribution["cadaver"][
-                            patient.age_group
-                        ]["proportion_uncensored"]
-                    ):
-                        sampled_wait_time = self.config.sim_duration + 1
-                    else:
-                        sampled_wait_time = self.config.ttgf_tx_initial_distribution[
-                            "cadaver"
-                        ][patient.age_group]["scale"] * self.rng.weibull(
-                            a=self.config.ttgf_tx_initial_distribution["cadaver"][
-                                patient.age_group
-                            ]["shape"],
-                            size=None,
-                        )
-
+                    random_number = truncate_2dp(self.rng.uniform(0, 1))
+                    sampled_wait_time = self.config.time_to_event_curves[
+                        "ttgf_cadTx_initialisation"
+                    ].loc[random_number, patient.patient_type]
                 self._update_event_log(
                     patient,
                     patient.transplant_type,
@@ -757,17 +645,16 @@ class Model:
 
         # Let's generate a time on the waiting list
         # We'll use this within the starts_dialysis function to work out how long they stay in dialysis before Tx
-        year = calculate_lookup_year(self.env.now)
         if patient.transplant_type == "live":
-            patient.time_on_waiting_list = self.rng.exponential(
-                scale=self.config.time_on_waiting_list_mean[year]["live"]
-            )
-
+            random_number = truncate_2dp(self.rng.uniform(0, 1))
+            patient.time_on_waiting_list = self.config.time_to_event_curves[
+                "tw_liveTx_England"
+            ].loc[random_number, patient.patient_type]
         else:  # cadaver
-            patient.time_on_waiting_list = self.rng.exponential(
-                scale=self.config.time_on_waiting_list_mean[year]["cadaver"]
-            )
-
+            random_number = truncate_2dp(self.rng.uniform(0, 1))
+            patient.time_on_waiting_list = self.config.time_to_event_curves[
+                "tw_cadTx_England"
+            ].loc[random_number, patient.patient_type]
         ## if this isn't their first Tx then we also need to simulate the time they wait before starting dialysis
         if patient.transplant_count > 0:
             # we need to check this isn't longer than their time on the waiting list
@@ -842,34 +729,15 @@ class Model:
             # death or transplant
             ## sampled_time depends on whether patitent is inicident or not
             if patient.patient_flag == "incident":
-                sampled_time = self.rng.gamma(
-                    self.config.ttd_distribution[patient.dialysis_modality][
-                        patient.age_group
-                    ]["shape"],
-                    self.config.ttd_distribution[patient.dialysis_modality][
-                        patient.age_group
-                    ]["scale"],
-                    size=None,
-                )
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                sampled_time = self.config.time_to_event_curves[
+                    f"ttd_{patient.dialysis_modality}"
+                ].loc[random_number, patient.patient_type]
             else:  ## prevalent patient
-                if (
-                    self.rng.uniform(0, 1)
-                    < 1
-                    - self.config.ttd_initial_distribution[patient.dialysis_modality][
-                        patient.age_group
-                    ]["proportion_uncensored"]
-                ):
-                    sampled_time = (
-                        self.config.sim_duration + 1
-                    )  # this is a censored observation
-                else:
-                    sampled_time = self.config.ttd_initial_distribution[
-                        patient.dialysis_modality
-                    ][patient.age_group]["scale"] * self.rng.weibull(
-                        self.config.ttd_initial_distribution[patient.dialysis_modality][
-                            patient.age_group
-                        ]["shape"]
-                    )
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                sampled_time = self.config.time_to_event_curves[
+                    f"ttd_{patient.dialysis_modality}_initialisation"
+                ].loc[random_number, patient.patient_type]
             if (
                 patient.transplant_suitable
                 and sampled_time >= patient.time_on_waiting_list
@@ -912,37 +780,17 @@ class Model:
         else:
             # modality change or transplant
 
-            ## sampled_time depends on whether patitent is inicident or not
+            ## sampled_time depends on whether patient is incident or not
             if patient.patient_flag == "incident":
-                sampled_time = self.rng.gamma(
-                    self.config.ttma_distribution[patient.dialysis_modality][
-                        patient.age_group
-                    ]["shape"],
-                    self.config.ttma_distribution[patient.dialysis_modality][
-                        patient.age_group
-                    ]["scale"],
-                    size=None,
-                )
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                sampled_time = self.config.time_to_event_curves[
+                    f"ttma_{patient.dialysis_modality}"
+                ].loc[random_number, patient.patient_type]
             else:  ## prevalent patient
-                if (
-                    self.rng.uniform(0, 1)
-                    < 1
-                    - self.config.ttma_initial_distribution[patient.dialysis_modality][
-                        patient.age_group
-                    ]["proportion_uncensored"]
-                ):
-                    sampled_time = (
-                        self.config.sim_duration + 1
-                    )  # this is a censored observation
-                else:
-                    sampled_time = self.config.ttma_initial_distribution[
-                        patient.dialysis_modality
-                    ][patient.age_group]["scale"] * self.rng.weibull(
-                        self.config.ttma_initial_distribution[
-                            patient.dialysis_modality
-                        ][patient.age_group]["shape"]
-                    )
-            # print(f"SAMPLED TIME was {sampled_time} for {patient.patient_flag} patient {patient.id}")
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                sampled_time = self.config.time_to_event_curves[
+                    f"ttma_{patient.dialysis_modality}_initialisation"
+                ].loc[random_number, patient.patient_type]
             if (
                 patient.transplant_suitable
                 and sampled_time >= patient.time_on_waiting_list

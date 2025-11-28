@@ -11,6 +11,7 @@ from renal_capacity_model.config_values import (
     national_config_dict,
     load_time_to_event_curves,
     ttd_con_care_values,
+    tw_before_dialysis_values,
 )
 from renal_capacity_model.utils import get_logger
 
@@ -68,6 +69,7 @@ class Config:
         ]
         # time to event distribution parameters (these are the same regardless of geography)
         self.ttd_con_care = ttd_con_care_values
+        self.tw_before_dialysis = tw_before_dialysis_values
         self.time_to_event_curves = load_time_to_event_curves(
             path_to_time_to_event_curves
         )
