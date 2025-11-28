@@ -1,5 +1,6 @@
 import pandas as pd
 from renal_capacity_model.utils import get_time_to_event_curve_filepaths, get_logger
+from renal_capacity_model.helpers import check_time_to_event_curve_dfs
 
 logger = get_logger(__name__)
 
@@ -258,4 +259,6 @@ def load_time_to_event_curves(filepath):
         filepath.stem: pd.read_csv(filepath, index_col=0)
         for filepath in time_to_event_filepaths
     }
+    for name, df in time_to_event_curves.items():
+        check_time_to_event_curve_dfs(name, df)
     return time_to_event_curves

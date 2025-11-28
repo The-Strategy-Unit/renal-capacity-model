@@ -4,6 +4,8 @@ Module with helper functions
 
 from renal_capacity_model.utils import get_logger
 import pandas as pd
+import numpy as np
+from itertools import product
 import math
 
 logger = get_logger(__name__)
@@ -208,4 +210,36 @@ def calculate_model_results(
 
 
 def truncate_2dp(x: float) -> float:
-    return math.trunc(x * 100) / 100
+    """Truncates randomly sampled numbers to two decimal places,
+    so we can use them as lookups in the time to event curves
+
+    Args:
+        x (float): Randomly sampled float from 0,1
+
+    Returns:
+        float: Number
+    """
+    truncated = math.trunc(x * 100) / 100
+    return min(max(truncated, 0.01), 0.99)
+
+
+def check_time_to_event_curve_dfs(tte_df_name: str, tte_df: pd.DataFrame):
+    """Checks that loaded time to event curve dataframes meet required standards
+
+    Args:
+        tte_df (pd.DataFrame): Time to event curve dataframe, loaded from CSV
+        tte_df_name (str): Name of time to event curve dataframe
+    """
+    indices = [float(num) for num in list(np.arange(0.01, 1, 0.01).round(2))]
+    age_groups = list(range(1, 7))
+    age_groups_str = [str(num) for num in age_groups]
+    referral_type = ["early", "late"]
+    cols = [
+        "_".join(patient_type)
+        for patient_type in list(product(age_groups_str, referral_type))
+    ]
+    try:
+        assert list(tte_df.index) == indices
+        assert list(tte_df.columns) == cols
+    except AssertionError:
+        raise ValueError(f"Check {tte_df_name} csv - incorrect indices/columns")
