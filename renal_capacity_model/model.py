@@ -11,6 +11,7 @@ from renal_capacity_model.helpers import (
     calculate_lookup_year,
     process_event_log,
     calculate_model_results,
+    truncate_2dp,
 )
 from renal_capacity_model.utils import get_logger
 import pandas as pd
@@ -126,6 +127,7 @@ class Model:
                     < self.config.transplant_type_dist[p.age_group]
                 ):
                     p.transplant_type = "live"
+
                     p.time_on_waiting_list = self.rng.exponential(
                         scale=self.config.time_on_waiting_list_mean[year]["live"]
                     )  # due to memoryless property of exponential dist

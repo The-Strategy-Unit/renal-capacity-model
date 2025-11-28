@@ -205,3 +205,7 @@ def calculate_model_results(
     results_df = pd.concat([incidence, mortality, prevalence]).fillna(0)
     activity_change = calculate_activity_change(processed_event_log)
     return results_df, activity_change
+
+
+def truncate_2dp(x: float) -> float:
+    return math.trunc(x * 100) / 100
