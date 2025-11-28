@@ -16,7 +16,10 @@ def test_calculate_lookup_year(time_units, expected):
 
 
 def test_check_config_duration_valid_passes(
-    config_values={"sim_duration": 730, "arrival_rate": {1: {}, 2: {}}},
+    config_values={
+        "sim_duration": 730,
+        "pre_emptive_transplant_live_donor_dist": {1: {}, 2: {}},
+    },
 ):
     # arrange
     config_dict = national_config_dict.copy()
