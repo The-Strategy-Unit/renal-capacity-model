@@ -10,6 +10,7 @@ from renal_capacity_model.helpers import (
 from renal_capacity_model.config_values import (
     national_config_dict,
     load_time_to_event_curves,
+    ttd_con_care_values,
 )
 from renal_capacity_model.utils import get_logger
 
@@ -66,6 +67,7 @@ class Config:
             "pre_emptive_transplant_cadaver_donor_dist"
         ]
         # time to event distribution parameters (these are the same regardless of geography)
+        self.ttd_con_care = ttd_con_care_values
         self.time_to_event_curves = load_time_to_event_curves(
             path_to_time_to_event_curves
         )

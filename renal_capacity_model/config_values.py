@@ -240,6 +240,11 @@ national_config_dict = {
     },
 }
 
+ttd_con_care_values = {
+    "shape": 0.5,
+    "scale": 100,
+}
+
 
 # These are used for all the model runs regardless of geography
 def load_time_to_event_curves(filepath):
