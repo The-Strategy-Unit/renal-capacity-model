@@ -25,7 +25,12 @@ def produce_combined_results_for_all_model_runs(results_dfs: list[pd.DataFrame])
     combined = pd.concat(
         [df.reset_index().assign(model_run=i + 1) for i, df in enumerate(dfs_processed)]
     )
-    return combined.set_index(["index", "model_run"]).sort_index()
+    return (
+        combined.set_index(["index", "model_run"])
+        .sort_index(axis=0)
+        .sort_index(axis=1)
+        .fillna(0)
+    )
 
 
 def write_results_to_excel(path_to_excel_file: str, combined_df: pd.DataFrame):
