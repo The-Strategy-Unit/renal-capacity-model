@@ -116,7 +116,7 @@ def calculate_activity_change(event_log):
 
 
 def calculate_prevalence(event_log):
-    years = list(range(1, event_log["year_end"].max()))
+    years = list(range(0, event_log["year_end"].max()))
 
     rows = []
     for y in years:
