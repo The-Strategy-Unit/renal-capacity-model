@@ -524,7 +524,7 @@ class Model:
                     sampled_wait_time = self.config.time_to_event_curves[
                         "ttgf_liveTx_initialisation"
                     ].loc[random_number, patient.patient_type]
-                    patient.patient_flag = "incident"  # after prevalent patient has a graft failure we treat them as incident again
+
                 self._update_event_log(
                     patient,
                     patient.transplant_type,
@@ -532,6 +532,7 @@ class Model:
                     float(self.env.now),
                     sampled_wait_time,
                 )
+                patient.patient_flag = "incident"  # if they were prevalent then after the patient has a graft failure we treat them as incident again
                 yield self.env.timeout(sampled_wait_time)
                 patient.time_living_with_live_transplant = sampled_wait_time
                 if self.config.trace:
@@ -603,7 +604,7 @@ class Model:
                     sampled_wait_time = self.config.time_to_event_curves[
                         "ttgf_cadTx_initialisation"
                     ].loc[random_number, patient.patient_type]
-                    patient.patient_flag = "incident"  # after prevalent patient has a graft failure we treat them as incident again
+
                 self._update_event_log(
                     patient,
                     patient.transplant_type,
@@ -611,7 +612,7 @@ class Model:
                     float(self.env.now),
                     sampled_wait_time,
                 )
-
+                patient.patient_flag = "incident"  # if they were prevalent then after the patient has a graft failure we treat them as incident again
                 yield self.env.timeout(sampled_wait_time)
                 patient.time_living_with_cadaver_transplant = sampled_wait_time
                 if self.config.trace:
@@ -744,7 +745,6 @@ class Model:
                 patient.transplant_suitable
                 and sampled_time >= patient.time_on_waiting_list
             ):
-                patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again if they're going to transplant (no need to do this if next step is death)
                 self._update_event_log(
                     patient,
                     patient.dialysis_modality,
@@ -752,6 +752,7 @@ class Model:
                     float(self.env.now),
                     patient.time_on_waiting_list,
                 )
+                patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again if they're going to transplant (no need to do this if next step is death)
                 patient.pre_emptive_transplant = False
                 yield self.env.timeout(patient.time_on_waiting_list)
                 patient.time_on_dialysis[patient.dialysis_modality] = (
@@ -794,7 +795,6 @@ class Model:
                 sampled_time = self.config.time_to_event_curves[
                     f"ttma_{patient.dialysis_modality}_initialisation"
                 ].loc[random_number, patient.patient_type]
-                patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again
             if (
                 patient.transplant_suitable
                 and sampled_time >= patient.time_on_waiting_list
@@ -806,6 +806,7 @@ class Model:
                     float(self.env.now),
                     patient.time_on_waiting_list,
                 )
+                patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again
                 patient.pre_emptive_transplant = False
                 yield self.env.timeout(patient.time_on_waiting_list)
                 patient.time_on_dialysis[patient.dialysis_modality] = (
@@ -825,6 +826,7 @@ class Model:
                     float(self.env.now),
                     sampled_time,
                 )
+                patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again
                 yield self.env.timeout(sampled_time)
                 patient.time_on_waiting_list -= sampled_time
                 patient.time_on_dialysis[patient.dialysis_modality] = sampled_time
