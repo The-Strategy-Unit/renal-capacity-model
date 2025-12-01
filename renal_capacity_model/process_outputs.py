@@ -41,4 +41,4 @@ def write_results_to_excel(path_to_excel_file: str, combined_df: pd.DataFrame):
         ".xlsx", f"_results_{today_date}.xlsx"
     )
     wb.save(results_filepath)
-    logging.info(f"✍️ Excel format model results written to {results_filepath}")
+    logging.info(f"Excel format model results written to: ✍️ {results_filepath}")
