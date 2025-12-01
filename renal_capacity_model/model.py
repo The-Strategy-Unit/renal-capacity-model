@@ -524,6 +524,7 @@ class Model:
                     sampled_wait_time = self.config.time_to_event_curves[
                         "ttgf_liveTx_initialisation"
                     ].loc[random_number, patient.patient_type]
+                    patient.patient_flag = "incident"  # after prevalent patient has a graft failure we treat them as incident again
                 self._update_event_log(
                     patient,
                     patient.transplant_type,
@@ -538,17 +539,17 @@ class Model:
                         f"Patient {patient.id} of age group {patient.age_group} had graft failure after live transplant at time {self.env.now}."
                     )
                 ## they're returning to start_krt so we want to reset a bunch of starting variables
-                self.transplant_suitable = None
-                self.transplant_type = None
-                self.pre_emptive_transplant = None
-                self.dialysis_modality = "none"
-                self.time_starts_dialysis = None
-                self.time_on_dialysis = {"ichd": 0.0, "hhd": 0.0, "pd": 0.0}
-                self.time_living_with_live_transplant = None
-                self.time_living_with_cadaver_transplant = None
-                self.time_on_waiting_list = 0
-                self.time_enters_waiting_list = None
-                self.time_of_transplant = None
+                patient.transplant_suitable = None
+                patient.transplant_type = None
+                patient.pre_emptive_transplant = None
+                patient.dialysis_modality = "none"
+                patient.time_starts_dialysis = None
+                patient.time_on_dialysis = {"ichd": 0.0, "hhd": 0.0, "pd": 0.0}
+                patient.time_living_with_live_transplant = None
+                patient.time_living_with_cadaver_transplant = None
+                patient.time_on_waiting_list = 0
+                patient.time_enters_waiting_list = None
+                patient.time_of_transplant = None
 
                 self.env.process(self.start_krt(patient))
         else:  # cadaver
@@ -602,6 +603,7 @@ class Model:
                     sampled_wait_time = self.config.time_to_event_curves[
                         "ttgf_cadTx_initialisation"
                     ].loc[random_number, patient.patient_type]
+                    patient.patient_flag = "incident"  # after prevalent patient has a graft failure we treat them as incident again
                 self._update_event_log(
                     patient,
                     patient.transplant_type,
@@ -617,17 +619,17 @@ class Model:
                         f"Patient {patient.id} of age group {patient.age_group} had graft failure after cadaver transplant at time {self.env.now}."
                     )
                 ## they're returning to start_krt so we want to reset a bunch of starting variables
-                self.transplant_suitable = None
-                self.transplant_type = None
-                self.pre_emptive_transplant = None
-                self.dialysis_modality = "none"
-                self.time_starts_dialysis = None
-                self.time_on_dialysis = {"ichd": 0.0, "hhd": 0.0, "pd": 0.0}
-                self.time_living_with_live_transplant = None
-                self.time_living_with_cadaver_transplant = None
-                self.time_on_waiting_list = 0
-                self.time_enters_waiting_list = None
-                self.time_of_transplant = None
+                patient.transplant_suitable = None
+                patient.transplant_type = None
+                patient.pre_emptive_transplant = None
+                patient.dialysis_modality = "none"
+                patient.time_starts_dialysis = None
+                patient.time_on_dialysis = {"ichd": 0.0, "hhd": 0.0, "pd": 0.0}
+                patient.time_living_with_live_transplant = None
+                patient.time_living_with_cadaver_transplant = None
+                patient.time_on_waiting_list = 0
+                patient.time_enters_waiting_list = None
+                patient.time_of_transplant = None
 
                 self.env.process(self.start_krt(patient))
 
@@ -742,6 +744,7 @@ class Model:
                 patient.transplant_suitable
                 and sampled_time >= patient.time_on_waiting_list
             ):
+                patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again if they're going to transplant (no need to do this if next step is death)
                 self._update_event_log(
                     patient,
                     patient.dialysis_modality,
@@ -791,6 +794,7 @@ class Model:
                 sampled_time = self.config.time_to_event_curves[
                     f"ttma_{patient.dialysis_modality}_initialisation"
                 ].loc[random_number, patient.patient_type]
+                patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again
             if (
                 patient.transplant_suitable
                 and sampled_time >= patient.time_on_waiting_list
