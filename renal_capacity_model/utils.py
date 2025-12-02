@@ -28,8 +28,16 @@ time_to_event_filenames = [
 ]
 
 
-def get_logger(module=None, level: int = logging.INFO):
-    """Get logger with appropriate name."""
+def get_logger(module=None, level: int = logging.INFO) -> logging.Logger:
+    """Get logger with appropriate name
+
+    Args:
+        module (str, optional): Module name. Defaults to None.
+        level (int, optional): Logging level. Defaults to logging.INFO.
+
+    Returns:
+        logging.Logger: Configured logger
+    """
     logger_name = module
     logging.basicConfig(
         level=level,
@@ -42,8 +50,20 @@ def get_logger(module=None, level: int = logging.INFO):
 
 
 def get_time_to_event_curve_filepaths(
-    directory="reference/survival_time_to_event_curves",
-):
+    directory: str = "reference/survival_time_to_event_curves",
+) -> list[Path]:
+    """Check required time to event curve CSVs are in the specified folder, load the paths to a list
+
+    Args:
+        directory (str, optional): Folder where time to event curve CSVs are stored. Defaults to "reference/survival_time_to_event_curves".
+
+    Raises:
+        FileNotFoundError: Checks if directory exists
+        FileNotFoundError: Checks if required files are all in the specified directory
+
+    Returns:
+        list[Path]: List of paths to time to event curve CSVs
+    """
     path = Path(directory)
     if not path.exists():
         raise FileNotFoundError(f"Directory not found: {directory}")
