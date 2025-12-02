@@ -1,6 +1,6 @@
 """
 This module contains the configuration for running the model.
-It can later be adapted to take inputs from users
+It can be adapted to take inputs from users
 """
 
 from renal_capacity_model.helpers import (
@@ -25,9 +25,15 @@ class Config:
 
     def __init__(
         self,
-        config_dict=national_config_dict,
-        path_to_time_to_event_curves="reference/survival_time_to_event_curves",
+        config_dict: dict = national_config_dict,
+        path_to_time_to_event_curves: str = "reference/survival_time_to_event_curves",
     ):
+        """Initialises config for running the model
+
+        Args:
+            config_dict (dict, optional): Dict containing values to be used to run the model. Defaults to national_config_dict.
+            path_to_time_to_event_curves (str, optional): Path to folder containing time to event curves as CSV files. Defaults to "reference/survival_time_to_event_curves".
+        """
         self.trace = config_dict.get("trace", False)
         self.initialise_prevalent_patients = config_dict.get(
             "initialise_prevalent_patients", True
