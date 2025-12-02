@@ -10,6 +10,16 @@ logging = get_logger(__name__)
 
 
 def combine_incident_and_prevalent_counts(df: pd.DataFrame) -> pd.DataFrame:
+    """The results dataframes separate out counts of prevalence, mortality, and incidence
+    by incident and prevalent patients, for easier debugging. We undo this aggregation
+    and combine the counts of both incident and prevalent patients, for model results aimed at users.
+
+    Args:
+        df (pd.DataFrame): Results dataframe from a model run
+
+    Returns:
+        pd.DataFrame: Results dataframe from a model run with the counts for incident and prevalent patients combined
+    """
     processed_dfs = []
     for metric in ["prevalence", "mortality", "incidence"]:
         df_filtered = df[df.index.str.contains(metric, case=False, na=False)].copy()
@@ -20,7 +30,17 @@ def combine_incident_and_prevalent_counts(df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(processed_dfs).fillna(0)
 
 
-def produce_combined_results_for_all_model_runs(results_dfs: list[pd.DataFrame]):
+def produce_combined_results_for_all_model_runs(
+    results_dfs: list[pd.DataFrame],
+) -> pd.DataFrame:
+    """Combine processed results for all model runs into one dataframe
+
+    Args:
+        results_dfs (list[pd.DataFrame]): List of model results dataframes
+
+    Returns:
+        pd.DataFrame: DataFrame of all model results combined and processed
+    """
     dfs_processed = [combine_incident_and_prevalent_counts(df) for df in results_dfs]
     combined = pd.concat(
         [df.reset_index().assign(model_run=i + 1) for i, df in enumerate(dfs_processed)]
@@ -34,6 +54,12 @@ def produce_combined_results_for_all_model_runs(results_dfs: list[pd.DataFrame])
 
 
 def write_results_to_excel(path_to_excel_file: str, combined_df: pd.DataFrame):
+    """Write combined model results from all model runs to Excel file
+
+    Args:
+        path_to_excel_file (str): Path to Excel file
+        combined_df (pd.DataFrame): Dataframe of all model results combined and processed
+    """
     today_date = datetime.now().strftime("%Y%m%d-%H%M")
     wb = load_workbook(path_to_excel_file)
     for outcome in combined_df.index.get_level_values(0).drop_duplicates():
@@ -46,4 +72,4 @@ def write_results_to_excel(path_to_excel_file: str, combined_df: pd.DataFrame):
         ".xlsx", f"_results_{today_date}.xlsx"
     )
     wb.save(results_filepath)
-    logging.info(f"Excel format model results written to: ✍️ {results_filepath}")
+    logging.info(f"✍️ Excel format model results written to: \n{results_filepath}")
