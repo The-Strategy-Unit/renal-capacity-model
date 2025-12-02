@@ -1,3 +1,8 @@
+"""
+This module stores National config values and time to event values that are used
+regardless of model geography
+"""
+
 import pandas as pd
 from renal_capacity_model.utils import get_time_to_event_curve_filepaths, get_logger
 from renal_capacity_model.helpers import check_time_to_event_curve_dfs
@@ -241,10 +246,13 @@ national_config_dict = {
     },
 }
 
+# Time to death: conservative care
 ttd_con_care_values = {
     "shape": 0.5,
     "scale": 100,
 }
+
+# Time waiting before dialysis
 tw_before_dialysis_values = {
     "shape": 1,
     "scale": 90,
@@ -252,7 +260,17 @@ tw_before_dialysis_values = {
 
 
 # These are used for all the model runs regardless of geography
-def load_time_to_event_curves(filepath):
+def load_time_to_event_curves(filepath: str) -> dict[str, pd.DataFrame]:
+    """Loads time to event curves from CSV files stored in a directory
+
+    Args:
+        filepath (str): Path to the directory containing the time to event curves
+
+    Returns:
+        dict: Dictionary where the keys are the names of the time to event variable,
+        and the values are a DataFrame with the time to event distributions for each
+        patient type
+    """
     logger.info(f"Loading time to event curves from {filepath}")
     time_to_event_filepaths = get_time_to_event_curve_filepaths(filepath)
     time_to_event_curves = {
