@@ -116,7 +116,7 @@ def calculate_activity_change(event_log):
 
 
 def calculate_prevalence(event_log):
-    years = list(range(1, event_log["year_end"].max()))
+    years = list(range(0, event_log["year_end"].max()))
 
     rows = []
     for y in years:
@@ -188,6 +188,8 @@ def process_event_log(event_log: pd.DataFrame) -> pd.DataFrame:
     event_log["year_start"] = event_log["time_starting_activity_from"].apply(
         calculate_lookup_year
     )
+    # normally we count 0 as lookup year 1 but we will force to 0 for results calculations
+    event_log.loc[event_log["time_starting_activity_from"] == 0, "year_start"] = 0
     event_log["end_time"] = (
         event_log["time_starting_activity_from"]
         + event_log["time_spent_in_activity_from"]
