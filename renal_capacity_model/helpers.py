@@ -7,11 +7,24 @@ import pandas as pd
 import numpy as np
 from itertools import product
 import math
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from renal_capacity_model.config import Config
 
 logger = get_logger(__name__)
 
 
-def get_yearly_arrival_rate(config):
+def get_yearly_arrival_rate(config: "Config") -> dict[int, dict]:
+    """Iteratively calls get_arival_rate over each year of the simulation
+
+    Args:
+        config (Config): Config for the model, containing sim_duration in days and
+        arrival rates for each year of the sim duration
+
+    Returns:
+        dict[int, dict]: Arrival_rate dictionaries to use for each year of the simulation
+    """
     mean_arrival_rates = {}
     years = calculate_lookup_year(config.sim_duration)
     for year in range(1, years + 1):
@@ -21,7 +34,17 @@ def get_yearly_arrival_rate(config):
     return mean_arrival_rates
 
 
-def get_mean_iat_over_time_from_arrival_rate(arrival_rate_dict):
+def get_mean_iat_over_time_from_arrival_rate(
+    arrival_rate_dict: dict,
+) -> dict[str, pd.DataFrame]:
+    """Calculates mean interarrival time in each year of the simulation, for each patient type
+
+    Args:
+        arrival_rate_dict (dict): Dict containing the arrival rates
+
+    Returns:
+        dict: Dict containing the mean inter arrival times and arrival rates for each patient type
+    """
     mean_iat_over_time_dfs = {}
     df = pd.DataFrame(arrival_rate_dict)
     for i in df.index:
@@ -32,8 +55,8 @@ def get_mean_iat_over_time_from_arrival_rate(arrival_rate_dict):
     return mean_iat_over_time_dfs
 
 
-def get_arrival_rate(arrival_rate, referral_dist, age_dist):
-    """Calculates interarrival times for different patient groups
+def get_arrival_rate(arrival_rate, referral_dist, age_dist) -> dict[str, float]:
+    """Calculates arrival rates for different patient groups
 
     Args:
         arrival_rate (float): Arrival rate in a given year
@@ -41,7 +64,7 @@ def get_arrival_rate(arrival_rate, referral_dist, age_dist):
         age_dist (dict): Distribution of different age groups
 
     Returns:
-        dict: Dictionary containing different interarrival times for patient groups, given a single arrival rate
+        dict: Dictionary containing different arrival rates for patient groups, given a single arrival rate
     """
 
     arrival_rate_dict = {}
@@ -53,7 +76,7 @@ def get_arrival_rate(arrival_rate, referral_dist, age_dist):
     return arrival_rate_dict
 
 
-def check_config_duration_valid(config):
+def check_config_duration_valid(config: "Config") -> bool:
     """Checks that config values which change over the sim duration are provided
 
     Args:
@@ -88,16 +111,35 @@ def calculate_lookup_year(time_units: float) -> int:
     return year
 
 
-def calculate_incidence(event_log):
+def calculate_incidence(event_log: pd.DataFrame) -> pd.DataFrame:
+    """Calculate incidence from the event log
+
+    Args:
+        event_log (pd.DataFrame): Event log recorded in each model iteration
+
+    Returns:
+        pd.DataFrame: Dataframe with incidence counts for each year in the model
+    """
     incidence = event_log.groupby(["year_start", "patient_flag"])[
         "activity_from"
     ].value_counts()
     incidence = incidence.unstack(level="year_start")
-    incidence.index = ["incidence_" + "_".join(i) for i in incidence.index]
+    incidence.index = incidence.index.map(
+        lambda idx: "incidence_" + "_".join(map(str, idx))
+    )
     return pd.DataFrame(incidence)
 
 
-def calculate_activity_change(event_log):
+def calculate_activity_change(event_log: pd.DataFrame) -> pd.DataFrame:
+    """Calculates activity change dataframe for easier debugging and validation
+
+    Args:
+        event_log (pd.DataFrame): Event log recorded in each model iteration
+
+    Returns:
+        pd.DataFrame: Activity change dataframe showing counts of changes in activity in each year
+        of model simulation
+    """
     activity_change = event_log.groupby(
         ["year_start", "patient_type", "patient_flag", "activity_from", "activity_to"]
     ).agg(
@@ -115,8 +157,16 @@ def calculate_activity_change(event_log):
     return activity_change
 
 
-def calculate_prevalence(event_log):
-    years = list(range(0, event_log["year_end"].max()))
+def calculate_prevalence(event_log: pd.DataFrame) -> pd.DataFrame:
+    """Calculate prevalence from the event log
+
+    Args:
+        event_log (pd.DataFrame): Event log recorded in each model iteration
+
+    Returns:
+        pd.DataFrame: Dataframe with prevalence counts for each year in the model
+    """
+    years = list(range(0, int(event_log["year_end"].max())))
 
     rows = []
     for y in years:
@@ -135,8 +185,16 @@ def calculate_prevalence(event_log):
     return prevalence
 
 
-def calculate_mortality(event_log):
-    years = list(range(1, event_log["year_end"].max()))
+def calculate_mortality(event_log: pd.DataFrame) -> pd.DataFrame:
+    """Calculate mortality from the event log
+
+    Args:
+        event_log (pd.DataFrame): Event log recorded in each model iteration
+
+    Returns:
+        pd.DataFrame: Dataframe with mortality counts for each year in the model
+    """
+    years = list(range(1, int(event_log["year_end"].max())))
     rows = []
     for y in years:
         mask = (event_log["activity_to"] == "death") & (event_log["year_end"] == y)
@@ -161,6 +219,10 @@ def adjust_next_modality(event_log: pd.DataFrame) -> pd.DataFrame:
 
     Args:
         event_log (pd.DataFrame): Event log
+
+    Returns:
+        pd.DataFrame: Event log with the actual modality allocated after
+        "modality_allocation" in the "activity_to" column
     """
     event_log_sorted = event_log.sort_values(
         by=["patient_id", "time_starting_activity_from"]
@@ -202,6 +264,14 @@ def process_event_log(event_log: pd.DataFrame) -> pd.DataFrame:
 def calculate_model_results(
     processed_event_log: pd.DataFrame,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Calculates full model results and activity change dataframes from the event log
+
+    Args:
+        processed_event_log (pd.DataFrame): Event log that has been through process_event_log cleaning
+
+    Returns:
+        tuple[pd.DataFrame, pd.DataFrame]: Results dataframe and activiy change dataframe
+    """
     logger.info("Calculating model run results from event log")
     incidence = calculate_incidence(processed_event_log)
     mortality = calculate_mortality(processed_event_log)

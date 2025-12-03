@@ -37,6 +37,14 @@ class Trial:
             raise TypeError("No trial results available")
 
     def process_model_results(self, results_dfs: list[pd.DataFrame]) -> pd.DataFrame:
+        """Process model results from all model runs to produce one aggregated combined results
+
+        Args:
+            results_dfs (list[pd.DataFrame]): List of model results dataframes
+
+        Returns:
+            pd.DataFrame: Combined and processed model results
+        """
         logger.info("Processing combined results")
         combined_results = pd.concat(results_dfs)
         aggregated_combined_results = pd.DataFrame(
@@ -45,6 +53,14 @@ class Trial:
         return aggregated_combined_results
 
     def process_eventlog_dfs(self, eventlog_dfs: list[pd.DataFrame]) -> pd.DataFrame:
+        """Process event logs to produce one aggregated event log
+
+        Args:
+            eventlog_dfs (list[pd.DataFrame]): List of event logs
+
+        Returns:
+            pd.DataFrame: Combined and aggregasted event log
+        """
         combined_df = pd.concat(eventlog_dfs)
         columns_to_groupby = list(combined_df.index.names)
         aggregated_combined_df = pd.DataFrame(
@@ -52,7 +68,13 @@ class Trial:
         )
         return aggregated_combined_df
 
-    def save_dfs(self, df_to_save, name_of_df_to_save):
+    def save_dfs(self, df_to_save: pd.DataFrame, name_of_df_to_save: str):
+        """Save dataframes to results folder
+
+        Args:
+            df_to_save (pd.DataFrame): Dataframe to save
+            name_of_df_to_save (str): Name of dataframe to save
+        """
         today_date = datetime.now().strftime("%Y%m%d-%H%M")
         if not os.path.exists("results"):
             os.makedirs("results")

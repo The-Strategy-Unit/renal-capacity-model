@@ -33,8 +33,13 @@ def parse_args():
     return parser.parse_args()
 
 
-def main(config, path_to_excel_file=None):
-    """Main function for running the experiment"""
+def main(config: Config, path_to_excel_file: str | None = None):
+    """Main function for running the experiment
+
+    Args:
+        config (Config): Config entity set up with the desired model run configuration values
+        path_to_excel_file (str | None, optional): Path to Excel file, used for regional model runs. Defaults to None (national values).
+    """
     trial = Trial(config)
     trial.run_trial()
     if path_to_excel_file:
@@ -50,7 +55,7 @@ if __name__ == "__main__":
         config_dict = load_scenario_from_excel(args.input_filepath, args.validation)
     else:
         logger.info(
-            "Running national version of model. Validation and results Excel file currently not available"
+            "Running national version of model. ⚠️ Validation and results Excel file currently not available"
         )
         config_dict = national_config_dict
     config = Config(config_dict)

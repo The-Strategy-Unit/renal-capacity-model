@@ -17,6 +17,7 @@ from renal_capacity_model.utils import get_logger
 import pandas as pd
 from datetime import datetime
 import os
+from typing import Generator
 
 logger = get_logger(__name__)
 
@@ -69,7 +70,8 @@ class Model:
         """Generator function for prevalent patients at time zero
 
         Args:
-            patient_type (str): Type of patient. Used to retrieve correct inter-arrival time.
+            patient_type (str): Type of patient. Used to retrieve correct inter-arrival time
+            location (str): Where the prevalent patient is initialised to
 
         Yields:
             simpy.Environment.process: starts process based on location of the patient at time t=0.
@@ -240,6 +242,15 @@ class Model:
         time_starting_activity_from: float | None,
         time_spent_in_activity_from: float | None,
     ) -> None:
+        """Updates the event log with a change in activity for a specific simulated patient
+
+        Args:
+            patient (Patient): Patient entity undergong activity change
+            activity_from (str | None): Activity that the patient is currently in
+            activity_to (str | None): Activity the patient is moving to
+            time_starting_activity_from (float | None): Timestamp of time starting current activity
+            time_spent_in_activity_from (float | None): Timestamp of time moving to the next activity
+        """
         self.event_log.loc[len(self.event_log)] = [
             patient.id,
             patient.patient_type,
@@ -250,7 +261,7 @@ class Model:
             time_spent_in_activity_from,
         ]
 
-    def generator_patient_arrivals(self, patient_type: str):
+    def generator_patient_arrivals(self, patient_type: str) -> Generator:
         """Generator function for arriving patients
 
         Args:
@@ -288,7 +299,15 @@ class Model:
             else:
                 self.env.process(self.start_conservative_care(p))
 
-    def start_conservative_care(self, p: Patient):
+    def start_conservative_care(self, p: Patient) -> Generator:
+        """Generator function for patients entering conservative care
+
+        Args:
+            p (Patient): Patient entity
+
+        Yields:
+            simpy.Environment.Timeout: Simpy Timeout event with a delay of the sampled inter-arrival time
+        """
         sampled_con_care_time = self.config.ttd_con_care["scale"] * self.rng.weibull(
             a=self.config.ttd_con_care["shape"], size=None
         )
@@ -306,7 +325,7 @@ class Model:
             )
         yield self.env.timeout(sampled_con_care_time)
 
-    def start_krt(self, patient: Patient):
+    def start_krt(self, patient: Patient) -> Generator:
         """Function containing the logic for the Kidney Replacement Therapy pathway
 
         Args:
@@ -400,7 +419,7 @@ class Model:
                         self.start_dialysis_whilst_waiting_for_transplant(patient)
                     )
 
-    def start_dialysis_modality_allocation(self, patient: Patient):
+    def start_dialysis_modality_allocation(self, patient: Patient) -> Generator:
         """Function containing the logic for the dialysis pathway
 
 
@@ -462,7 +481,7 @@ class Model:
         self.env.process(self.start_dialysis_modality(patient))
         yield self.env.timeout(0)
 
-    def start_transplant(self, patient: Patient):
+    def start_transplant(self, patient: Patient) -> Generator:
         """Function containing the logic for the transplant pathway
 
         Args:
@@ -634,7 +653,9 @@ class Model:
 
                 self.env.process(self.start_krt(patient))
 
-    def start_dialysis_whilst_waiting_for_transplant(self, patient: Patient):
+    def start_dialysis_whilst_waiting_for_transplant(
+        self, patient: Patient
+    ) -> Generator:
         """Function containing the logic for the mixed pathway where a patient starts on dialysis and then receives a transplant
 
         Args:
@@ -706,7 +727,7 @@ class Model:
             yield self.env.timeout(0)
             self.env.process(self.start_dialysis_modality_allocation(patient))
 
-    def start_dialysis_modality(self, patient: Patient):
+    def start_dialysis_modality(self, patient: Patient) -> Generator:
         """Function containing the logic for all dialysis pathways
 
         Args:
@@ -837,7 +858,12 @@ class Model:
 
                 self.env.process(self.start_dialysis_modality_allocation(patient))
 
-    def time_tracker(self):
+    def time_tracker(self) -> Generator:
+        """Function for logging time passing in the simulation, for user information
+
+        Yields:
+            simpy.Environment.Timeout: Simpy Timeout event with a delay of each year of simulation
+        """
         years = calculate_lookup_year(self.config.sim_duration)
         for i in range(1, years + 1):
             yield (self.env.timeout(365))
