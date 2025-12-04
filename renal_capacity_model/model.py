@@ -788,12 +788,15 @@ class Model:
 
         # what is the next step modality change, death
         # if they're waiting for transplant we'll compare the time generated to patient.time on waiting list
-        if (
-            self.rng.uniform(0, 1)
-            < self.config.death_post_dialysis_modality[patient.dialysis_modality][
-                patient.referral_type
-            ][patient.age_group]
-        ):
+        if patient.patient_flag == "incident":
+            prob_death = self.config.death_post_dialysis_modality_incident[
+                patient.dialysis_modality
+            ][patient.referral_type][patient.age_group]
+        else:
+            prob_death = self.config.death_post_dialysis_modality[
+                patient.dialysis_modality
+            ][patient.referral_type][patient.age_group]
+        if self.rng.uniform(0, 1) < prob_death:
             # death or transplant
             ## sampled_time depends on whether patitent is inicident or not
             if patient.patient_flag == "incident":

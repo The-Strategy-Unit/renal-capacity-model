@@ -65,7 +65,9 @@ class Config:
         ]
         self.death_post_transplant = config_dict["death_post_transplant"]
         self.death_post_dialysis_modality = config_dict["death_post_dialysis_modality"]
-
+        self.death_post_dialysis_modality_incident = config_dict[
+            "death_post_dialysis_modality_incident"
+        ]
         self.pre_emptive_transplant_live_donor_dist = config_dict[
             "pre_emptive_transplant_live_donor_dist"
         ]
