@@ -902,4 +902,19 @@ def load_scenario_from_excel(
         "living_with_transplant": input_scenario.iat[39, 1],
     }
 
+    config_from_excel["death_post_transplant_glm"] = {
+        "live": {
+            "intercept": input_scenario.iat[120, 7],
+            "time_in_system": input_scenario.iat[121, 7],
+            "age": input_scenario.iat[122, 7],
+            "ref_stat": input_scenario.iat[123, 7],
+        },
+        "cadaver": {
+            "intercept": input_scenario.iat[120, 6],
+            "time_in_system": input_scenario.iat[121, 6],
+            "age": input_scenario.iat[122, 6],
+            "ref_stat": input_scenario.iat[123, 6],
+        },
+    }
+
     return config_from_excel

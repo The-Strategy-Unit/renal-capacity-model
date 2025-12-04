@@ -495,9 +495,28 @@ class Model:
         patient.time_of_transplant = self.env.now
         if patient.transplant_type == "live":
             # how long the graft lasts depends on where they go next: death or back to start_krt
+            if patient.patient_flag == "incident":
+                prob_death_post_tx = 1 / (
+                    1
+                    + np.exp(
+                        self.config.death_post_transplant_glm["live"]["intercept"]
+                        + self.config.death_post_transplant_glm["live"][
+                            "time_in_system"
+                        ]
+                        * (self.env.now - patient.start_time_in_system)
+                        + self.config.death_post_transplant_glm["live"]["age"]
+                        * patient.age_group
+                        + self.config.death_post_transplant_glm["live"]["ref_stat"]
+                        * (0 if patient.referral_type == "early" else 1)
+                    )
+                )
+            else:
+                prob_death_post_tx = self.config.death_post_transplant["live"][
+                    patient.age_group
+                ]
             if (
                 self.rng.uniform(0, 1)
-                < self.config.death_post_transplant["live"][patient.age_group]
+                < prob_death_post_tx  # self.config.death_post_transplant["live"][patient.age_group]
             ):
                 # patient dies after transplant
 
@@ -574,9 +593,34 @@ class Model:
                 self.env.process(self.start_krt(patient))
         else:  # cadaver
             # how long the graft lasts depends on where they go next: death or back to start_krt
+            if patient.patient_flag == "incident":
+                prob_death_post_tx = 1 / (
+                    1
+                    + np.exp(
+                        -(
+                            self.config.death_post_transplant_glm["cadaver"][
+                                "intercept"
+                            ]
+                            + self.config.death_post_transplant_glm["cadaver"][
+                                "time_in_system"
+                            ]
+                            * (self.env.now - patient.start_time_in_system)
+                            + self.config.death_post_transplant_glm["cadaver"]["age"]
+                            * patient.age_group
+                            + self.config.death_post_transplant_glm["cadaver"][
+                                "ref_stat"
+                            ]
+                            * (0 if patient.referral_type == "early" else 1)
+                        )
+                    )
+                )
+            else:
+                prob_death_post_tx = self.config.death_post_transplant["cadaver"][
+                    patient.age_group
+                ]
             if (
                 self.rng.uniform(0, 1)
-                < self.config.death_post_transplant["cadaver"][patient.age_group]
+                < prob_death_post_tx  # self.config.death_post_transplant["cadaver"][patient.age_group]
             ):
                 # patient dies after transplant
 

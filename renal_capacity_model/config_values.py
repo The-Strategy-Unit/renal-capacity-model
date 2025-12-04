@@ -166,20 +166,20 @@ national_config_dict = {
     },
     "death_post_transplant": {
         "live": {
-            1: 0.05,
-            2: 0.15,
-            3: 0.26,
-            4: 0.38,
-            5: 0.50,
-            6: 0.63,
+            1: 0.08,
+            2: 0.20,
+            3: 0.34,
+            4: 0.50,
+            5: 0.67,
+            6: 0.85,
         },
         "cadaver": {
-            1: 0.07,
-            2: 0.17,
-            3: 0.27,
-            4: 0.42,
-            5: 0.54,
-            6: 0.73,
+            1: 0.09,
+            2: 0.21,
+            3: 0.35,
+            4: 0.53,
+            5: 0.68,
+            6: 0.84,
         },
     },
     "death_post_dialysis_modality": {
@@ -243,6 +243,20 @@ national_config_dict = {
     },
     "pre_emptive_transplant_cadaver_donor_dist": {
         y: {"early": 0.22, "late": 0.05} for y in range(1, 14)
+    },
+    "death_post_transplant_glm": {
+        "live": {
+            "intercept": -4.184,
+            "time_in_system": 0.0003,
+            "age": 0.6348,
+            "ref_stat": -0.3346,  # early = 0 , late =1
+        },
+        "cadaver": {
+            "intercept": -3.87,
+            "time_in_system": 0.0003,
+            "age": 0.562,
+            "ref_stat": -0.127,  # early = 0 , late =1
+        },
     },
 }
 
