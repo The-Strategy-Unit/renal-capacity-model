@@ -19,8 +19,6 @@ from renal_capacity_model.process_outputs import (
 )
 from renal_capacity_model.utils import get_logger
 import pandas as pd
-from datetime import datetime
-import os
 from typing import Generator
 
 logger = get_logger(__name__)

@@ -6,11 +6,13 @@ import pandas as pd
 from renal_capacity_model.model import Model
 from renal_capacity_model.config import Config
 from renal_capacity_model.utils import get_logger
+from renal_capacity_model.process_outputs import (
+    create_results_folder,
+    save_result_files,
+)
 import numpy as np
 from tqdm import tqdm
 from typing import Optional
-from datetime import datetime
-import os
 
 pd.set_option("display.max_columns", 13)
 
@@ -70,18 +72,9 @@ class Trial:
         )
         return aggregated_combined_df
 
-    def save_dfs(self, df_to_save: pd.DataFrame, name_of_df_to_save: str):
-        """Save dataframes to results folder
-
-        Args:
-            df_to_save (pd.DataFrame): Dataframe to save
-            name_of_df_to_save (str): Name of dataframe to save
-        """
-        today_date = datetime.now().strftime("%Y%m%d-%H%M")
-        if not os.path.exists("results"):
-            os.makedirs("results")
-        filename = f"results/{today_date}_combined_{name_of_df_to_save}.csv"
-        df_to_save.to_csv(filename)
+    def save_trial_results(self, df_to_save, name_of_df_to_save):
+        path_to_results = create_results_folder(self.run_start_time)
+        save_result_files(df_to_save, name_of_df_to_save, path_to_results)
 
     def run_trial(self):
         for run in tqdm(range(self.config.number_of_runs)):
@@ -92,7 +85,7 @@ class Trial:
         logger.info("✅🥳 Trial complete!")
         self.df_trial_results = self.process_model_results(self.results_dfs)
         logger.info("💾 Saving full trial results")
-        self.save_dfs(
+        self.save_trial_results(
             self.process_eventlog_dfs(self.activity_change_dfs), "activity_change"
         )
-        self.save_dfs((self.df_trial_results), "trial_results")
+        self.save_trial_results(self.df_trial_results, "trial_results")
