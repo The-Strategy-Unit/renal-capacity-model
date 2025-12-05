@@ -8,6 +8,7 @@ from renal_capacity_model.config import Config
 from renal_capacity_model.config_values import national_config_dict
 from renal_capacity_model.load_scenario import load_scenario_from_excel
 from renal_capacity_model.process_outputs import (
+    create_results_folder,
     write_results_to_excel,
     produce_combined_results_for_all_model_runs,
 )

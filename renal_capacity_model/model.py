@@ -13,6 +13,10 @@ from renal_capacity_model.helpers import (
     calculate_model_results,
     truncate_2dp,
 )
+from renal_capacity_model.process_outputs import (
+    create_results_folder,
+    save_result_files,
+)
 from renal_capacity_model.utils import get_logger
 import pandas as pd
 from datetime import datetime
@@ -876,16 +880,15 @@ class Model:
             yield (self.env.timeout(365))
             logger.info(f"{i} year(s) of simulation complete")
 
-    def save_result_files(self, data_to_save):
-        logger.info(f"💾 Saving {data_to_save}")
-        folder_path = "results"
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
-        today_date = datetime.now().strftime("%Y%m%d-%H%M")
-        filename = f"results/{today_date}_{data_to_save}_{self.run_number}"
-        df_to_save = getattr(self, data_to_save).copy()
-        df_to_save.to_parquet(filename + ".parquet")
-        df_to_save.to_csv(filename + ".csv")
+    def save_model_iteration_result_files(self, df_name: str):
+        """Saves dataframes from Model class
+
+        Args:
+            df_name (str): Name of dataframe to save
+        """
+        path_to_results = create_results_folder(self.run_start_time)
+        df_to_save = getattr(self, df_name)
+        save_result_files(df_to_save, df_name, path_to_results)
 
     def run(self):
         """Runs the model"""
@@ -940,8 +943,8 @@ class Model:
         results_df, activity_change = calculate_model_results(self.event_log)
         self.results_df = results_df
         self.activity_change = activity_change
-        self.save_result_files("event_log")
-        self.save_result_files("results_df")
+        self.save_model_iteration_result_files("event_log")
+        self.save_model_iteration_result_files("results_df")
         # Show results (optional - set in config)
         if self.config.trace:
             print(f"Run Number {self.run_number}")
