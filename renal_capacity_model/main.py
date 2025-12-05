@@ -12,6 +12,7 @@ from renal_capacity_model.process_outputs import (
     produce_combined_results_for_all_model_runs,
 )
 from renal_capacity_model.helpers import get_logger
+from datetime import datetime
 
 logger = get_logger()
 
@@ -40,7 +41,8 @@ def main(config: Config, path_to_excel_file: str | None = None):
         config (Config): Config entity set up with the desired model run configuration values
         path_to_excel_file (str | None, optional): Path to Excel file, used for regional model runs. Defaults to None (national values).
     """
-    trial = Trial(config)
+    run_start_time = datetime.now().strftime("%Y%m%d-%H%M")
+    trial = Trial(config, run_start_time)
     trial.run_trial()
     if path_to_excel_file:
         combined_results = produce_combined_results_for_all_model_runs(

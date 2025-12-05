@@ -27,7 +27,13 @@ class Model:
     Model class containing the logic for the simulation
     """
 
-    def __init__(self, run_number: int, rng: np.random.Generator, config: Config):
+    def __init__(
+        self,
+        run_number: int,
+        rng: np.random.Generator,
+        config: Config,
+        run_start_time: str,
+    ):
         """Initialise the model
 
         Args:
@@ -44,6 +50,7 @@ class Model:
         self.patient_types = self.config.mean_iat_over_time_dfs.keys()
         self.patients_in_system: dict = {k: 0 for k in self.patient_types}
         self.event_log: pd.DataFrame = self._setup_event_log()
+        self.run_start_time = run_start_time
 
     def _setup_event_log(self) -> pd.DataFrame:
         """Sets up DataFrame for recording model events
@@ -946,5 +953,5 @@ if __name__ == "__main__":
     config.trace = False
     config.initialise_prevalent_patients = False
     rng = np.random.default_rng(config.random_seed)
-    model = Model(1, rng, config)
+    model = Model(1, rng, config, "20250101_1200")
     model.run()

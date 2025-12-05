@@ -4,6 +4,7 @@ Module containing Trial class with logic for running multiple model iterations
 
 import pandas as pd
 from renal_capacity_model.model import Model
+from renal_capacity_model.config import Config
 from renal_capacity_model.utils import get_logger
 import numpy as np
 from tqdm import tqdm
@@ -21,12 +22,13 @@ class Trial:
     Trial class containing logic for running full experiment
     """
 
-    def __init__(self, config):
+    def __init__(self, config: Config, run_start_time: str):
         self.config = config
         self.rng = np.random.default_rng(self.config.random_seed)
         self.df_trial_results: Optional[pd.DataFrame] = None
         self.results_dfs: list[pd.DataFrame] = []
         self.activity_change_dfs = []
+        self.run_start_time = run_start_time
 
     def print_trial_results(self):
         print("Trial Results")
@@ -83,7 +85,7 @@ class Trial:
 
     def run_trial(self):
         for run in tqdm(range(self.config.number_of_runs)):
-            model = Model(run, self.rng, self.config)
+            model = Model(run, self.rng, self.config, self.run_start_time)
             model.run()
             self.activity_change_dfs.append(model.activity_change)
             self.results_dfs.append(model.results_df)
