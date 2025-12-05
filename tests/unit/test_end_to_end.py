@@ -106,13 +106,13 @@ def rng():
 
 
 def test_single_model_run(config, rng):
-    model = Model(1, rng, config)
+    model = Model(1, rng, config, "start_time")
     model.run()
     assert model.results_df.shape[0] > 0  # There are results in the dataframe
 
 
 def test_full_trial_run(config):
-    trial = Trial(config)
+    trial = Trial(config, "start_time")
     trial.run_trial()
     if trial.df_trial_results is not None:
         assert trial.df_trial_results.shape[0] > 0  # There are results in the dataframe
