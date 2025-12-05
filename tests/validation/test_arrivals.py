@@ -24,7 +24,7 @@ if __name__ == "__main__":
     config.initialise_prevalent_patients = False
     config.trace = True
     rng = np.random.default_rng(config.random_seed)
-    model = Model(1, rng, config)
+    model = Model(1, rng, config, "start_time")
     model.run()
     event_log = model.event_log
     compare_modelled_arrivals_with_expected(event_log, config).to_csv(
