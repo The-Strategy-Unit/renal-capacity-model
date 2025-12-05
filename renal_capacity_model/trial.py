@@ -72,7 +72,13 @@ class Trial:
         )
         return aggregated_combined_df
 
-    def save_trial_results(self, df_to_save, name_of_df_to_save):
+    def save_trial_results(self, df_to_save: pd.DataFrame, name_of_df_to_save: str):
+        """Save trial results dataframes
+
+        Args:
+            df_to_save (pd.DataFrame): Trial results dataframe to save
+            name_of_df_to_save (str): Name of trial results dataframe to save
+        """
         path_to_results = create_results_folder(self.run_start_time)
         save_result_files(df_to_save, name_of_df_to_save, path_to_results)
 

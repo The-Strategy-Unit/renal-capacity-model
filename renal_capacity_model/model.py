@@ -886,7 +886,9 @@ class Model:
         """
         path_to_results = create_results_folder(self.run_start_time)
         df_to_save = getattr(self, df_name)
-        save_result_files(df_to_save, df_name, path_to_results)
+        save_result_files(
+            df_to_save, f"{str(self.run_number)}_" + df_name, path_to_results
+        )
 
     def run(self):
         """Runs the model"""
