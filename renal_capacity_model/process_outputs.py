@@ -1,11 +1,9 @@
 # Module for processing results into output suitable for users
 
 import pandas as pd
-from openpyxl.utils.dataframe import dataframe_to_rows
-from openpyxl import load_workbook
 from renal_capacity_model.helpers import get_logger
 import os
-from datetime import datetime
+import shutil
 
 logger = get_logger(__name__)
 
@@ -33,7 +31,7 @@ def save_result_files(df_to_save: pd.DataFrame, filename: str, path_to_results: 
         filename (str): Name of Dataframe to save
         path_to_results (str): Folder to save results to
     """
-    logger.info(f"💾 Saving {df_to_save}")
+    logger.info(f"💾 Saving {filename}")
     df_to_save.to_parquet(os.path.join(path_to_results, filename + ".parquet"))
     df_to_save.to_csv(os.path.join(path_to_results, filename + ".csv"))
 
@@ -82,23 +80,43 @@ def produce_combined_results_for_all_model_runs(
     )
 
 
-def write_results_to_excel(path_to_excel_file: str, combined_df: pd.DataFrame):
+def create_excel_results_file(path_to_excel_file: str, run_start_time: str) -> str:
+    """Creates a copy of the Renal Modelling Input File in the results folder for the trial run
+
+    Args:
+        path_to_excel_file (str): Path to the Renal Modelling Input File
+        run_start_time (str): Start time of experimment
+
+    Returns:
+        str: Filepath to the copied Excel file, in the reuslts folder
+    """
+    results_folder = create_results_folder(run_start_time)
+    new_filename = os.path.basename(path_to_excel_file).replace(
+        ".xlsx", f"_results_{run_start_time}.xlsx"
+    )
+    results_filepath = os.path.join(results_folder, new_filename)
+    shutil.copy2(path_to_excel_file, results_filepath)
+    return results_filepath
+
+
+def write_results_to_excel(
+    path_to_results_excel_file: str,
+    combined_df: pd.DataFrame,
+):
     """Write combined model results from all model runs to Excel file
 
     Args:
         path_to_excel_file (str): Path to Excel file
         combined_df (pd.DataFrame): Dataframe of all model results combined and processed
     """
-    today_date = datetime.now().strftime("%Y%m%d-%H%M")
-    wb = load_workbook(path_to_excel_file)
-    for outcome in combined_df.index.get_level_values(0).drop_duplicates():
-        ws = wb.create_sheet(title=outcome)
-        for r in dataframe_to_rows(
-            combined_df.loc[outcome].reset_index(), index=False, header=True
-        ):
-            ws.append(r)
-    results_filepath = path_to_excel_file.replace(
-        ".xlsx", f"_results_{today_date}.xlsx"
+    with pd.ExcelWriter(
+        path_to_results_excel_file,
+        engine="openpyxl",
+        mode="a",
+        if_sheet_exists="replace",
+    ) as writer:
+        for outcome in combined_df.index.get_level_values(0).drop_duplicates():
+            combined_df.loc[outcome].to_excel(writer, sheet_name=outcome)
+    logger.info(
+        f"✅ 💾 Excel format model results written to: \n{path_to_results_excel_file}"
     )
-    wb.save(results_filepath)
-    logger.info(f"✍️ Excel format model results written to: \n{results_filepath}")
