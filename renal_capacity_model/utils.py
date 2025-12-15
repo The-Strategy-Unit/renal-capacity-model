@@ -41,7 +41,7 @@ def get_logger(module=None, level: int = logging.INFO) -> logging.Logger:
     logger_name = module
     logging.basicConfig(
         level=level,
-        format="%(asctime)s - %(name)s.%(funcName)s - %(levelname)s - %(message)s",
+        format="%(asctime)s - %(name)s.%(funcName)s - %(message)s",
         handlers=[
             logging.StreamHandler(),
         ],

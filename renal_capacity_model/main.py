@@ -9,9 +9,11 @@ from renal_capacity_model.config_values import national_config_dict
 from renal_capacity_model.load_scenario import load_scenario_from_excel
 from renal_capacity_model.process_outputs import (
     write_results_to_excel,
+    create_excel_results_file,
     produce_combined_results_for_all_model_runs,
 )
 from renal_capacity_model.helpers import get_logger
+from datetime import datetime
 
 logger = get_logger()
 
@@ -40,13 +42,17 @@ def main(config: Config, path_to_excel_file: str | None = None):
         config (Config): Config entity set up with the desired model run configuration values
         path_to_excel_file (str | None, optional): Path to Excel file, used for regional model runs. Defaults to None (national values).
     """
-    trial = Trial(config)
+    run_start_time = datetime.now().strftime("%Y%m%d-%H%M")
+    trial = Trial(config, run_start_time)
     trial.run_trial()
     if path_to_excel_file:
         combined_results = produce_combined_results_for_all_model_runs(
             trial.results_dfs
         )
-        write_results_to_excel(path_to_excel_file, combined_results)
+        path_to_excel_results_file = create_excel_results_file(
+            path_to_excel_file, trial.run_start_time
+        )
+        write_results_to_excel(path_to_excel_results_file, combined_results)
 
 
 if __name__ == "__main__":
