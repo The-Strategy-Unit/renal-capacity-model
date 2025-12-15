@@ -65,7 +65,9 @@ class Config:
         ]
         self.death_post_transplant = config_dict["death_post_transplant"]
         self.death_post_dialysis_modality = config_dict["death_post_dialysis_modality"]
-
+        self.death_post_dialysis_modality_incident = config_dict[
+            "death_post_dialysis_modality_incident"
+        ]
         self.pre_emptive_transplant_live_donor_dist = config_dict[
             "pre_emptive_transplant_live_donor_dist"
         ]
@@ -73,9 +75,11 @@ class Config:
         self.pre_emptive_transplant_cadaver_donor_dist = config_dict[
             "pre_emptive_transplant_cadaver_donor_dist"
         ]
+        self.death_post_transplant_glm = config_dict["death_post_transplant_glm"]
         # time to event distribution parameters (these are the same regardless of geography)
         self.ttd_con_care = ttd_con_care_values
         self.tw_before_dialysis = tw_before_dialysis_values
+
         self.time_to_event_curves = load_time_to_event_curves(
             path_to_time_to_event_curves
         )

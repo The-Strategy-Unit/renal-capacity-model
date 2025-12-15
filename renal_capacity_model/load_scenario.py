@@ -731,6 +731,62 @@ def load_scenario_from_excel(
             },
         },
     }
+    config_from_excel["death_post_dialysis_modality_incident"] = {
+        "ichd": {
+            "early": {
+                1: input_scenario.iat[104, 6],
+                2: input_scenario.iat[105, 6],
+                3: input_scenario.iat[106, 6],
+                4: input_scenario.iat[107, 6],
+                5: input_scenario.iat[108, 6],
+                6: input_scenario.iat[109, 6],
+            },
+            "late": {
+                1: input_scenario.iat[110, 6],
+                2: input_scenario.iat[111, 6],
+                3: input_scenario.iat[112, 6],
+                4: input_scenario.iat[113, 6],
+                5: input_scenario.iat[114, 6],
+                6: input_scenario.iat[115, 6],
+            },
+        },
+        "hhd": {
+            "early": {
+                1: input_scenario.iat[104, 7],
+                2: input_scenario.iat[105, 7],
+                3: input_scenario.iat[106, 7],
+                4: input_scenario.iat[107, 7],
+                5: input_scenario.iat[108, 7],
+                6: input_scenario.iat[109, 7],
+            },
+            "late": {
+                1: input_scenario.iat[110, 7],
+                2: input_scenario.iat[111, 7],
+                3: input_scenario.iat[112, 7],
+                4: input_scenario.iat[113, 7],
+                5: input_scenario.iat[114, 7],
+                6: input_scenario.iat[115, 7],
+            },
+        },
+        "pd": {
+            "early": {
+                1: input_scenario.iat[104, 8],
+                2: input_scenario.iat[105, 8],
+                3: input_scenario.iat[106, 8],
+                4: input_scenario.iat[107, 8],
+                5: input_scenario.iat[108, 8],
+                6: input_scenario.iat[109, 8],
+            },
+            "late": {
+                1: input_scenario.iat[110, 8],
+                2: input_scenario.iat[111, 8],
+                3: input_scenario.iat[112, 8],
+                4: input_scenario.iat[113, 8],
+                5: input_scenario.iat[114, 8],
+                6: input_scenario.iat[115, 8],
+            },
+        },
+    }
     config_from_excel["pre_emptive_transplant_live_donor_dist"] = {
         1: {
             "early": input_scenario.iat[55, 18],
@@ -900,6 +956,21 @@ def load_scenario_from_excel(
         "hhd": input_scenario.iat[37, 1],
         "pd": input_scenario.iat[38, 1],
         "living_with_transplant": input_scenario.iat[39, 1],
+    }
+
+    config_from_excel["death_post_transplant_glm"] = {
+        "live": {
+            "intercept": input_scenario.iat[120, 7],
+            "time_in_system": input_scenario.iat[121, 7],
+            "age": input_scenario.iat[122, 7],
+            "ref_stat": input_scenario.iat[123, 7],
+        },
+        "cadaver": {
+            "intercept": input_scenario.iat[120, 6],
+            "time_in_system": input_scenario.iat[121, 6],
+            "age": input_scenario.iat[122, 6],
+            "ref_stat": input_scenario.iat[123, 6],
+        },
     }
 
     return config_from_excel
