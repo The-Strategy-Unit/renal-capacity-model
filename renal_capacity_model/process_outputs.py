@@ -80,22 +80,25 @@ def produce_combined_results_for_all_model_runs(
     )
 
 
-def create_excel_results_file(path_to_excel_file: str, run_start_time: str) -> str:
+def copy_excel_files(path_to_file: str, run_start_time: str) -> str:
     """Creates a copy of the Renal Modelling Input File in the results folder for the trial run
 
     Args:
-        path_to_excel_file (str): Path to the Renal Modelling Input File
+        path_to_file (str): Path to the Excel File to copy
         run_start_time (str): Start time of experimment
 
     Returns:
-        str: Filepath to the copied Excel file, in the reuslts folder
+        str: Filepath to the copied Excel file, in the results folder
     """
     results_folder = create_results_folder(run_start_time)
-    new_filename = os.path.basename(path_to_excel_file).replace(
-        ".xlsx", f"_results_{run_start_time}.xlsx"
+    new_filename = (
+        os.path.basename(path_to_file)
+        .replace(".xlsx", f"_{run_start_time}.xlsx")
+        .replace("Renal_Modelling_", "")
+        .replace("_File", "")
     )
     results_filepath = os.path.join(results_folder, new_filename)
-    shutil.copy2(path_to_excel_file, results_filepath)
+    shutil.copy2(path_to_file, results_filepath)
     return results_filepath
 
 
