@@ -52,6 +52,7 @@ Ensure that you have not changed any values in `config.py` to use the default na
 ### Regional model using input Excel file
 
 1. Save your input Excel file on your local machine. We suggest creating a `data` folder in the root of the renal-capacity-model project directory and saving it there.
+1. You will also need a results Excel template file in the same folder.
 1. Run the full trial with validation values using `uv run -m renal_capacity_model.main --input_filepath path/to/excel_file --validation`
 
 ## Information for developers
