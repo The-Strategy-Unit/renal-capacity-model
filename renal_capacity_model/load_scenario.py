@@ -957,7 +957,11 @@ def load_scenario_from_excel(
         "pd": input_scenario.iat[38, 1],
         "living_with_transplant": input_scenario.iat[39, 1],
     }
-
+    config_from_excel["multipliers"] = {
+        "ichd": input_scenario.iat[232, 1],
+        "hhd": input_scenario.iat[233, 1],
+        "pd": input_scenario.iat[234, 1],
+    }
     config_from_excel["death_post_transplant_glm"] = {
         "live": {
             "intercept": input_scenario.iat[120, 7],

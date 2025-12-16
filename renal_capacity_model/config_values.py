@@ -314,6 +314,11 @@ national_config_dict = {
             "ref_stat": -0.127,  # early = 0 , late =1
         },
     },
+    "multipliers": {
+        "ichd": 1.0,
+        "hhd": 1.0,
+        "pd": 1.0,
+    },
 }
 
 # Time to death: conservative care
