@@ -119,7 +119,9 @@ def write_results_to_excel(
         if_sheet_exists="replace",
     ) as writer:
         for outcome in combined_df.index.get_level_values(0).drop_duplicates():
-            combined_df.loc[outcome].to_excel(writer, sheet_name=outcome)
+            combined_df.loc[outcome].to_excel(
+                writer, sheet_name=outcome.replace("waiting_for_transplant", "wft")
+            )
     logger.info(
         f"✅ 💾 Excel format model results written to: \n{path_to_results_excel_file}"
     )
