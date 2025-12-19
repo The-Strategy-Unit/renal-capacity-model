@@ -532,14 +532,20 @@ class Model:
                 ## sampled_wait_time depends on whether patient is incident or not
                 if patient.patient_flag == "incident":
                     random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    sampled_wait_time = self.config.time_to_event_curves[
-                        "ttd_liveTx"
-                    ].loc[random_number, patient.patient_type]
+                    sampled_wait_time = (
+                        self.config.time_to_event_curves["ttd_liveTx"].loc[
+                            random_number, patient.patient_type
+                        ]
+                        * self.config.multipliers["ttd"]["live"]
+                    )
                 else:  # prevalent patient
                     random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    sampled_wait_time = self.config.time_to_event_curves[
-                        "ttd_liveTx_initialisation"
-                    ].loc[random_number, patient.patient_type]
+                    sampled_wait_time = (
+                        self.config.time_to_event_curves[
+                            "ttd_liveTx_initialisation"
+                        ].loc[random_number, patient.patient_type]
+                        * self.config.multipliers["ttd"]["live"]
+                    )
                 self._update_event_log(
                     patient,
                     patient.transplant_type,
@@ -563,14 +569,20 @@ class Model:
                 ## sampled_wait_time depends on whether patient is incident or not
                 if patient.patient_flag == "incident":
                     random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    sampled_wait_time = self.config.time_to_event_curves[
-                        "ttgf_liveTx"
-                    ].loc[random_number, patient.patient_type]
+                    sampled_wait_time = (
+                        self.config.time_to_event_curves["ttgf_liveTx"].loc[
+                            random_number, patient.patient_type
+                        ]
+                        * self.config.multipliers["ttgf"]["live"]
+                    )
                 else:  # prevalent patient
                     random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    sampled_wait_time = self.config.time_to_event_curves[
-                        "ttgf_liveTx_initialisation"
-                    ].loc[random_number, patient.patient_type]
+                    sampled_wait_time = (
+                        self.config.time_to_event_curves[
+                            "ttgf_liveTx_initialisation"
+                        ].loc[random_number, patient.patient_type]
+                        * self.config.multipliers["ttgf"]["live"]
+                    )
 
                 self._update_event_log(
                     patient,
@@ -636,14 +648,20 @@ class Model:
                 ## sampled_wait_time depends on whether patient is incident or not
                 if patient.patient_flag == "incident":
                     random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    sampled_wait_time = self.config.time_to_event_curves[
-                        "ttgf_cadTx"
-                    ].loc[random_number, patient.patient_type]
+                    sampled_wait_time = (
+                        self.config.time_to_event_curves["ttgf_cadTx"].loc[
+                            random_number, patient.patient_type
+                        ]
+                        * self.config.multipliers["ttd"]["cadaver"]
+                    )
                 else:  # prevalent patient
                     random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    sampled_wait_time = self.config.time_to_event_curves[
-                        "ttgf_liveTx_initialisation"
-                    ].loc[random_number, patient.patient_type]
+                    sampled_wait_time = (
+                        self.config.time_to_event_curves[
+                            "ttgf_liveTx_initialisation"
+                        ].loc[random_number, patient.patient_type]
+                        * self.config.multipliers["ttd"]["cadaver"]
+                    )
                 self._update_event_log(
                     patient,
                     patient.transplant_type,
@@ -668,14 +686,20 @@ class Model:
                 ## sampled_wait_time depends on whether patitent is inicident or not
                 if patient.patient_flag == "incident":
                     random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    sampled_wait_time = self.config.time_to_event_curves[
-                        "ttgf_cadTx"
-                    ].loc[random_number, patient.patient_type]
+                    sampled_wait_time = (
+                        self.config.time_to_event_curves["ttgf_cadTx"].loc[
+                            random_number, patient.patient_type
+                        ]
+                        * self.config.multipliers["ttgf"]["cadaver"]
+                    )
                 else:  # prevalent patient
                     random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    sampled_wait_time = self.config.time_to_event_curves[
-                        "ttgf_cadTx_initialisation"
-                    ].loc[random_number, patient.patient_type]
+                    sampled_wait_time = (
+                        self.config.time_to_event_curves[
+                            "ttgf_cadTx_initialisation"
+                        ].loc[random_number, patient.patient_type]
+                        * self.config.multipliers["ttgf"]["cadaver"]
+                    )
 
                 self._update_event_log(
                     patient,
@@ -810,14 +834,20 @@ class Model:
             ## sampled_time depends on whether patitent is inicident or not
             if patient.patient_flag == "incident":
                 random_number = truncate_2dp(self.rng.uniform(0, 1))
-                sampled_time = self.config.time_to_event_curves[
-                    f"ttd_{patient.dialysis_modality}"
-                ].loc[random_number, patient.patient_type]
+                sampled_time = (
+                    self.config.time_to_event_curves[
+                        f"ttd_{patient.dialysis_modality}"
+                    ].loc[random_number, patient.patient_type]
+                    # * self.config.multipliers["ttd"][patient.dialysis_modality]
+                )
             else:  ## prevalent patient
                 random_number = truncate_2dp(self.rng.uniform(0, 1))
-                sampled_time = self.config.time_to_event_curves[
-                    f"ttd_{patient.dialysis_modality}_initialisation"
-                ].loc[random_number, patient.patient_type]
+                sampled_time = (
+                    self.config.time_to_event_curves[
+                        f"ttd_{patient.dialysis_modality}_initialisation"
+                    ].loc[random_number, patient.patient_type]
+                    # * self.config.multipliers["ttd"][patient.dialysis_modality]
+                )
             if (
                 patient.transplant_suitable
                 and sampled_time >= patient.time_on_waiting_list
@@ -864,14 +894,20 @@ class Model:
             ## sampled_time depends on whether patient is incident or not
             if patient.patient_flag == "incident":
                 random_number = truncate_2dp(self.rng.uniform(0, 1))
-                sampled_time = self.config.time_to_event_curves[
-                    f"ttma_{patient.dialysis_modality}"
-                ].loc[random_number, patient.patient_type]
+                sampled_time = (
+                    self.config.time_to_event_curves[
+                        f"ttma_{patient.dialysis_modality}"
+                    ].loc[random_number, patient.patient_type]
+                    * self.config.multipliers["ttma"][patient.dialysis_modality]
+                )
             else:  ## prevalent patient
                 random_number = truncate_2dp(self.rng.uniform(0, 1))
-                sampled_time = self.config.time_to_event_curves[
-                    f"ttma_{patient.dialysis_modality}_initialisation"
-                ].loc[random_number, patient.patient_type]
+                sampled_time = (
+                    self.config.time_to_event_curves[
+                        f"ttma_{patient.dialysis_modality}_initialisation"
+                    ].loc[random_number, patient.patient_type]
+                    ##* self.config.multipliers["ttma"][patient.dialysis_modality]
+                )
             if (
                 patient.transplant_suitable
                 and sampled_time >= patient.time_on_waiting_list
