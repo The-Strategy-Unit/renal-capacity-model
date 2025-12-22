@@ -76,6 +76,7 @@ class Config:
             "pre_emptive_transplant_cadaver_donor_dist"
         ]
         self.death_post_transplant_glm = config_dict["death_post_transplant_glm"]
+        self.multipliers = config_dict["multipliers"]
         # time to event distribution parameters (these are the same regardless of geography)
         self.ttd_con_care = ttd_con_care_values
         self.tw_before_dialysis = tw_before_dialysis_values
