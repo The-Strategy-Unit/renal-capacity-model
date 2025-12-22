@@ -60,7 +60,9 @@ def main(
         )
         for excel_file in [path_to_inputs_file, path_to_outputs_file]:
             filepaths.append(copy_excel_files(excel_file, run_start_time))
-        write_results_to_excel(filepaths[1], combined_results)
+        write_results_to_excel(
+            filepaths[1], combined_results, trial.yearly_activity_duration
+        )
 
 
 if __name__ == "__main__":
