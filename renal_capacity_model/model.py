@@ -88,9 +88,7 @@ class Model:
         self.patient_counter += 1
 
         p = Patient(self.patient_counter, patient_type, 0, patient_flag="prevalent")
-
         self.patients_in_system[patient_type] += 1
-
         if location == "conservative_care":
             # these patients are diverted to conservative care. We don't need a process here as all these patients do is wait a while before leaving the system
             if self.config.trace:
@@ -107,6 +105,7 @@ class Model:
                 0.0,
                 sampled_con_care_time,
             )
+            p.time_until_death = sampled_con_care_time
             yield self.env.timeout(sampled_con_care_time)
             self.patients_in_system[patient_type] -= 1
             if self.config.trace:
@@ -121,12 +120,46 @@ class Model:
                 > self.config.suitable_for_transplant_dist[p.age_group]
             ):
                 p.transplant_suitable = False
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                p.time_until_death = min(
+                    # self.config.time_to_event_curves[f"ttd_prev_not_listed"].loc[
+                    #    random_number, p.patient_type
+                    # ]
+                    self.config.ttd_krt["initialisation"]["not_listed"][
+                        p.referral_type
+                    ][p.age_group][1]
+                    * self.rng.weibull(
+                        a=self.config.ttd_krt["initialisation"]["not_listed"][
+                            p.referral_type
+                        ][p.age_group][0],
+                        size=None,
+                    )
+                    * self.config.multipliers["ttd"]["prev"],
+                    self.config.sim_duration + 1,
+                )
                 if self.config.trace:
                     print(
                         f"Patient {p.id} of age group {p.age_group} is in ICHD dialysis at time {self.env.now}."
                     )
             else:
                 p.transplant_suitable = True
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                p.time_until_death = min(
+                    # self.config.time_to_event_curves[f"ttd_prev_listed"].loc[
+                    #    random_number, p.patient_type
+                    # ]
+                    self.config.ttd_krt["initialisation"]["listed"][p.referral_type][
+                        p.age_group
+                    ][1]
+                    * self.rng.weibull(
+                        a=self.config.ttd_krt["initialisation"]["listed"][
+                            p.referral_type
+                        ][p.age_group][0],
+                        size=None,
+                    )
+                    * self.config.multipliers["ttd"]["prev"],
+                    self.config.sim_duration + 1,
+                )
                 p.time_enters_waiting_list = self.env.now
                 if self.config.trace:
                     print(
@@ -138,16 +171,21 @@ class Model:
                 ):
                     p.transplant_type = "live"
                     random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    p.time_on_waiting_list = self.config.time_to_event_curves[
-                        "tw_liveTx_England"
-                    ].loc[random_number, p.patient_type]
-
+                    p.time_on_waiting_list = (
+                        self.config.time_to_event_curves["tw_liveTx_England"].loc[
+                            random_number, p.patient_type
+                        ]
+                        * self.config.multipliers["tw"]["prev"]["live"]
+                    )
                 else:
                     p.transplant_type = "cadaver"
                     random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    p.time_on_waiting_list = self.config.time_to_event_curves[
-                        "tw_cadTx_England"
-                    ].loc[random_number, p.patient_type]
+                    p.time_on_waiting_list = (
+                        self.config.time_to_event_curves["tw_cadTx_England"].loc[
+                            random_number, p.patient_type
+                        ]
+                        * self.config.multipliers["tw"]["prev"]["cadaver"]
+                    )
                 p.pre_emptive_transplant = False
             self.env.process(self.start_dialysis_modality(p))
         elif location == "hhd":
@@ -157,12 +195,46 @@ class Model:
                 > self.config.suitable_for_transplant_dist[p.age_group]
             ):
                 p.transplant_suitable = False
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                p.time_until_death = min(
+                    # self.config.time_to_event_curves[f"ttd_prev_not_listed"].loc[
+                    #    random_number, p.patient_type
+                    # ]
+                    self.config.ttd_krt["initialisation"]["not_listed"][
+                        p.referral_type
+                    ][p.age_group][1]
+                    * self.rng.weibull(
+                        a=self.config.ttd_krt["initialisation"]["not_listed"][
+                            p.referral_type
+                        ][p.age_group][0],
+                        size=None,
+                    )
+                    * self.config.multipliers["ttd"]["prev"],
+                    self.config.sim_duration + 1,
+                )
                 if self.config.trace:
                     print(
                         f"Patient {p.id} of age group {p.age_group} is in HHD dialysis at time {self.env.now}."
                     )
             else:
                 p.transplant_suitable = True
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                p.time_until_death = min(
+                    # self.config.time_to_event_curves[f"ttd_prev_listed"].loc[
+                    #    random_number, p.patient_type
+                    # ]
+                    self.config.ttd_krt["initialisation"]["listed"][p.referral_type][
+                        p.age_group
+                    ][1]
+                    * self.rng.weibull(
+                        a=self.config.ttd_krt["initialisation"]["listed"][
+                            p.referral_type
+                        ][p.age_group][0],
+                        size=None,
+                    )
+                    * self.config.multipliers["ttd"]["prev"],
+                    self.config.sim_duration + 1,
+                )
                 p.time_enters_waiting_list = self.env.now
                 if self.config.trace:
                     print(
@@ -192,12 +264,46 @@ class Model:
                 > self.config.suitable_for_transplant_dist[p.age_group]
             ):
                 p.transplant_suitable = False
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                p.time_until_death = min(
+                    # self.config.time_to_event_curves[f"ttd_prev_not_listed"].loc[
+                    #    random_number, p.patient_type
+                    # ]
+                    self.config.ttd_krt["initialisation"]["not_listed"][
+                        p.referral_type
+                    ][p.age_group][1]
+                    * self.rng.weibull(
+                        a=self.config.ttd_krt["initialisation"]["not_listed"][
+                            p.referral_type
+                        ][p.age_group][0],
+                        size=None,
+                    )
+                    * self.config.multipliers["ttd"]["prev"],
+                    self.config.sim_duration + 1,
+                )
                 if self.config.trace:
                     print(
                         f"Patient {p.id} of age group {p.age_group} is in PD dialysis at time {self.env.now}."
                     )
             else:
                 p.transplant_suitable = True
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                p.time_until_death = min(
+                    # self.config.time_to_event_curves[f"ttd_prev_listed"].loc[
+                    #    random_number, p.patient_type
+                    # ]
+                    self.config.ttd_krt["initialisation"]["listed"][p.referral_type][
+                        p.age_group
+                    ][1]
+                    * self.rng.weibull(
+                        a=self.config.ttd_krt["initialisation"]["listed"][
+                            p.referral_type
+                        ][p.age_group][0],
+                        size=None,
+                    )
+                    * self.config.multipliers["ttd"]["prev"],
+                    self.config.sim_duration + 1,
+                )
                 p.time_enters_waiting_list = self.env.now
                 if self.config.trace:
                     print(
@@ -222,6 +328,23 @@ class Model:
             self.env.process(self.start_dialysis_modality(p))
         elif location == "live_transplant":
             p.transplant_suitable = True
+            random_number = truncate_2dp(self.rng.uniform(0, 1))
+            p.time_until_death = min(
+                self.config.ttd_krt["initialisation"]["listed"][p.referral_type][
+                    p.age_group
+                ][1]
+                * self.rng.weibull(
+                    a=self.config.ttd_krt["initialisation"]["listed"][p.referral_type][
+                        p.age_group
+                    ][0],
+                    size=None,
+                )
+                * self.config.multipliers["ttd"]["prev"],
+                self.config.sim_duration + 1,
+            )
+            # self.config.time_to_event_curves[
+            #   f"ttd_prev_listed"
+            # ].loc[random_number, p.patient_type]
             p.pre_emptive_transplant = None  # Unknown for prevalent patients
             p.time_of_transplant = self.env.now
             p.transplant_type = "live"
@@ -233,6 +356,23 @@ class Model:
             self.env.process(self.start_transplant(p))
         elif location == "cadaver_transplant":
             p.transplant_suitable = True
+            random_number = truncate_2dp(self.rng.uniform(0, 1))
+            p.time_until_death = min(
+                self.config.ttd_krt["initialisation"]["listed"][p.referral_type][
+                    p.age_group
+                ][1]
+                * self.rng.weibull(
+                    a=self.config.ttd_krt["initialisation"]["listed"][p.referral_type][
+                        p.age_group
+                    ][0],
+                    size=None,
+                )
+                * self.config.multipliers["ttd"]["prev"],
+                self.config.sim_duration + 1,
+            )
+            # self.config.time_to_event_curves[
+            #    f"ttd_prev_listed"
+            # ].loc[random_number, p.patient_type]
             p.pre_emptive_transplant = None  # Unknown for prevalent patients
             p.time_of_transplant = self.env.now
             p.transplant_type = "cadaver"
@@ -350,6 +490,24 @@ class Model:
         ):
             # Patient is not suitable for transplant and so starts dialysis only pathway
             patient.transplant_suitable = False
+            if patient.time_until_death is None:
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                patient.time_until_death = min(
+                    self.config.ttd_krt["incidence"]["not_listed"][
+                        patient.referral_type
+                    ][patient.age_group][1]
+                    * self.rng.weibull(
+                        a=self.config.ttd_krt["incidence"]["not_listed"][
+                            patient.referral_type
+                        ][patient.age_group][0],
+                        size=None,
+                    )
+                    * self.config.multipliers["ttd"]["inc"],
+                    self.config.sim_duration + 1,
+                    # self.config.time_to_event_curves[f"ttd_inc_not_listed"].loc[
+                    #    random_number, patient.patient_type
+                    # ]
+                )
 
             if self.config.trace:
                 print(
@@ -361,6 +519,24 @@ class Model:
         else:
             # Patient is suitable for transplant and so we need to decide if they start pre-emptive transplant or dialysis whilst waiting for transplant
             patient.transplant_suitable = True
+            if patient.time_until_death is None:
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                patient.time_until_death = min(
+                    self.config.ttd_krt["incidence"]["listed"][patient.referral_type][
+                        patient.age_group
+                    ][1]
+                    * self.rng.weibull(
+                        a=self.config.ttd_krt["incidence"]["listed"][
+                            patient.referral_type
+                        ][patient.age_group][0],
+                        size=None,
+                    )
+                    * self.config.multipliers["ttd"]["inc"],
+                    self.config.sim_duration + 1,
+                    # self.config.time_to_event_curves[f"ttd_inc_listed"].loc[
+                    #    random_number, patient.patient_type
+                    # ]
+                )
             # We first assign a transplant type: live or cadaver as this impacts the probability of starting pre-emptive transplant
             if (
                 self.rng.uniform(0, 1)
@@ -499,212 +675,148 @@ class Model:
         Yields:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
         """
+        if patient.transplant_count == 0:
+            # adjust the time to death as this is a patient that has recieve (not just been listed for) a transplant
+            if patient.patient_flag == "incident":
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                sampled_time = min(
+                    # self.config.time_to_event_curves[f"ttd_inc_received_Tx"].loc[
+                    #    random_number, patient.patient_type
+                    # ]
+                    self.config.ttd_krt["incidence"]["received_Tx"][
+                        patient.referral_type
+                    ][patient.age_group][1]
+                    * self.rng.weibull(
+                        a=self.config.ttd_krt["incidence"]["received_Tx"][
+                            patient.referral_type
+                        ][patient.age_group][0],
+                        size=None,
+                    )
+                    * self.config.multipliers["ttd"]["inc"],
+                    self.config.sim_duration + 1,
+                )
+                current_tud = patient.time_until_death
+                patient.time_until_death = max(
+                    sampled_time - (self.env.now - patient.start_time_in_system),
+                    current_tud,
+                )
+            else:  # prevalent patient
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                sampled_time = min(
+                    # self.config.time_to_event_curves[f"ttd_prev_received_Tx"].loc[
+                    #    random_number, patient.patient_type
+                    # ]
+                    self.config.ttd_krt["initialisation"]["received_Tx"][
+                        patient.referral_type
+                    ][patient.age_group][1]
+                    * self.rng.weibull(
+                        a=self.config.ttd_krt["initialisation"]["received_Tx"][
+                            patient.referral_type
+                        ][patient.age_group][0],
+                        size=None,
+                    )
+                    * self.config.multipliers["ttd"]["prev"],
+                    self.config.sim_duration + 1,
+                )
+                current_tud = patient.time_until_death
+                patient.time_until_death = max(
+                    sampled_time - (self.env.now - patient.start_time_in_system),
+                    current_tud,
+                )
         patient.transplant_count += 1
 
         patient.time_of_transplant = self.env.now
         if patient.transplant_type == "live":
             # how long the graft lasts depends on where they go next: death or back to start_krt
+            ## sampled_wait_time depends on whether patient is incident or not
             if patient.patient_flag == "incident":
-                prob_death_post_tx = 1 / (
-                    1
-                    + np.exp(
-                        self.config.death_post_transplant_glm["live"]["intercept"]
-                        + self.config.death_post_transplant_glm["live"][
-                            "time_in_system"
-                        ]
-                        * (self.env.now - patient.start_time_in_system)
-                        + self.config.death_post_transplant_glm["live"]["age"]
-                        * patient.age_group
-                        + self.config.death_post_transplant_glm["live"]["ref_stat"]
-                        * (0 if patient.referral_type == "early" else 1)
-                    )
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                sampled_wait_time = (
+                    self.config.time_to_event_curves["ttgf_liveTx"].loc[
+                        random_number, patient.patient_type
+                    ]
+                    * self.config.multipliers["ttgf"]["inc"]["live"]
                 )
-            else:
-                prob_death_post_tx = self.config.death_post_transplant["live"][
-                    patient.age_group
-                ]
-            if (
-                self.rng.uniform(0, 1)
-                < prob_death_post_tx  # self.config.death_post_transplant["live"][patient.age_group]
-            ):
-                # patient dies after transplant
-
-                ## sampled_wait_time depends on whether patient is incident or not
-                if patient.patient_flag == "incident":
-                    random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    sampled_wait_time = self.config.time_to_event_curves[
-                        "ttd_liveTx"
-                    ].loc[random_number, patient.patient_type]
-                else:  # prevalent patient
-                    random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    sampled_wait_time = self.config.time_to_event_curves[
-                        "ttd_liveTx_initialisation"
-                    ].loc[random_number, patient.patient_type]
-                self._update_event_log(
-                    patient,
-                    patient.transplant_type,
-                    "death",
-                    float(self.env.now),
-                    sampled_wait_time,
+            else:  # prevalent patient
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                sampled_wait_time = (
+                    self.config.time_to_event_curves["ttgf_liveTx_initialisation"].loc[
+                        random_number, patient.patient_type
+                    ]
+                    * self.config.multipliers["ttgf"]["prev"]["live"]
                 )
-
-                yield self.env.timeout(sampled_wait_time)
-                patient.time_living_with_live_transplant = sampled_wait_time
-
-                self.patients_in_system[patient.patient_type] -= 1
-
-                if self.config.trace:
-                    print(
-                        f"Patient {patient.id} of age group {patient.age_group} died after live transplant at time {self.env.now}."
-                    )
-                # patient leaves the system
-            else:
-                # patient goes back to start_krt after graft fails
-                ## sampled_wait_time depends on whether patient is incident or not
-                if patient.patient_flag == "incident":
-                    random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    sampled_wait_time = self.config.time_to_event_curves[
-                        "ttgf_liveTx"
-                    ].loc[random_number, patient.patient_type]
-                else:  # prevalent patient
-                    random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    sampled_wait_time = self.config.time_to_event_curves[
-                        "ttgf_liveTx_initialisation"
-                    ].loc[random_number, patient.patient_type]
-
-                self._update_event_log(
-                    patient,
-                    patient.transplant_type,
-                    "graft_failure",
-                    float(self.env.now),
-                    sampled_wait_time,
-                )
-                patient.patient_flag = "incident"  # if they were prevalent then after the patient has a graft failure we treat them as incident again
-                yield self.env.timeout(sampled_wait_time)
-                patient.time_living_with_live_transplant = sampled_wait_time
-                if self.config.trace:
-                    print(
-                        f"Patient {patient.id} of age group {patient.age_group} had graft failure after live transplant at time {self.env.now}."
-                    )
-                ## they're returning to start_krt so we want to reset a bunch of starting variables
-                patient.transplant_suitable = None
-                patient.transplant_type = None
-                patient.pre_emptive_transplant = None
-                patient.dialysis_modality = "none"
-                patient.time_starts_dialysis = None
-                patient.time_on_dialysis = {"ichd": 0.0, "hhd": 0.0, "pd": 0.0}
-                patient.time_living_with_live_transplant = None
-                patient.time_living_with_cadaver_transplant = None
-                patient.time_on_waiting_list = 0
-                patient.time_enters_waiting_list = None
-                patient.time_of_transplant = None
-
-                self.env.process(self.start_krt(patient))
         else:  # cadaver
-            # how long the graft lasts depends on where they go next: death or back to start_krt
             if patient.patient_flag == "incident":
-                prob_death_post_tx = 1 / (
-                    1
-                    + np.exp(
-                        -(
-                            self.config.death_post_transplant_glm["cadaver"][
-                                "intercept"
-                            ]
-                            + self.config.death_post_transplant_glm["cadaver"][
-                                "time_in_system"
-                            ]
-                            * (self.env.now - patient.start_time_in_system)
-                            + self.config.death_post_transplant_glm["cadaver"]["age"]
-                            * patient.age_group
-                            + self.config.death_post_transplant_glm["cadaver"][
-                                "ref_stat"
-                            ]
-                            * (0 if patient.referral_type == "early" else 1)
-                        )
-                    )
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                sampled_wait_time = (
+                    self.config.time_to_event_curves["ttgf_cadTx"].loc[
+                        random_number, patient.patient_type
+                    ]
+                    * self.config.multipliers["ttgf"]["inc"]["cadaver"]
                 )
-            else:
-                prob_death_post_tx = self.config.death_post_transplant["cadaver"][
-                    patient.age_group
-                ]
-            if (
-                self.rng.uniform(0, 1)
-                < prob_death_post_tx  # self.config.death_post_transplant["cadaver"][patient.age_group]
-            ):
-                # patient dies after transplant
-
-                ## sampled_wait_time depends on whether patient is incident or not
-                if patient.patient_flag == "incident":
-                    random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    sampled_wait_time = self.config.time_to_event_curves[
-                        "ttgf_cadTx"
-                    ].loc[random_number, patient.patient_type]
-                else:  # prevalent patient
-                    random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    sampled_wait_time = self.config.time_to_event_curves[
-                        "ttgf_liveTx_initialisation"
-                    ].loc[random_number, patient.patient_type]
-                self._update_event_log(
-                    patient,
-                    patient.transplant_type,
-                    "death",
-                    float(self.env.now),
-                    sampled_wait_time,
+            else:  # prevalent patient
+                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                sampled_wait_time = (
+                    self.config.time_to_event_curves["ttgf_liveTx_initialisation"].loc[
+                        random_number, patient.patient_type
+                    ]
+                    * self.config.multipliers["ttgf"]["prev"]["cadaver"]
                 )
 
-                yield self.env.timeout(sampled_wait_time)
-                patient.time_living_with_cadaver_transplant = sampled_wait_time
+        next_event = ["death", "graft_failure"]
+        time_to_next_event = [patient.time_until_death, sampled_wait_time]
+        event_time = min(time_to_next_event)
+        event = next_event[np.argmin(time_to_next_event)]
 
-                self.patients_in_system[patient.patient_type] -= 1
-
-                if self.config.trace:
-                    print(
-                        f"Patient {patient.id} of age group {patient.age_group} died after cadaver transplant at time {self.env.now}."
-                    )
-                # patient leaves the system
-            else:
-                # patient goes back to start_krt after graft fails
-
-                ## sampled_wait_time depends on whether patitent is inicident or not
-                if patient.patient_flag == "incident":
-                    random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    sampled_wait_time = self.config.time_to_event_curves[
-                        "ttgf_cadTx"
-                    ].loc[random_number, patient.patient_type]
-                else:  # prevalent patient
-                    random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    sampled_wait_time = self.config.time_to_event_curves[
-                        "ttgf_cadTx_initialisation"
-                    ].loc[random_number, patient.patient_type]
-
-                self._update_event_log(
-                    patient,
-                    patient.transplant_type,
-                    "graft_failure_modality_allocation",
-                    float(self.env.now),
-                    sampled_wait_time,
+        if event == "graft_failure":
+            self._update_event_log(
+                patient,
+                patient.transplant_type,
+                "graft_failure",
+                float(self.env.now),
+                event_time,
+            )
+            patient.patient_flag = "incident"  # if they were prevalent then after the patient has a graft failure we treat them as incident again
+            yield self.env.timeout(event_time)
+            patient.time_living_with_live_transplant = event_time
+            patient.time_until_death -= event_time
+            if self.config.trace:
+                print(
+                    f"Patient {patient.id} of age group {patient.age_group} had graft failure after live transplant at time {self.env.now}."
                 )
-                patient.patient_flag = "incident"  # if they were prevalent then after the patient has a graft failure we treat them as incident again
-                yield self.env.timeout(sampled_wait_time)
-                patient.time_living_with_cadaver_transplant = sampled_wait_time
-                if self.config.trace:
-                    print(
-                        f"Patient {patient.id} of age group {patient.age_group} had graft failure after cadaver transplant at time {self.env.now}."
-                    )
                 ## they're returning to start_krt so we want to reset a bunch of starting variables
-                patient.transplant_suitable = None
-                patient.transplant_type = None
-                patient.pre_emptive_transplant = None
-                patient.dialysis_modality = "none"
-                patient.time_starts_dialysis = None
-                patient.time_on_dialysis = {"ichd": 0.0, "hhd": 0.0, "pd": 0.0}
-                patient.time_living_with_live_transplant = None
-                patient.time_living_with_cadaver_transplant = None
-                patient.time_on_waiting_list = 0
-                patient.time_enters_waiting_list = None
-                patient.time_of_transplant = None
+            patient.transplant_suitable = None
+            patient.transplant_type = None
+            patient.pre_emptive_transplant = None
+            patient.dialysis_modality = "none"
+            patient.time_starts_dialysis = None
+            patient.time_on_dialysis = {"ichd": 0.0, "hhd": 0.0, "pd": 0.0}
+            patient.time_living_with_live_transplant = None
+            patient.time_living_with_cadaver_transplant = None
+            patient.time_on_waiting_list = 0
+            patient.time_enters_waiting_list = None
+            patient.time_of_transplant = None
 
-                self.env.process(self.start_krt(patient))
+            self.env.process(self.start_krt(patient))
+        else:  # death
+            self._update_event_log(
+                patient,
+                patient.transplant_type,
+                "death",
+                float(self.env.now),
+                event_time,
+            )
+
+            yield self.env.timeout(event_time)
+            patient.time_living_with_live_transplant = event_time
+
+            self.patients_in_system[patient.patient_type] -= 1
+
+            if self.config.trace:
+                print(
+                    f"Patient {patient.id} of age group {patient.age_group} died after live transplant at time {self.env.now}."
+                )
+                # patient leaves the system
 
     def start_dialysis_whilst_waiting_for_transplant(
         self, patient: Patient
@@ -732,6 +844,7 @@ class Model:
             patient.time_on_waiting_list = self.config.time_to_event_curves[
                 "tw_cadTx_England"
             ].loc[random_number, patient.patient_type]
+
         ## if this isn't their first Tx then we also need to simulate the time they wait before starting dialysis
         if patient.transplant_count > 0:
             # we need to check this isn't longer than their time on the waiting list
@@ -739,37 +852,65 @@ class Model:
             sampled_wait_time = self.config.tw_before_dialysis[
                 "scale"
             ] * self.rng.weibull(a=self.config.tw_before_dialysis["shape"], size=None)
-            if sampled_wait_time > patient.time_on_waiting_list:
+
+            next_event = ["start_dialysis", "pre_emptive_transplant", "death"]
+            time_to_next_event = [
+                sampled_wait_time,
+                patient.time_on_waiting_list,
+                patient.time_until_death,
+            ]
+            event_time = np.min(time_to_next_event)
+            event = next_event[np.argmin(time_to_next_event)]
+
+            if event == "pre_emptive_transplant":
                 # they go to transplant pre-emptively without starting dialysis
                 self._update_event_log(
                     patient,
                     "waiting_for_transplant",
                     patient.transplant_type,
                     float(self.env.now),
-                    patient.time_on_waiting_list,
+                    event_time,
                 )
-                yield self.env.timeout(patient.time_on_waiting_list)
+                yield self.env.timeout(event_time)
+                patient.time_until_death -= event_time
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} has pre-emptive {patient.transplant_type} transplant at time {self.env.now}."
                     )
                 patient.pre_emptive_transplant = True
                 self.env.process(self.start_transplant(patient))
-            else:
+            elif event == "start_dialysis":
                 self._update_event_log(
                     patient,
                     "waiting_for_transplant",
                     "dialysis_modality_allocation",
                     float(self.env.now),
-                    sampled_wait_time,
+                    event_time,
                 )
-                yield self.env.timeout(sampled_wait_time)
-                patient.time_on_waiting_list -= sampled_wait_time  ## remove time waiting from total time on waiting list
+                yield self.env.timeout(event_time)
+                patient.time_until_death -= event_time
+                patient.time_on_waiting_list -= (
+                    event_time  ## remove time waiting from total time on waiting list
+                )
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant at time {self.env.now}."
                     )
                 self.env.process(self.start_dialysis_modality_allocation(patient))
+            else:  # death
+                self._update_event_log(
+                    patient,
+                    "waiting_for_transplant",
+                    "death",
+                    float(self.env.now),
+                    event_time,
+                )
+                yield self.env.timeout(event_time)
+                self.patients_in_system[patient.patient_type] -= 1
+                if self.config.trace:
+                    print(
+                        f"Patient {patient.id} of age group {patient.age_group} died whilst waiting for transplant at time {self.env.now}."
+                    )
         else:
             # if this is the first time in the model then there should be no wait before starting dialysis as they
             # are assumed to enter the model at the point of starting dialysis
@@ -795,124 +936,126 @@ class Model:
                 f"Patient {patient.id} of age group {patient.age_group} starts {patient.dialysis_modality} at time {self.env.now}."
             )
 
-        # what is the next step modality change, death
+        # what is the next step modality change, transplant or death
         # if they're waiting for transplant we'll compare the time generated to patient.time on waiting list
+        # we'll compare all generated times to time of death
+
+        ## sampled_time depends on whether patient is incident or not
         if patient.patient_flag == "incident":
-            prob_death = self.config.death_post_dialysis_modality_incident[
-                patient.dialysis_modality
-            ][patient.referral_type][patient.age_group]
-        else:
-            prob_death = self.config.death_post_dialysis_modality[
-                patient.dialysis_modality
-            ][patient.referral_type][patient.age_group]
-        if self.rng.uniform(0, 1) < prob_death:
-            # death or transplant
-            ## sampled_time depends on whether patitent is inicident or not
-            if patient.patient_flag == "incident":
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
-                sampled_time = self.config.time_to_event_curves[
-                    f"ttd_{patient.dialysis_modality}"
+            random_number = truncate_2dp(self.rng.uniform(0, 1))
+            sampled_time = (
+                self.config.time_to_event_curves[
+                    f"ttma_{patient.dialysis_modality}"
                 ].loc[random_number, patient.patient_type]
-            else:  ## prevalent patient
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
-                sampled_time = self.config.time_to_event_curves[
-                    f"ttd_{patient.dialysis_modality}_initialisation"
+                * self.config.multipliers["ttma"]["inc"][patient.dialysis_modality]
+            )
+        else:  ## prevalent patient
+            random_number = truncate_2dp(self.rng.uniform(0, 1))
+            sampled_time = (
+                self.config.time_to_event_curves[
+                    f"ttma_{patient.dialysis_modality}_initialisation"
                 ].loc[random_number, patient.patient_type]
-            if (
-                patient.transplant_suitable
-                and sampled_time >= patient.time_on_waiting_list
-            ):
-                self._update_event_log(
-                    patient,
-                    patient.dialysis_modality,
-                    patient.transplant_type,
-                    float(self.env.now),
-                    patient.time_on_waiting_list,
-                )
-                patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again if they're going to transplant (no need to do this if next step is death)
-                patient.pre_emptive_transplant = False
-                yield self.env.timeout(patient.time_on_waiting_list)
-                patient.time_on_dialysis[patient.dialysis_modality] = (
-                    patient.time_on_waiting_list
-                )
-                if self.config.trace:
-                    print(
-                        f"Patient {patient.id} of age group {patient.age_group} has {patient.transplant_type} transplant at time {self.env.now}."
-                    )
-                yield self.env.timeout(0)
-                self.env.process(self.start_transplant(patient))
-            else:
-                # death
+                * self.config.multipliers["ttma"]["prev"][patient.dialysis_modality]
+            )
+
+        next_event = ["modality_change", "death", "transplant"]
+        time_to_next_event = [
+            sampled_time,
+            patient.time_until_death,
+            patient.time_on_waiting_list,
+        ]
+        ## now we judge what the next step is based on smallest time to transplant, modality change or death
+        if not patient.transplant_suitable:
+            # we just compare sampled time and time of death
+            event_time = np.min(time_to_next_event[:2])
+            event = next_event[np.argmin(time_to_next_event[:2])]
+            if event == "death":
                 self._update_event_log(
                     patient,
                     patient.dialysis_modality,
                     "death",
                     float(self.env.now),
-                    sampled_time,
+                    event_time,
                 )
-                yield self.env.timeout(sampled_time)
-                patient.time_on_dialysis[patient.dialysis_modality] = sampled_time
+                yield self.env.timeout(event_time)
+                patient.time_on_dialysis[patient.dialysis_modality] = event_time
                 self.patients_in_system[patient.patient_type] -= 1
                 if self.config.trace:
                     print(
-                        f"Patient {patient.id} of age group {patient.age_group} died and left the system at time {self.env.now}."
+                        f"Patient {patient.id} of age group {patient.age_group} died on dialysis at time {self.env.now}."
                     )
-                    print(self.patients_in_system)
-        else:
-            # modality change or transplant
-
-            ## sampled_time depends on whether patient is incident or not
-            if patient.patient_flag == "incident":
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
-                sampled_time = self.config.time_to_event_curves[
-                    f"ttma_{patient.dialysis_modality}"
-                ].loc[random_number, patient.patient_type]
-            else:  ## prevalent patient
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
-                sampled_time = self.config.time_to_event_curves[
-                    f"ttma_{patient.dialysis_modality}_initialisation"
-                ].loc[random_number, patient.patient_type]
-            if (
-                patient.transplant_suitable
-                and sampled_time >= patient.time_on_waiting_list
-            ):
-                self._update_event_log(
-                    patient,
-                    patient.dialysis_modality,
-                    patient.transplant_type,
-                    float(self.env.now),
-                    patient.time_on_waiting_list,
-                )
-                patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again
-                patient.pre_emptive_transplant = False
-                yield self.env.timeout(patient.time_on_waiting_list)
-                patient.time_on_dialysis[patient.dialysis_modality] = (
-                    patient.time_on_waiting_list
-                )
-                if self.config.trace:
-                    print(
-                        f"Patient {patient.id} of age group {patient.age_group} has {patient.transplant_type} transplant at time {self.env.now}."
-                    )
-                self.env.process(self.start_transplant(patient))
-            else:
-                # modality change
+            else:  # modality change
                 self._update_event_log(
                     patient,
                     patient.dialysis_modality,
                     "modality_allocation",
                     float(self.env.now),
-                    sampled_time,
+                    event_time,
                 )
-                patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again
-                yield self.env.timeout(sampled_time)
-                patient.time_on_waiting_list -= sampled_time
-                patient.time_on_dialysis[patient.dialysis_modality] = sampled_time
+                patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again so let's just always do this
+                yield self.env.timeout(event_time)
+                patient.time_on_dialysis[patient.dialysis_modality] = event_time
+                patient.time_until_death -= event_time
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} changed dialysis modality at time {self.env.now}."
                     )
 
                 self.env.process(self.start_dialysis_modality_allocation(patient))
+        else:
+            # we compare all three times
+            event_time = np.min(time_to_next_event)
+            event = next_event[np.argmin(time_to_next_event)]
+            if event == "death":
+                self._update_event_log(
+                    patient,
+                    patient.dialysis_modality,
+                    "death",
+                    float(self.env.now),
+                    event_time,
+                )
+                yield self.env.timeout(event_time)
+                patient.time_on_dialysis[patient.dialysis_modality] = event_time
+                self.patients_in_system[patient.patient_type] -= 1
+                if self.config.trace:
+                    print(
+                        f"Patient {patient.id} of age group {patient.age_group} died on dialysis at time {self.env.now}."
+                    )
+            elif event == "modality_change":  # modality change
+                self._update_event_log(
+                    patient,
+                    patient.dialysis_modality,
+                    "modality_allocation",
+                    float(self.env.now),
+                    event_time,
+                )
+                patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again so let's just always do this
+                yield self.env.timeout(event_time)
+                patient.time_on_dialysis[patient.dialysis_modality] = event_time
+                patient.time_until_death -= event_time
+                if self.config.trace:
+                    print(
+                        f"Patient {patient.id} of age group {patient.age_group} changed dialysis modality at time {self.env.now}."
+                    )
+
+                self.env.process(self.start_dialysis_modality_allocation(patient))
+            else:  # transplant
+                self._update_event_log(
+                    patient,
+                    patient.dialysis_modality,
+                    patient.transplant_type,
+                    float(self.env.now),
+                    event_time,
+                )
+                patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again
+                yield self.env.timeout(event_time)
+                patient.time_on_dialysis[patient.dialysis_modality] = event_time
+                patient.time_until_death -= event_time
+                if self.config.trace:
+                    print(
+                        f"Patient {patient.id} of age group {patient.age_group} has {patient.transplant_type} transplant at time {self.env.now}."
+                    )
+                self.env.process(self.start_transplant(patient))
 
     def time_tracker(self) -> Generator:
         """Function for logging time passing in the simulation, for user information
@@ -939,6 +1082,7 @@ class Model:
 
     def run(self):
         """Runs the model"""
+        # print(self.config.con_care_dist)
         if self.config.initialise_prevalent_patients:
             logger.info("Initialising prevalent patients...")
             # We first initialize the model with patients that were in the system at time zero - we look at each location in turn (conservative care, ichd, hhd, pd, live transplant, cadaver transplant)
