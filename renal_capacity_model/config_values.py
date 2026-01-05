@@ -112,12 +112,12 @@ national_config_dict = {
         },
     },
     "age_dist": {  ## adjusted for con-care patient inflow
-        1: 0.06,
-        2: 0.07,
-        3: 0.12,
-        4: 0.17,
-        5: 0.25,
-        6: 0.33,
+        1: 0.05,
+        2: 0.06,
+        3: 0.11,
+        4: 0.15,
+        5: 0.24,
+        6: 0.39,
     },
     "referral_dist": {"early": 0.82, "late": 0.18},
     "con_care_dist": {
