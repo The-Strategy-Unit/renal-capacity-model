@@ -171,21 +171,44 @@ class Model:
                 ):
                     p.transplant_type = "live"
                     random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    p.time_on_waiting_list = (
-                        self.config.time_to_event_curves["tw_liveTx_England"].loc[
-                            random_number, p.patient_type
-                        ]
-                        * self.config.multipliers["tw"]["prev"]["live"]
-                    )
+                    if (
+                        random_number
+                        < self.config.tw_liveTx_initialisation[p.age_group][2]
+                    ):
+                        p.time_on_waiting_list = (
+                            # self.config.time_to_event_curves["tw_liveTx_England"].loc[
+                            #    random_number, p.patient_type
+                            # ]
+                            self.config.tw_liveTx_initialisation[p.age_group][1]
+                            * self.rng.weibull(
+                                a=self.config.tw_liveTx_initialisation[p.age_group][0],
+                                size=None,
+                            )
+                            * self.config.multipliers["tw"]["prev"]["live"]
+                        )
+                    else:
+                        p.time_on_waiting_list = (
+                            self.config.sim_duration * 10
+                        )  # they don't have a transplant in the simulation period
                 else:
                     p.transplant_type = "cadaver"
                     random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    p.time_on_waiting_list = (
-                        self.config.time_to_event_curves["tw_cadTx_England"].loc[
-                            random_number, p.patient_type
-                        ]
-                        * self.config.multipliers["tw"]["prev"]["cadaver"]
-                    )
+                    if (
+                        random_number
+                        < self.config.tw_cadTx_initialisation[p.age_group][2]
+                    ):
+                        p.time_on_waiting_list = (
+                            self.config.tw_cadTx_initialisation[p.age_group][1]
+                            * self.rng.weibull(
+                                a=self.config.tw_cadTx_initialisation[p.age_group][0],
+                                size=None,
+                            )
+                            * self.config.multipliers["tw"]["prev"]["cadaver"]
+                        )
+                    else:
+                        p.time_on_waiting_list = (
+                            self.config.sim_duration * 10
+                        )  # they don't have a transplant in the simulation period
                 p.pre_emptive_transplant = False
             self.env.process(self.start_dialysis_modality(p))
         elif location == "hhd":
@@ -246,15 +269,34 @@ class Model:
                 ):
                     p.transplant_type = "live"
                     random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    p.time_on_waiting_list = self.config.time_to_event_curves[
-                        "tw_liveTx_England"
-                    ].loc[random_number, p.patient_type]
+                    if random_number < self.config.tw_liveTx_initialisation[p.age_group][2]:
+                        #p.time_on_waiting_list = self.config.time_to_event_curves[
+                        #    "tw_liveTx_England"
+                        #].loc[random_number, p.patient_type]
+                        p.time_on_waiting_list = self.config.tw_liveTx_initialisation[p.age_group][1]
+                            * self.rng.weibull(
+                                a=self.config.tw_liveTx_initialisation[p.age_group][0],
+                                size=None,
+                            ) * self.config.multipliers["tw"]["prev"]["live"]
+                    else:
+                        p.time_on_waiting_list = (
+                            self.config.sim_duration * 10
+                        )  # they don't have a transplant in the simulation period
                 else:
                     p.transplant_type = "cadaver"
                     random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    p.time_on_waiting_list = self.config.time_to_event_curves[
-                        "tw_cadTx_England"
-                    ].loc[random_number, p.patient_type]
+                    if random_number < self.config.tw_cadTx_initialisation[p.age_group][2]:
+                        #p.time_on_waiting_list = self.config.time_to_event_curves[
+                        #    "tw_cadTx_England"
+                        #].loc[random_number, p.patient_type]
+                        p.time_on_waiting_list = self.config.tw_cadTx_initialisation[p.age_group][1]
+                            * self.rng.weibull(a=self.config.tw_cadTx_initialisation[p.age_group][0],
+                                size=None,
+                            ) * self.config.multipliers["tw"]["prev"]["cadaver"]
+                    else:
+                        p.time_on_waiting_list = (
+                            self.config.sim_duration * 10
+                        )  # they don't have a transplant in the simulation period
                 p.pre_emptive_transplant = False
             self.env.process(self.start_dialysis_modality(p))
         elif location == "pd":
@@ -315,15 +357,35 @@ class Model:
                 ):
                     p.transplant_type = "live"
                     random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    p.time_on_waiting_list = self.config.time_to_event_curves[
-                        "tw_liveTx_England"
-                    ].loc[random_number, p.patient_type]
+                    if random_number < self.config.tw_liveTx_initialisation[p.age_group][2]:
+                        #p.time_on_waiting_list = self.config.time_to_event_curves[
+                        #    "tw_liveTx_England"
+                        #].loc[random_number, p.patient_type]
+                        p.time_on_waiting_list = self.config.tw_liveTx_initialisation[p.age_group][1]
+                            * self.rng.weibull(
+                                a=self.config.tw_liveTx_initialisation[p.age_group][0],
+                                size=None,
+                            ) * self.config.multipliers["tw"]["prev"]["live"]
+                    else:
+                        p.time_on_waiting_list = (
+                            self.config.sim_duration * 10
+                        )  # they don't have a transplant in the simulation period
                 else:
                     p.transplant_type = "cadaver"
                     random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    p.time_on_waiting_list = self.config.time_to_event_curves[
-                        "tw_cadTx_England"
-                    ].loc[random_number, p.patient_type]
+                    if random_number < self.config.tw_cadTx_initialisation[p.age_group][2]:
+                        #p.time_on_waiting_list = self.config.time_to_event_curves[
+                        #    "tw_cadTx_England"
+                        #].loc[random_number, p.patient_type]
+                        p.time_on_waiting_list = self.config.tw_cadTx_initialisation[p.age_group][1]
+                            * self.rng.weibull(
+                                a=self.config.tw_cadTx_initialisation[p.age_group][0],
+                                size=None,
+                            ) * self.config.multipliers["tw"]["prev"]["cadaver"]
+                    else:
+                        p.time_on_waiting_list = (
+                            self.config.sim_duration * 10
+                        )  # they don't have a transplant in the simulation period
                 p.pre_emptive_transplant = False
             self.env.process(self.start_dialysis_modality(p))
         elif location == "live_transplant":
@@ -836,14 +898,28 @@ class Model:
         # We'll use this within the starts_dialysis function to work out how long they stay in dialysis before Tx
         if patient.transplant_type == "live":
             random_number = truncate_2dp(self.rng.uniform(0, 1))
-            patient.time_on_waiting_list = self.config.time_to_event_curves[
-                "tw_liveTx_England"
-            ].loc[random_number, patient.patient_type]
+            #patient.time_on_waiting_list = self.config.time_to_event_curves[
+            #    "tw_liveTx_England"
+            #].loc[random_number, patient.patient_type]
+            patient.time_on_waiting_list = (
+                self.config.tw_liveTx[p.age_group][1]
+                * self.rng.weibull(
+                a=self.config.tw_liveTx[p.age_group][0],
+                    size=None,
+                            )
+                * self.config.multipliers["tw"]["inc"]["live"]
         else:  # cadaver
-            random_number = truncate_2dp(self.rng.uniform(0, 1))
-            patient.time_on_waiting_list = self.config.time_to_event_curves[
-                "tw_cadTx_England"
-            ].loc[random_number, patient.patient_type]
+            #random_number = truncate_2dp(self.rng.uniform(0, 1)) 
+            patient.time_on_waiting_list = (
+                self.config.tw_cadTx[p.age_group][1]
+                * self.rng.weibull(
+                a=self.config.tw_cadTx[p.age_group][0],
+                    size=None,
+                            )
+                * self.config.multipliers["tw"]["inc"]["cadaver"]
+            #self.config.time_to_event_curves[
+            #    "tw_cadTx_England"
+            #].loc[random_number, patient.patient_type]
 
         ## if this isn't their first Tx then we also need to simulate the time they wait before starting dialysis
         if patient.transplant_count > 0:

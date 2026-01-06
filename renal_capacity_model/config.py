@@ -13,6 +13,10 @@ from renal_capacity_model.config_values import (
     ttd_con_care_values,
     tw_before_dialysis_values,
     ttd_krt_values,
+    tw_cadTx_values,
+    tw_liveTx_values,
+    tw_cadTx_initialisation_values,
+    tw_liveTx_initialisation_values,
 )
 from renal_capacity_model.utils import get_logger
 
@@ -74,6 +78,10 @@ class Config:
         # time to event distribution parameters (these are the same regardless of geography)
         self.ttd_con_care = ttd_con_care_values
         self.ttd_krt = ttd_krt_values
+        self.tw_cadTx = tw_cadTx_values
+        self.tw_liveTx = tw_liveTx_values
+        self.tw_cadTx_initialisation = tw_cadTx_initialisation_values
+        self.tw_liveTx_initialisation = tw_liveTx_initialisation_values
         self.tw_before_dialysis = tw_before_dialysis_values
         self.multipliers = config_dict["multipliers"]
         self.time_to_event_curves = load_time_to_event_curves(
