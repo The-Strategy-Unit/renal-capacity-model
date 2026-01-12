@@ -12,6 +12,11 @@ from renal_capacity_model.config_values import (
     load_time_to_event_curves,
     ttd_con_care_values,
     tw_before_dialysis_values,
+    ttd_krt_values,
+    tw_cadTx_values,
+    tw_liveTx_values,
+    tw_cadTx_initialisation_values,
+    tw_liveTx_initialisation_values,
 )
 from renal_capacity_model.utils import get_logger
 
@@ -59,14 +64,10 @@ class Config:
         # routing distributions
         self.con_care_dist = config_dict["con_care_dist"]
         self.suitable_for_transplant_dist = config_dict["suitable_for_transplant_dist"]
+        self.receives_transplant_dist = config_dict["receives_transplant_dist"]
         self.transplant_type_dist = config_dict["transplant_type_dist"]
         self.modality_allocation_distributions = config_dict[
             "modality_allocation_distributions"
-        ]
-        self.death_post_transplant = config_dict["death_post_transplant"]
-        self.death_post_dialysis_modality = config_dict["death_post_dialysis_modality"]
-        self.death_post_dialysis_modality_incident = config_dict[
-            "death_post_dialysis_modality_incident"
         ]
         self.pre_emptive_transplant_live_donor_dist = config_dict[
             "pre_emptive_transplant_live_donor_dist"
@@ -75,12 +76,15 @@ class Config:
         self.pre_emptive_transplant_cadaver_donor_dist = config_dict[
             "pre_emptive_transplant_cadaver_donor_dist"
         ]
-        self.death_post_transplant_glm = config_dict["death_post_transplant_glm"]
-        self.multipliers = config_dict["multipliers"]
         # time to event distribution parameters (these are the same regardless of geography)
         self.ttd_con_care = ttd_con_care_values
+        self.ttd_krt = ttd_krt_values
+        self.tw_cadTx = tw_cadTx_values
+        self.tw_liveTx = tw_liveTx_values
+        self.tw_cadTx_initialisation = tw_cadTx_initialisation_values
+        self.tw_liveTx_initialisation = tw_liveTx_initialisation_values
         self.tw_before_dialysis = tw_before_dialysis_values
-
+        self.multipliers = config_dict["multipliers"]
         self.time_to_event_curves = load_time_to_event_curves(
             path_to_time_to_event_curves
         )

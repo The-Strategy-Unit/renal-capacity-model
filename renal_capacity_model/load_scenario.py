@@ -354,20 +354,58 @@ def load_scenario_from_excel(
     }
 
     config_from_excel["suitable_for_transplant_dist"] = {
-        1: input_scenario.iat[47, 1],
-        2: input_scenario.iat[48, 1],
-        3: input_scenario.iat[49, 1],
-        4: input_scenario.iat[50, 1],
-        5: input_scenario.iat[51, 1],
-        6: input_scenario.iat[52, 1],
+        "inc": {
+            1: input_scenario.iat[47, 1],
+            2: input_scenario.iat[48, 1],
+            3: input_scenario.iat[49, 1],
+            4: input_scenario.iat[50, 1],
+            5: input_scenario.iat[51, 1],
+            6: input_scenario.iat[52, 1],
+        },
+        "prev": {
+            1: input_scenario.iat[47, 2],
+            2: input_scenario.iat[48, 2],
+            3: input_scenario.iat[49, 2],
+            4: input_scenario.iat[50, 2],
+            5: input_scenario.iat[51, 2],
+            6: input_scenario.iat[52, 2],
+        },
+    }
+    config_from_excel["receives_transplant_dist"] = {
+        "inc": {
+            1: input_scenario.iat[47, 5],
+            2: input_scenario.iat[48, 5],
+            3: input_scenario.iat[49, 5],
+            4: input_scenario.iat[50, 5],
+            5: input_scenario.iat[51, 5],
+            6: input_scenario.iat[52, 5],
+        },
+        "prev": {
+            1: input_scenario.iat[47, 6],
+            2: input_scenario.iat[48, 6],
+            3: input_scenario.iat[49, 6],
+            4: input_scenario.iat[50, 6],
+            5: input_scenario.iat[51, 6],
+            6: input_scenario.iat[52, 6],
+        },
     }
     config_from_excel["transplant_type_dist"] = {
-        1: input_scenario.iat[95, 1],
-        2: input_scenario.iat[96, 1],
-        3: input_scenario.iat[97, 1],
-        4: input_scenario.iat[98, 1],
-        5: input_scenario.iat[99, 1],
-        6: input_scenario.iat[100, 1],
+        "inc": {
+            1: input_scenario.iat[95, 1],
+            2: input_scenario.iat[96, 1],
+            3: input_scenario.iat[97, 1],
+            4: input_scenario.iat[98, 1],
+            5: input_scenario.iat[99, 1],
+            6: input_scenario.iat[100, 1],
+        },
+        "prev": {
+            1: input_scenario.iat[95, 2],
+            2: input_scenario.iat[96, 2],
+            3: input_scenario.iat[97, 2],
+            4: input_scenario.iat[98, 2],
+            5: input_scenario.iat[99, 2],
+            6: input_scenario.iat[100, 2],
+        },
     }
     config_from_excel["modality_allocation_distributions"] = {
         1: {  # year
@@ -657,136 +695,6 @@ def load_scenario_from_excel(
             },
         },
     }
-    config_from_excel["death_post_transplant"] = {
-        "live": {
-            1: input_scenario.iat[119, 3],
-            2: input_scenario.iat[120, 3],
-            3: input_scenario.iat[121, 3],
-            4: input_scenario.iat[122, 3],
-            5: input_scenario.iat[123, 3],
-            6: input_scenario.iat[124, 3],
-        },
-        "cadaver": {
-            1: input_scenario.iat[119, 2],
-            2: input_scenario.iat[120, 2],
-            3: input_scenario.iat[121, 2],
-            4: input_scenario.iat[122, 2],
-            5: input_scenario.iat[123, 2],
-            6: input_scenario.iat[124, 2],
-        },
-    }
-    config_from_excel["death_post_dialysis_modality"] = {
-        "ichd": {
-            "early": {
-                1: input_scenario.iat[104, 2],
-                2: input_scenario.iat[105, 2],
-                3: input_scenario.iat[106, 2],
-                4: input_scenario.iat[107, 2],
-                5: input_scenario.iat[108, 2],
-                6: input_scenario.iat[109, 2],
-            },
-            "late": {
-                1: input_scenario.iat[110, 2],
-                2: input_scenario.iat[111, 2],
-                3: input_scenario.iat[112, 2],
-                4: input_scenario.iat[113, 2],
-                5: input_scenario.iat[114, 2],
-                6: input_scenario.iat[115, 2],
-            },
-        },
-        "hhd": {
-            "early": {
-                1: input_scenario.iat[104, 3],
-                2: input_scenario.iat[105, 3],
-                3: input_scenario.iat[106, 3],
-                4: input_scenario.iat[107, 3],
-                5: input_scenario.iat[108, 3],
-                6: input_scenario.iat[109, 3],
-            },
-            "late": {
-                1: input_scenario.iat[110, 3],
-                2: input_scenario.iat[111, 3],
-                3: input_scenario.iat[112, 3],
-                4: input_scenario.iat[113, 3],
-                5: input_scenario.iat[114, 3],
-                6: input_scenario.iat[115, 3],
-            },
-        },
-        "pd": {
-            "early": {
-                1: input_scenario.iat[104, 4],
-                2: input_scenario.iat[105, 4],
-                3: input_scenario.iat[106, 4],
-                4: input_scenario.iat[107, 4],
-                5: input_scenario.iat[108, 4],
-                6: input_scenario.iat[109, 4],
-            },
-            "late": {
-                1: input_scenario.iat[110, 4],
-                2: input_scenario.iat[111, 4],
-                3: input_scenario.iat[112, 4],
-                4: input_scenario.iat[113, 4],
-                5: input_scenario.iat[114, 4],
-                6: input_scenario.iat[115, 4],
-            },
-        },
-    }
-    config_from_excel["death_post_dialysis_modality_incident"] = {
-        "ichd": {
-            "early": {
-                1: input_scenario.iat[104, 6],
-                2: input_scenario.iat[105, 6],
-                3: input_scenario.iat[106, 6],
-                4: input_scenario.iat[107, 6],
-                5: input_scenario.iat[108, 6],
-                6: input_scenario.iat[109, 6],
-            },
-            "late": {
-                1: input_scenario.iat[110, 6],
-                2: input_scenario.iat[111, 6],
-                3: input_scenario.iat[112, 6],
-                4: input_scenario.iat[113, 6],
-                5: input_scenario.iat[114, 6],
-                6: input_scenario.iat[115, 6],
-            },
-        },
-        "hhd": {
-            "early": {
-                1: input_scenario.iat[104, 7],
-                2: input_scenario.iat[105, 7],
-                3: input_scenario.iat[106, 7],
-                4: input_scenario.iat[107, 7],
-                5: input_scenario.iat[108, 7],
-                6: input_scenario.iat[109, 7],
-            },
-            "late": {
-                1: input_scenario.iat[110, 7],
-                2: input_scenario.iat[111, 7],
-                3: input_scenario.iat[112, 7],
-                4: input_scenario.iat[113, 7],
-                5: input_scenario.iat[114, 7],
-                6: input_scenario.iat[115, 7],
-            },
-        },
-        "pd": {
-            "early": {
-                1: input_scenario.iat[104, 8],
-                2: input_scenario.iat[105, 8],
-                3: input_scenario.iat[106, 8],
-                4: input_scenario.iat[107, 8],
-                5: input_scenario.iat[108, 8],
-                6: input_scenario.iat[109, 8],
-            },
-            "late": {
-                1: input_scenario.iat[110, 8],
-                2: input_scenario.iat[111, 8],
-                3: input_scenario.iat[112, 8],
-                4: input_scenario.iat[113, 8],
-                5: input_scenario.iat[114, 8],
-                6: input_scenario.iat[115, 8],
-            },
-        },
-    }
     config_from_excel["pre_emptive_transplant_live_donor_dist"] = {
         1: {
             "early": input_scenario.iat[55, 18],
@@ -951,43 +859,49 @@ def load_scenario_from_excel(
             "cadaver": input_scenario.iat[30, 14],
         },
     }
+    config_from_excel["multipliers"] = {
+        "ttd": {
+            "inc": input_scenario.iat[232, 1],
+            "prev": input_scenario.iat[233, 1],
+        },
+        "ttma": {
+            "inc": {
+                "ichd": input_scenario.iat[236, 1],
+                "hhd": input_scenario.iat[237, 1],
+                "pd": input_scenario.iat[238, 1],
+            },
+            "prev": {
+                "ichd": input_scenario.iat[236, 2],
+                "hhd": input_scenario.iat[237, 2],
+                "pd": input_scenario.iat[238, 2],
+            },
+        },
+        "ttgf": {
+            "inc": {
+                "live": input_scenario.iat[244, 1],
+                "cadaver": input_scenario.iat[245, 1],
+            },
+            "prev": {
+                "live": input_scenario.iat[244, 2],
+                "cadaver": input_scenario.iat[245, 2],
+            },
+        },
+        "tw": {
+            "inc": {
+                "live": input_scenario.iat[248, 1],
+                "cadaver": input_scenario.iat[249, 1],
+            },
+            "prev": {
+                "live": input_scenario.iat[248, 2],
+                "cadaver": input_scenario.iat[249, 2],
+            },
+        },
+    }
     config_from_excel["daily_costs"] = {
         "ichd": input_scenario.iat[36, 1],
         "hhd": input_scenario.iat[37, 1],
         "pd": input_scenario.iat[38, 1],
         "living_with_transplant": input_scenario.iat[39, 1],
-    }
-    config_from_excel["multipliers"] = {
-        "ttd": {
-            "ichd": input_scenario.iat[232, 1],
-            "hhd": input_scenario.iat[233, 1],
-            "pd": input_scenario.iat[234, 1],
-            "live": input_scenario.iat[241, 1],
-            "cadaver": input_scenario.iat[242, 1],
-        },
-        "ttma": {
-            "ichd": input_scenario.iat[236, 1],
-            "hhd": input_scenario.iat[237, 1],
-            "pd": input_scenario.iat[238, 1],
-        },
-        "ttgf": {
-            "live": input_scenario.iat[244, 1],
-            "cadaver": input_scenario.iat[245, 1],
-        },
-    }
-    config_from_excel["death_post_transplant_glm"] = {
-        "live": {
-            "intercept": input_scenario.iat[120, 7],
-            "time_in_system": input_scenario.iat[121, 7],
-            "age": input_scenario.iat[122, 7],
-            "ref_stat": input_scenario.iat[123, 7],
-        },
-        "cadaver": {
-            "intercept": input_scenario.iat[120, 6],
-            "time_in_system": input_scenario.iat[121, 6],
-            "age": input_scenario.iat[122, 6],
-            "ref_stat": input_scenario.iat[123, 6],
-        },
     }
 
     return config_from_excel

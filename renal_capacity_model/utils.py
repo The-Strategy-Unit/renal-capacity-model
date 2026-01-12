@@ -2,17 +2,6 @@ import logging
 from pathlib import Path
 
 time_to_event_filenames = [
-    "ttd_cadTx",
-    "ttd_cadTx_initialisation",
-    "ttd_hhd",
-    "ttd_hhd_initialisation",
-    "ttd_ichd",
-    "ttd_ichd_initialisation",
-    "ttd_initialisation",
-    "ttd_liveTx",
-    "ttd_liveTx_initialisation",
-    "ttd_pd",
-    "ttd_pd_initialisation",
     "ttgf_cadTx",
     "ttgf_cadTx_initialisation",
     "ttgf_liveTx",
@@ -23,8 +12,6 @@ time_to_event_filenames = [
     "ttma_ichd_initialisation",
     "ttma_pd",
     "ttma_pd_initialisation",
-    "tw_cadTx_England",
-    "tw_liveTx_England",
 ]
 
 
