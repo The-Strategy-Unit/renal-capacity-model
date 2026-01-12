@@ -570,7 +570,7 @@ class Model:
         ):
             # Patient is not suitable for transplant and so starts dialysis only pathway
             patient.transplant_suitable = False
-            if patient.time_until_death is None:
+            if patient.time_until_death == 0:
                 patient.time_until_death = min(
                     self.config.ttd_krt["incidence"]["not_listed"][
                         patient.referral_type
@@ -599,7 +599,7 @@ class Model:
                 > self.config.receives_transplant_dist["inc"][patient.age_group]
             ):
                 # Although suitable for transplant, patient does not receive a transplant in the simulation period
-                if patient.time_until_death is None:
+                if patient.time_until_death == 0:
                     patient.time_until_death = min(
                         self.config.ttd_krt["incidence"]["listed"][
                             patient.referral_type
@@ -624,7 +624,7 @@ class Model:
                 yield self.env.timeout(0)
             else:
                 # Patient may receive a transplant in the simulation period
-                if patient.time_until_death is None:
+                if patient.time_until_death == 0:
                     patient.time_until_death = min(
                         self.config.ttd_krt["incidence"]["received_Tx"][
                             patient.referral_type
