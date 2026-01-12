@@ -64,6 +64,7 @@ class Config:
         # routing distributions
         self.con_care_dist = config_dict["con_care_dist"]
         self.suitable_for_transplant_dist = config_dict["suitable_for_transplant_dist"]
+        self.receives_transplant_dist = config_dict["receives_transplant_dist"]
         self.transplant_type_dist = config_dict["transplant_type_dist"]
         self.modality_allocation_distributions = config_dict[
             "modality_allocation_distributions"

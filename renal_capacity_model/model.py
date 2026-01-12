@@ -117,14 +117,11 @@ class Model:
             p.dialysis_modality = "ichd"
             if (
                 self.rng.uniform(0, 1)
-                > self.config.suitable_for_transplant_dist[p.age_group]
+                > self.config.suitable_for_transplant_dist["prev"][p.age_group]
             ):
+                ## they aren't suitable for transplant
                 p.transplant_suitable = False
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
                 p.time_until_death = min(
-                    # self.config.time_to_event_curves[f"ttd_prev_not_listed"].loc[
-                    #    random_number, p.patient_type
-                    # ]
                     self.config.ttd_krt["initialisation"]["not_listed"][
                         p.referral_type
                     ][p.age_group][1]
@@ -142,43 +139,63 @@ class Model:
                         f"Patient {p.id} of age group {p.age_group} is in ICHD dialysis at time {self.env.now}."
                     )
             else:
-                p.transplant_suitable = True
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
-                p.time_until_death = min(
-                    # self.config.time_to_event_curves[f"ttd_prev_listed"].loc[
-                    #    random_number, p.patient_type
-                    # ]
-                    self.config.ttd_krt["initialisation"]["listed"][p.referral_type][
-                        p.age_group
-                    ][1]
-                    * self.rng.weibull(
-                        a=self.config.ttd_krt["initialisation"]["listed"][
-                            p.referral_type
-                        ][p.age_group][0],
-                        size=None,
-                    )
-                    * self.config.multipliers["ttd"]["prev"],
-                    self.config.sim_duration + 1,
-                )
-                p.time_enters_waiting_list = self.env.now
-                if self.config.trace:
-                    print(
-                        f"Patient {p.id} of age group {p.age_group} is in ICHD dialysis whilst waiting for transplant at time {self.env.now}."
-                    )
+                # they are suitable for transplant
                 if (
                     self.rng.uniform(0, 1)
-                    < self.config.transplant_type_dist[p.age_group]
+                    > self.config.receives_transplant_dist["prev"][p.age_group]
                 ):
-                    p.transplant_type = "live"
-                    random_number = truncate_2dp(self.rng.uniform(0, 1))
+                    # they don't receive a transplant in the simulation period
+                    p.transplant_suitable = True
+                    p.time_on_waiting_list = (
+                        self.config.sim_duration + 1
+                    )  # they're listed but don't receive a transplant in the simulation period
+                    p.time_until_death = min(
+                        self.config.ttd_krt["initialisation"]["listed"][
+                            p.referral_type
+                        ][p.age_group][1]
+                        * self.rng.weibull(
+                            a=self.config.ttd_krt["initialisation"]["listed"][
+                                p.referral_type
+                            ][p.age_group][0],
+                            size=None,
+                        )
+                        * self.config.multipliers["ttd"]["prev"],
+                        self.config.sim_duration + 1,
+                    )
+                    p.time_enters_waiting_list = self.env.now
+                    if self.config.trace:
+                        print(
+                            f"Patient {p.id} of age group {p.age_group} is in ICHD dialysis whilst waiting for transplant at time {self.env.now}."
+                        )
+
+                else:
+                    # they do receive a transplant in the simulation period
+                    p.transplant_suitable = True
+                    p.time_until_death = min(
+                        self.config.ttd_krt["initialisation"]["received_Tx"][
+                            p.referral_type
+                        ][p.age_group][1]
+                        * self.rng.weibull(
+                            a=self.config.ttd_krt["initialisation"]["received_Tx"][
+                                p.referral_type
+                            ][p.age_group][0],
+                            size=None,
+                        )
+                        * self.config.multipliers["ttd"]["prev"],
+                        self.config.sim_duration + 1,
+                    )
+                    p.time_enters_waiting_list = self.env.now
+                    if self.config.trace:
+                        print(
+                            f"Patient {p.id} of age group {p.age_group} is in ICHD dialysis whilst waiting for transplant at time {self.env.now}."
+                        )
                     if (
-                        random_number
-                        < self.config.tw_liveTx_initialisation[p.age_group][2]
+                        self.rng.uniform(0, 1)
+                        < self.config.transplant_type_dist["prev"][p.age_group]
                     ):
+                        # it's a live transplant, but not pre-emptive as they're already on dialysis
+                        p.transplant_type = "live"
                         p.time_on_waiting_list = (
-                            # self.config.time_to_event_curves["tw_liveTx_England"].loc[
-                            #    random_number, p.patient_type
-                            # ]
                             self.config.tw_liveTx_initialisation[p.age_group][1]
                             * self.rng.weibull(
                                 a=self.config.tw_liveTx_initialisation[p.age_group][0],
@@ -187,16 +204,7 @@ class Model:
                             * self.config.multipliers["tw"]["prev"]["live"]
                         )
                     else:
-                        p.time_on_waiting_list = (
-                            self.config.sim_duration * 10
-                        )  # they don't have a transplant in the simulation period
-                else:
-                    p.transplant_type = "cadaver"
-                    random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    if (
-                        random_number
-                        < self.config.tw_cadTx_initialisation[p.age_group][2]
-                    ):
+                        p.transplant_type = "cadaver"
                         p.time_on_waiting_list = (
                             self.config.tw_cadTx_initialisation[p.age_group][1]
                             * self.rng.weibull(
@@ -205,24 +213,17 @@ class Model:
                             )
                             * self.config.multipliers["tw"]["prev"]["cadaver"]
                         )
-                    else:
-                        p.time_on_waiting_list = (
-                            self.config.sim_duration * 10
-                        )  # they don't have a transplant in the simulation period
                 p.pre_emptive_transplant = False
             self.env.process(self.start_dialysis_modality(p))
         elif location == "hhd":
             p.dialysis_modality = "hhd"
             if (
                 self.rng.uniform(0, 1)
-                > self.config.suitable_for_transplant_dist[p.age_group]
+                > self.config.suitable_for_transplant_dist["prev"][p.age_group]
             ):
+                ## they aren't suitable for transplant
                 p.transplant_suitable = False
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
                 p.time_until_death = min(
-                    # self.config.time_to_event_curves[f"ttd_prev_not_listed"].loc[
-                    #    random_number, p.patient_type
-                    # ]
                     self.config.ttd_krt["initialisation"]["not_listed"][
                         p.referral_type
                     ][p.age_group][1]
@@ -240,77 +241,90 @@ class Model:
                         f"Patient {p.id} of age group {p.age_group} is in HHD dialysis at time {self.env.now}."
                     )
             else:
-                p.transplant_suitable = True
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
-                p.time_until_death = min(
-                    # self.config.time_to_event_curves[f"ttd_prev_listed"].loc[
-                    #    random_number, p.patient_type
-                    # ]
-                    self.config.ttd_krt["initialisation"]["listed"][p.referral_type][
-                        p.age_group
-                    ][1]
-                    * self.rng.weibull(
-                        a=self.config.ttd_krt["initialisation"]["listed"][
-                            p.referral_type
-                        ][p.age_group][0],
-                        size=None,
-                    )
-                    * self.config.multipliers["ttd"]["prev"],
-                    self.config.sim_duration + 1,
-                )
-                p.time_enters_waiting_list = self.env.now
-                if self.config.trace:
-                    print(
-                        f"Patient {p.id} of age group {p.age_group} is in HHD dialysis whilst waiting for transplant at time {self.env.now}."
-                    )
+                # they are suitable for transplant
                 if (
                     self.rng.uniform(0, 1)
-                    < self.config.transplant_type_dist[p.age_group]
+                    > self.config.receives_transplant_dist["prev"][p.age_group]
                 ):
-                    p.transplant_type = "live"
-                    random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    if random_number < self.config.tw_liveTx_initialisation[p.age_group][2]:
-                        #p.time_on_waiting_list = self.config.time_to_event_curves[
-                        #    "tw_liveTx_England"
-                        #].loc[random_number, p.patient_type]
-                        p.time_on_waiting_list = self.config.tw_liveTx_initialisation[p.age_group][1]
+                    # they don't receive a transplant in the simulation period
+                    p.transplant_suitable = True
+                    p.time_on_waiting_list = (
+                        self.config.sim_duration + 1
+                    )  # they're listed but don't receive a transplant in the simulation period
+                    p.time_until_death = min(
+                        self.config.ttd_krt["initialisation"]["listed"][
+                            p.referral_type
+                        ][p.age_group][1]
+                        * self.rng.weibull(
+                            a=self.config.ttd_krt["initialisation"]["listed"][
+                                p.referral_type
+                            ][p.age_group][0],
+                            size=None,
+                        )
+                        * self.config.multipliers["ttd"]["prev"],
+                        self.config.sim_duration + 1,
+                    )
+                    p.time_enters_waiting_list = self.env.now
+                    if self.config.trace:
+                        print(
+                            f"Patient {p.id} of age group {p.age_group} is in HHD dialysis whilst waiting for transplant at time {self.env.now}."
+                        )
+                else:
+                    # they do receive a transplant in the simulation period
+                    p.transplant_suitable = True
+                    p.time_until_death = min(
+                        self.config.ttd_krt["initialisation"]["received_Tx"][
+                            p.referral_type
+                        ][p.age_group][1]
+                        * self.rng.weibull(
+                            a=self.config.ttd_krt["initialisation"]["received_Tx"][
+                                p.referral_type
+                            ][p.age_group][0],
+                            size=None,
+                        )
+                        * self.config.multipliers["ttd"]["prev"],
+                        self.config.sim_duration + 1,
+                    )
+                    p.time_enters_waiting_list = self.env.now
+                    if self.config.trace:
+                        print(
+                            f"Patient {p.id} of age group {p.age_group} is in HHD dialysis whilst waiting for transplant at time {self.env.now}."
+                        )
+                    if (
+                        self.rng.uniform(0, 1)
+                        < self.config.transplant_type_dist["prev"][p.age_group]
+                    ):
+                        # it's a live transplant, but not pre-emptive as they're already on dialysis
+                        p.transplant_type = "live"
+                        p.time_on_waiting_list = (
+                            self.config.tw_liveTx_initialisation[p.age_group][1]
                             * self.rng.weibull(
                                 a=self.config.tw_liveTx_initialisation[p.age_group][0],
                                 size=None,
-                            ) * self.config.multipliers["tw"]["prev"]["live"]
+                            )
+                            * self.config.multipliers["tw"]["prev"]["live"]
+                        )
                     else:
+                        p.transplant_type = "cadaver"
                         p.time_on_waiting_list = (
-                            self.config.sim_duration * 10
-                        )  # they don't have a transplant in the simulation period
-                else:
-                    p.transplant_type = "cadaver"
-                    random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    if random_number < self.config.tw_cadTx_initialisation[p.age_group][2]:
-                        #p.time_on_waiting_list = self.config.time_to_event_curves[
-                        #    "tw_cadTx_England"
-                        #].loc[random_number, p.patient_type]
-                        p.time_on_waiting_list = self.config.tw_cadTx_initialisation[p.age_group][1]
-                            * self.rng.weibull(a=self.config.tw_cadTx_initialisation[p.age_group][0],
+                            self.config.tw_cadTx_initialisation[p.age_group][1]
+                            * self.rng.weibull(
+                                a=self.config.tw_cadTx_initialisation[p.age_group][0],
                                 size=None,
-                            ) * self.config.multipliers["tw"]["prev"]["cadaver"]
-                    else:
-                        p.time_on_waiting_list = (
-                            self.config.sim_duration * 10
-                        )  # they don't have a transplant in the simulation period
+                            )
+                            * self.config.multipliers["tw"]["prev"]["cadaver"]
+                        )
                 p.pre_emptive_transplant = False
             self.env.process(self.start_dialysis_modality(p))
         elif location == "pd":
             p.dialysis_modality = "pd"
             if (
                 self.rng.uniform(0, 1)
-                > self.config.suitable_for_transplant_dist[p.age_group]
+                > self.config.suitable_for_transplant_dist["prev"][p.age_group]
             ):
+                ## they aren't suitable for transplant
                 p.transplant_suitable = False
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
                 p.time_until_death = min(
-                    # self.config.time_to_event_curves[f"ttd_prev_not_listed"].loc[
-                    #    random_number, p.patient_type
-                    # ]
                     self.config.ttd_krt["initialisation"]["not_listed"][
                         p.referral_type
                     ][p.age_group][1]
@@ -328,89 +342,99 @@ class Model:
                         f"Patient {p.id} of age group {p.age_group} is in PD dialysis at time {self.env.now}."
                     )
             else:
-                p.transplant_suitable = True
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
-                p.time_until_death = min(
-                    # self.config.time_to_event_curves[f"ttd_prev_listed"].loc[
-                    #    random_number, p.patient_type
-                    # ]
-                    self.config.ttd_krt["initialisation"]["listed"][p.referral_type][
-                        p.age_group
-                    ][1]
-                    * self.rng.weibull(
-                        a=self.config.ttd_krt["initialisation"]["listed"][
-                            p.referral_type
-                        ][p.age_group][0],
-                        size=None,
-                    )
-                    * self.config.multipliers["ttd"]["prev"],
-                    self.config.sim_duration + 1,
-                )
-                p.time_enters_waiting_list = self.env.now
-                if self.config.trace:
-                    print(
-                        f"Patient {p.id} of age group {p.age_group} is in PD dialysis whilst waiting for transplant at time {self.env.now}."
-                    )
+                # they are suitable for transplant
                 if (
                     self.rng.uniform(0, 1)
-                    < self.config.transplant_type_dist[p.age_group]
+                    > self.config.receives_transplant_dist["prev"][p.age_group]
                 ):
-                    p.transplant_type = "live"
-                    random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    if random_number < self.config.tw_liveTx_initialisation[p.age_group][2]:
-                        #p.time_on_waiting_list = self.config.time_to_event_curves[
-                        #    "tw_liveTx_England"
-                        #].loc[random_number, p.patient_type]
-                        p.time_on_waiting_list = self.config.tw_liveTx_initialisation[p.age_group][1]
+                    # they don't receive a transplant in the simulation period
+                    p.transplant_suitable = True
+                    p.time_on_waiting_list = (
+                        self.config.sim_duration + 1
+                    )  # they're listed but don't receive a transplant in the simulation period
+                    p.time_until_death = min(
+                        self.config.ttd_krt["initialisation"]["listed"][
+                            p.referral_type
+                        ][p.age_group][1]
+                        * self.rng.weibull(
+                            a=self.config.ttd_krt["initialisation"]["listed"][
+                                p.referral_type
+                            ][p.age_group][0],
+                            size=None,
+                        )
+                        * self.config.multipliers["ttd"]["prev"],
+                        self.config.sim_duration + 1,
+                    )
+                    p.time_enters_waiting_list = self.env.now
+                    if self.config.trace:
+                        print(
+                            f"Patient {p.id} of age group {p.age_group} is in PD dialysis whilst waiting for transplant at time {self.env.now}."
+                        )
+                else:
+                    # they do receive a transplant in the simulation period
+                    p.transplant_suitable = True
+                    p.time_until_death = min(
+                        self.config.ttd_krt["initialisation"]["received_Tx"][
+                            p.referral_type
+                        ][p.age_group][1]
+                        * self.rng.weibull(
+                            a=self.config.ttd_krt["initialisation"]["received_Tx"][
+                                p.referral_type
+                            ][p.age_group][0],
+                            size=None,
+                        )
+                        * self.config.multipliers["ttd"]["prev"],
+                        self.config.sim_duration + 1,
+                    )
+                    p.time_enters_waiting_list = self.env.now
+                    if self.config.trace:
+                        print(
+                            f"Patient {p.id} of age group {p.age_group} is in PD dialysis whilst waiting for transplant at time {self.env.now}."
+                        )
+                    if (
+                        self.rng.uniform(0, 1)
+                        < self.config.transplant_type_dist["prev"][p.age_group]
+                    ):
+                        # it's a live transplant, but not pre-emptive as they're already on dialysis
+                        p.transplant_type = "live"
+                        p.time_on_waiting_list = (
+                            self.config.tw_liveTx_initialisation[p.age_group][1]
                             * self.rng.weibull(
                                 a=self.config.tw_liveTx_initialisation[p.age_group][0],
                                 size=None,
-                            ) * self.config.multipliers["tw"]["prev"]["live"]
+                            )
+                            * self.config.multipliers["tw"]["prev"]["live"]
+                        )
                     else:
+                        p.transplant_type = "cadaver"
                         p.time_on_waiting_list = (
-                            self.config.sim_duration * 10
-                        )  # they don't have a transplant in the simulation period
-                else:
-                    p.transplant_type = "cadaver"
-                    random_number = truncate_2dp(self.rng.uniform(0, 1))
-                    if random_number < self.config.tw_cadTx_initialisation[p.age_group][2]:
-                        #p.time_on_waiting_list = self.config.time_to_event_curves[
-                        #    "tw_cadTx_England"
-                        #].loc[random_number, p.patient_type]
-                        p.time_on_waiting_list = self.config.tw_cadTx_initialisation[p.age_group][1]
+                            self.config.tw_cadTx_initialisation[p.age_group][1]
                             * self.rng.weibull(
                                 a=self.config.tw_cadTx_initialisation[p.age_group][0],
                                 size=None,
-                            ) * self.config.multipliers["tw"]["prev"]["cadaver"]
-                    else:
-                        p.time_on_waiting_list = (
-                            self.config.sim_duration * 10
-                        )  # they don't have a transplant in the simulation period
+                            )
+                            * self.config.multipliers["tw"]["prev"]["cadaver"]
+                        )
                 p.pre_emptive_transplant = False
             self.env.process(self.start_dialysis_modality(p))
         elif location == "live_transplant":
             p.transplant_suitable = True
-            random_number = truncate_2dp(self.rng.uniform(0, 1))
             p.time_until_death = min(
-                self.config.ttd_krt["initialisation"]["listed"][p.referral_type][
+                self.config.ttd_krt["initialisation"]["received_Tx"][p.referral_type][
                     p.age_group
                 ][1]
                 * self.rng.weibull(
-                    a=self.config.ttd_krt["initialisation"]["listed"][p.referral_type][
-                        p.age_group
-                    ][0],
+                    a=self.config.ttd_krt["initialisation"]["received_Tx"][
+                        p.referral_type
+                    ][p.age_group][0],
                     size=None,
                 )
                 * self.config.multipliers["ttd"]["prev"],
                 self.config.sim_duration + 1,
             )
-            # self.config.time_to_event_curves[
-            #   f"ttd_prev_listed"
-            # ].loc[random_number, p.patient_type]
             p.pre_emptive_transplant = None  # Unknown for prevalent patients
             p.time_of_transplant = self.env.now
             p.transplant_type = "live"
-
             if self.config.trace:
                 print(
                     f"Patient {p.id} of age group {p.age_group} is living with live donor transplant at time {self.env.now}."
@@ -418,27 +442,22 @@ class Model:
             self.env.process(self.start_transplant(p))
         elif location == "cadaver_transplant":
             p.transplant_suitable = True
-            random_number = truncate_2dp(self.rng.uniform(0, 1))
             p.time_until_death = min(
-                self.config.ttd_krt["initialisation"]["listed"][p.referral_type][
+                self.config.ttd_krt["initialisation"]["received_Tx"][p.referral_type][
                     p.age_group
                 ][1]
                 * self.rng.weibull(
-                    a=self.config.ttd_krt["initialisation"]["listed"][p.referral_type][
-                        p.age_group
-                    ][0],
+                    a=self.config.ttd_krt["initialisation"]["received_Tx"][
+                        p.referral_type
+                    ][p.age_group][0],
                     size=None,
                 )
                 * self.config.multipliers["ttd"]["prev"],
                 self.config.sim_duration + 1,
             )
-            # self.config.time_to_event_curves[
-            #    f"ttd_prev_listed"
-            # ].loc[random_number, p.patient_type]
             p.pre_emptive_transplant = None  # Unknown for prevalent patients
             p.time_of_transplant = self.env.now
             p.transplant_type = "cadaver"
-
             if self.config.trace:
                 print(
                     f"Patient {p.id} of age group {p.age_group} is living with cadaver donor transplant at time {self.env.now}."
@@ -548,12 +567,11 @@ class Model:
         year = calculate_lookup_year(self.env.now)
         if (
             self.rng.uniform(0, 1)
-            > self.config.suitable_for_transplant_dist[patient.age_group]
+            > self.config.suitable_for_transplant_dist["inc"][patient.age_group]
         ):
             # Patient is not suitable for transplant and so starts dialysis only pathway
             patient.transplant_suitable = False
             if patient.time_until_death is None:
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
                 patient.time_until_death = min(
                     self.config.ttd_krt["incidence"]["not_listed"][
                         patient.referral_type
@@ -566,9 +584,6 @@ class Model:
                     )
                     * self.config.multipliers["ttd"]["inc"],
                     self.config.sim_duration + 1,
-                    # self.config.time_to_event_curves[f"ttd_inc_not_listed"].loc[
-                    #    random_number, patient.patient_type
-                    # ]
                 )
 
             if self.config.trace:
@@ -581,90 +596,109 @@ class Model:
         else:
             # Patient is suitable for transplant and so we need to decide if they start pre-emptive transplant or dialysis whilst waiting for transplant
             patient.transplant_suitable = True
-            if patient.time_until_death is None:
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
-                patient.time_until_death = min(
-                    self.config.ttd_krt["incidence"]["listed"][patient.referral_type][
-                        patient.age_group
-                    ][1]
-                    * self.rng.weibull(
-                        a=self.config.ttd_krt["incidence"]["listed"][
-                            patient.referral_type
-                        ][patient.age_group][0],
-                        size=None,
-                    )
-                    * self.config.multipliers["ttd"]["inc"],
-                    self.config.sim_duration + 1,
-                    # self.config.time_to_event_curves[f"ttd_inc_listed"].loc[
-                    #    random_number, patient.patient_type
-                    # ]
-                )
-            # We first assign a transplant type: live or cadaver as this impacts the probability of starting pre-emptive transplant
             if (
                 self.rng.uniform(0, 1)
-                < self.config.transplant_type_dist[patient.age_group]
+                > self.config.receives_transplant_dist["inc"][patient.age_group]
             ):
-                patient.transplant_type = "live"
+                # Although suitable for transplant, patient does not receive a transplant in the simulation period
+                if patient.time_until_death is None:
+                    patient.time_until_death = min(
+                        self.config.ttd_krt["incidence"]["listed"][
+                            patient.referral_type
+                        ][patient.age_group][1]
+                        * self.rng.weibull(
+                            a=self.config.ttd_krt["incidence"]["listed"][
+                                patient.referral_type
+                            ][patient.age_group][0],
+                            size=None,
+                        )
+                        * self.config.multipliers["ttd"]["inc"],
+                        self.config.sim_duration + 1,
+                    )
+                patient.time_on_waiting_list = (
+                    self.config.sim_duration + 1
+                )  # they're listed but don't receive a transplant in the simulation period
             else:
-                patient.transplant_type = "cadaver"
+                # Patient may receive a transplant in the simulation period
+                if patient.time_until_death is None:
+                    patient.time_until_death = min(
+                        self.config.ttd_krt["incidence"]["received_Tx"][
+                            patient.referral_type
+                        ][patient.age_group][1]
+                        * self.rng.weibull(
+                            a=self.config.ttd_krt["incidence"]["received_Tx"][
+                                patient.referral_type
+                            ][patient.age_group][0],
+                            size=None,
+                        )
+                        * self.config.multipliers["ttd"]["inc"],
+                        self.config.sim_duration + 1,
+                    )
 
-            if patient.transplant_type == "live":
+                # We now assign a transplant type: live or cadaver as this impacts the probability of starting pre-emptive transplant
                 if (
                     self.rng.uniform(0, 1)
-                    < self.config.pre_emptive_transplant_live_donor_dist[year][
-                        patient.referral_type
-                    ]
+                    < self.config.transplant_type_dist["inc"][patient.age_group]
                 ):
-                    # Patient starts pre-emptive transplant
-
-                    patient.pre_emptive_transplant = True
-                    patient.time_enters_waiting_list = self.env.now
-                    if self.config.trace:
-                        print(
-                            f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with live donor at time {self.env.now}."
-                        )
-                    self.env.process(self.start_transplant(patient))
+                    patient.transplant_type = "live"
                 else:
-                    # Patient starts dialysis whilst waiting for transplant
+                    patient.transplant_type = "cadaver"
 
-                    patient.pre_emptive_transplant = False
-                    patient.time_enters_waiting_list = self.env.now
-                    if self.config.trace:
-                        print(
-                            f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with live donor at time {self.env.now}."
+                if patient.transplant_type == "live":
+                    if (
+                        self.rng.uniform(0, 1)
+                        < self.config.pre_emptive_transplant_live_donor_dist[year][
+                            patient.referral_type
+                        ]
+                    ):
+                        # Patient starts pre-emptive transplant
+                        patient.pre_emptive_transplant = True
+                        patient.time_enters_waiting_list = self.env.now
+                        if self.config.trace:
+                            print(
+                                f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with live donor at time {self.env.now}."
+                            )
+                        self.env.process(self.start_transplant(patient))
+                    else:
+                        # Patient starts dialysis whilst waiting for transplant
+                        patient.pre_emptive_transplant = False
+                        patient.time_enters_waiting_list = self.env.now
+                        if self.config.trace:
+                            print(
+                                f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with live donor at time {self.env.now}."
+                            )
+                        self.env.process(
+                            self.start_dialysis_whilst_waiting_for_transplant(patient)
                         )
-                    self.env.process(
-                        self.start_dialysis_whilst_waiting_for_transplant(patient)
-                    )
-            else:  # cadaver
-                if (
-                    self.rng.uniform(0, 1)
-                    < self.config.pre_emptive_transplant_cadaver_donor_dist[year][
-                        patient.referral_type
-                    ]
-                ):
-                    # Patient starts pre-emptive transplant
+                else:  # cadaver
+                    if (
+                        self.rng.uniform(0, 1)
+                        < self.config.pre_emptive_transplant_cadaver_donor_dist[year][
+                            patient.referral_type
+                        ]
+                    ):
+                        # Patient starts pre-emptive transplant
 
-                    patient.pre_emptive_transplant = True
-                    patient.time_enters_waiting_list = self.env.now
-                    if self.config.trace:
-                        print(
-                            f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with cadaver donor at time {self.env.now}."
+                        patient.pre_emptive_transplant = True
+                        patient.time_enters_waiting_list = self.env.now
+                        if self.config.trace:
+                            print(
+                                f"Patient {patient.id} of age group {patient.age_group} started pre-emptive transplant pathway with cadaver donor at time {self.env.now}."
+                            )
+                        self.env.process(self.start_transplant(patient))
+
+                    else:
+                        # Patient starts dialysis whilst waiting for transplant
+                        patient.pre_emptive_transplant = False
+                        patient.time_enters_waiting_list = self.env.now
+
+                        if self.config.trace:
+                            print(
+                                f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with cadaver donor at time {self.env.now}."
+                            )
+                        self.env.process(
+                            self.start_dialysis_whilst_waiting_for_transplant(patient)
                         )
-                    self.env.process(self.start_transplant(patient))
-
-                else:
-                    # Patient starts dialysis whilst waiting for transplant
-                    patient.pre_emptive_transplant = False
-                    patient.time_enters_waiting_list = self.env.now
-
-                    if self.config.trace:
-                        print(
-                            f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with cadaver donor at time {self.env.now}."
-                        )
-                    self.env.process(
-                        self.start_dialysis_whilst_waiting_for_transplant(patient)
-                    )
 
     def start_dialysis_modality_allocation(self, patient: Patient) -> Generator:
         """Function containing the logic for the dialysis pathway
@@ -893,33 +927,7 @@ class Model:
         """
 
         # If they're coming down this pathway then they're listed i.e. pre-emptive = FALSE
-
-        # Let's generate a time on the waiting list
-        # We'll use this within the starts_dialysis function to work out how long they stay in dialysis before Tx
-        if patient.transplant_type == "live":
-            random_number = truncate_2dp(self.rng.uniform(0, 1))
-            #patient.time_on_waiting_list = self.config.time_to_event_curves[
-            #    "tw_liveTx_England"
-            #].loc[random_number, patient.patient_type]
-            patient.time_on_waiting_list = (
-                self.config.tw_liveTx[p.age_group][1]
-                * self.rng.weibull(
-                a=self.config.tw_liveTx[p.age_group][0],
-                    size=None,
-                            )
-                * self.config.multipliers["tw"]["inc"]["live"]
-        else:  # cadaver
-            #random_number = truncate_2dp(self.rng.uniform(0, 1)) 
-            patient.time_on_waiting_list = (
-                self.config.tw_cadTx[p.age_group][1]
-                * self.rng.weibull(
-                a=self.config.tw_cadTx[p.age_group][0],
-                    size=None,
-                            )
-                * self.config.multipliers["tw"]["inc"]["cadaver"]
-            #self.config.time_to_event_curves[
-            #    "tw_cadTx_England"
-            #].loc[random_number, patient.patient_type]
+        # AND they have a time on waiting list assigned
 
         ## if this isn't their first Tx then we also need to simulate the time they wait before starting dialysis
         if patient.transplant_count > 0:

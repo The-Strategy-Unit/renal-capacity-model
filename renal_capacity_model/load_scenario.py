@@ -354,20 +354,58 @@ def load_scenario_from_excel(
     }
 
     config_from_excel["suitable_for_transplant_dist"] = {
-        1: input_scenario.iat[47, 1],
-        2: input_scenario.iat[48, 1],
-        3: input_scenario.iat[49, 1],
-        4: input_scenario.iat[50, 1],
-        5: input_scenario.iat[51, 1],
-        6: input_scenario.iat[52, 1],
+        "inc": {
+            1: input_scenario.iat[47, 1],
+            2: input_scenario.iat[48, 1],
+            3: input_scenario.iat[49, 1],
+            4: input_scenario.iat[50, 1],
+            5: input_scenario.iat[51, 1],
+            6: input_scenario.iat[52, 1],
+        },
+        "prev": {
+            1: input_scenario.iat[47, 2],
+            2: input_scenario.iat[48, 2],
+            3: input_scenario.iat[49, 2],
+            4: input_scenario.iat[50, 2],
+            5: input_scenario.iat[51, 2],
+            6: input_scenario.iat[52, 2],
+        },
+    }
+    config_from_excel["receives_transplant_dist"] = {
+        "inc": {
+            1: input_scenario.iat[47, 5],
+            2: input_scenario.iat[48, 5],
+            3: input_scenario.iat[49, 5],
+            4: input_scenario.iat[50, 5],
+            5: input_scenario.iat[51, 5],
+            6: input_scenario.iat[52, 5],
+        },
+        "prev": {
+            1: input_scenario.iat[47, 6],
+            2: input_scenario.iat[48, 6],
+            3: input_scenario.iat[49, 6],
+            4: input_scenario.iat[50, 6],
+            5: input_scenario.iat[51, 6],
+            6: input_scenario.iat[52, 6],
+        },
     }
     config_from_excel["transplant_type_dist"] = {
-        1: input_scenario.iat[95, 1],
-        2: input_scenario.iat[96, 1],
-        3: input_scenario.iat[97, 1],
-        4: input_scenario.iat[98, 1],
-        5: input_scenario.iat[99, 1],
-        6: input_scenario.iat[100, 1],
+        "inc": {
+            1: input_scenario.iat[95, 1],
+            2: input_scenario.iat[96, 1],
+            3: input_scenario.iat[97, 1],
+            4: input_scenario.iat[98, 1],
+            5: input_scenario.iat[99, 1],
+            6: input_scenario.iat[100, 1],
+        },
+        "prev": {
+            1: input_scenario.iat[95, 2],
+            2: input_scenario.iat[96, 2],
+            3: input_scenario.iat[97, 2],
+            4: input_scenario.iat[98, 2],
+            5: input_scenario.iat[99, 2],
+            6: input_scenario.iat[100, 2],
+        },
     }
     config_from_excel["modality_allocation_distributions"] = {
         1: {  # year
