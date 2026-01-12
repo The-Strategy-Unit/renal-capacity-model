@@ -194,14 +194,14 @@ def copy_excel_files(path_to_file: str, run_start_time: str) -> str:
 def write_results_to_excel(
     path_to_results_excel_file: str,
     combined_df: pd.DataFrame,
-    yearly_activity_duration: pd.DataFrame,
+    costs_dfs: dict[str, pd.DataFrame],
 ):
     """Write combined model results from all model runs to Excel file
 
     Args:
         path_to_excel_file (str): Path to Excel file
         combined_df (pd.DataFrame): Dataframe of all model results combined and processed
-        yearly_activity_duration (pd.DataFrame): Dataframe of counts of activity for each year of
+        costs_dfs (pd.DataFrame): Dataframe of costs of activity for each year of
         model simulation, for each model run
     """
     with pd.ExcelWriter(
@@ -214,10 +214,33 @@ def write_results_to_excel(
             combined_df.loc[outcome].to_excel(
                 writer, sheet_name=outcome.replace("waiting_for_transplant", "wft")
             )
-        for activity in ["ichd", "hhd", "pd", "transplant"]:
-            yearly_activity_duration.pivot(
-                index="model_run", columns="year", values=activity
-            ).sort_index(axis=1).to_excel(writer, sheet_name=f"{activity}_yearly")
+        for activity, df in costs_dfs.items():
+            df.to_excel(writer, sheet_name=f"{activity}_yearly")
     logger.info(
         f"✅ 💾 Excel format model results written to: \n{path_to_results_excel_file}"
     )
+
+
+def convert_activity_to_costs(
+    yearly_activity_duration: pd.DataFrame, daily_costs: dict[str, float]
+) -> dict[str, pd.DataFrame]:
+    """Converts yearly activity duration dataframe into costs for each type of activity
+
+    Args:
+        yearly_activity_duration (pd.DataFrame): Dataframe with yearly activity durations
+        for each of the activity types
+        daily_costs (dict[str, float]): Daily costs dictionary, set in config
+
+    Returns:
+        dict[str, pd.DataFrame]: Dictionary where keys are treatment modality and
+        values are a DataFrame with the yearly costs for each across each of the model runs
+    """
+    costs_dfs = {}
+    for activity in ["ichd", "hhd", "pd", "transplant"]:
+        costs_dfs[activity] = (
+            yearly_activity_duration.pivot(
+                index="model_run", columns="year", values=activity
+            ).sort_index(axis=1)
+            * daily_costs[activity]
+        )
+    return costs_dfs

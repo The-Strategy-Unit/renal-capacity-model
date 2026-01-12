@@ -10,6 +10,7 @@ from renal_capacity_model.process_outputs import (
     create_results_folder,
     save_result_files,
     calculate_activity_duration_per_year,
+    convert_activity_to_costs,
 )
 import numpy as np
 from tqdm import tqdm
@@ -95,6 +96,9 @@ class Trial:
         self.df_trial_results = self.process_model_results(self.results_dfs)
         self.yearly_activity_duration = calculate_activity_duration_per_year(
             self.event_log_dfs
+        )
+        self.costs_dfs = convert_activity_to_costs(
+            self.yearly_activity_duration, self.config.daily_costs
         )
         logger.info("💾 Saving full trial results")
         self.save_trial_results(

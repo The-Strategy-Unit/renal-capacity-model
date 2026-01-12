@@ -250,7 +250,7 @@ national_config_dict = {
         "ichd": 62842 / 365,
         "hhd": 51122 / 365,
         "pd": 39391 / 365,
-        "living_with_transplant": 9005 / 365,
+        "transplant": 9005 / 365,
     },
 }
 
