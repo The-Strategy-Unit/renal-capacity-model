@@ -8,6 +8,95 @@ import shutil
 logger = get_logger(__name__)
 
 
+def split_activities_across_years(row: pd.DataFrame) -> pd.DataFrame:
+    """Splits activity durations to calulate how much of each activity happened in each year.
+    For example, if we have a model run with a single patient entering at time 0 and spending
+    465 days in ichd, we want the count of activity for ichd to be 365 in year 1 and 100 in year 2
+
+
+    Args:
+        row (pd.DataFrame): Row of the event log dataframe
+
+    Returns:
+        pd.DataFrame: Dataframe with total activity for each modality over the yeaers of the simulation
+    """
+    segments = []
+
+    start = row["time_starting_activity_from"]
+    end = row["end_time"]
+    modality = row["activity_from"]
+    start_year = int(row.loc["year_start"])
+    end_year = int(row.loc["year_end"])
+
+    for year in range(start_year, end_year + 1):
+        year_start = (year - 1) * 365
+        year_end = year * 365
+
+        overlap = max(0, min(end, year_end) - max(start, year_start))
+
+        if overlap > 0:
+            segments.append({"year": year, "activity": modality, "time_spent": overlap})
+
+    return pd.DataFrame(segments)
+
+
+def create_yearly_activity_duration(df: pd.DataFrame, model_run: int) -> pd.DataFrame:
+    """Table with the total yearly activity for each activity for a specific model run
+
+    Args:
+        df (pd.DataFrame): Event log dataframe
+        model_run (int): Which model run the event log is from
+
+    Returns:
+        pd.DataFrame: DataFrame with the total yearly activity for each treatment modality,
+        trimmed to 13 years only and with model_run column added.
+    """
+    df["activity_from"] = df["activity_from"].replace(
+        to_replace=["live", "cadaver"], value="transplant"
+    )  # We combine both transplant types for cost calculations
+    df["year_start"] = df["year_start"].replace(
+        0, 1
+    )  # Needed for split_activities_across_years to work properly
+    yearly_time = pd.DataFrame(
+        pd.concat(
+            df.apply(split_activities_across_years, axis=1).to_list(), ignore_index=True
+        )
+        .groupby(["year", "activity"], as_index=False)["time_spent"]
+        .sum()
+    )
+    yearly_time = yearly_time[
+        yearly_time["year"] < 14
+    ]  # Hard coding to 13 years of sim
+    yearly_pivot = (
+        yearly_time.pivot(index="year", columns="activity", values="time_spent")
+        .fillna(0)
+        .reset_index()
+    )
+    yearly_pivot["model_run"] = model_run
+    return yearly_pivot
+
+
+def calculate_activity_duration_per_year(
+    list_of_eventlogs: list[pd.DataFrame],
+) -> pd.DataFrame:
+    """Converts list of event logs from multiple model runs to a single dataframe
+    with counts of activity for each year of model simulation, for each model run
+
+    Args:
+        list_of_eventlogs (list[pd.DataFrame]): List of event log dataframes, each from a single model run
+
+    Returns:
+        pd.DataFrame: Single dataframe with counts of activity for each year of
+        model simulation, for each model run
+    """
+    event_logs_processed = [
+        create_yearly_activity_duration(event_log, model_run + 1)
+        for model_run, event_log in enumerate(list_of_eventlogs)
+    ]
+    yearly_activity_duration = pd.concat(event_logs_processed)
+    return yearly_activity_duration
+
+
 def create_results_folder(run_start_time: str) -> str:
     """Creates folder results/run_start_time to save results files to
 
@@ -105,12 +194,15 @@ def copy_excel_files(path_to_file: str, run_start_time: str) -> str:
 def write_results_to_excel(
     path_to_results_excel_file: str,
     combined_df: pd.DataFrame,
+    yearly_activity_duration: pd.DataFrame,
 ):
     """Write combined model results from all model runs to Excel file
 
     Args:
         path_to_excel_file (str): Path to Excel file
         combined_df (pd.DataFrame): Dataframe of all model results combined and processed
+        yearly_activity_duration (pd.DataFrame): Dataframe of counts of activity for each year of
+        model simulation, for each model run
     """
     with pd.ExcelWriter(
         path_to_results_excel_file,
@@ -122,6 +214,10 @@ def write_results_to_excel(
             combined_df.loc[outcome].to_excel(
                 writer, sheet_name=outcome.replace("waiting_for_transplant", "wft")
             )
+        for activity in ["ichd", "hhd", "pd", "transplant"]:
+            yearly_activity_duration.pivot(
+                index="model_run", columns="year", values=activity
+            ).sort_index(axis=1).to_excel(writer, sheet_name=f"{activity}_yearly")
     logger.info(
         f"✅ 💾 Excel format model results written to: \n{path_to_results_excel_file}"
     )

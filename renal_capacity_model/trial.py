@@ -9,6 +9,7 @@ from renal_capacity_model.utils import get_logger
 from renal_capacity_model.process_outputs import (
     create_results_folder,
     save_result_files,
+    calculate_activity_duration_per_year,
 )
 import numpy as np
 from tqdm import tqdm
@@ -29,7 +30,8 @@ class Trial:
         self.rng = np.random.default_rng(self.config.random_seed)
         self.df_trial_results: Optional[pd.DataFrame] = None
         self.results_dfs: list[pd.DataFrame] = []
-        self.activity_change_dfs = []
+        self.activity_change_dfs: list[pd.DataFrame] = []
+        self.event_log_dfs: list[pd.DataFrame] = []
         self.run_start_time = run_start_time
 
     def print_trial_results(self):
@@ -88,8 +90,12 @@ class Trial:
             model.run()
             self.activity_change_dfs.append(model.activity_change)
             self.results_dfs.append(model.results_df)
+            self.event_log_dfs.append(model.event_log)
         logger.info("✅🥳 Trial complete!")
         self.df_trial_results = self.process_model_results(self.results_dfs)
+        self.yearly_activity_duration = calculate_activity_duration_per_year(
+            self.event_log_dfs
+        )
         logger.info("💾 Saving full trial results")
         self.save_trial_results(
             self.process_eventlog_dfs(self.activity_change_dfs), "activity_change"
