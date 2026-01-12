@@ -25,7 +25,7 @@ class Patient:
         self.time_in_system = 0
         self.patient_type = patient_type
         self.start_time_in_system = start_time_in_system
-        self.time_until_death: float | None = None
+        self.time_until_death: float = 0.0
         self.patient_flag = patient_flag  # "incident" or "prevalent"
         self.age_group = int(
             patient_type.split("_")[0]
