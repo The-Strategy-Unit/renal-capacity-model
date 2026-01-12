@@ -246,6 +246,12 @@ national_config_dict = {
     "pre_emptive_transplant_cadaver_donor_dist": {
         y: {"early": 0.22, "late": 0.05} for y in range(1, 14)
     },
+    "daily_costs": {
+        "ichd": 62842 / 365,
+        "hhd": 51122 / 365,
+        "pd": 39391 / 365,
+        "living_with_transplant": 9005 / 365,
+    },
 }
 
 # Time to death: conservative care

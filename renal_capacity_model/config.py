@@ -88,4 +88,5 @@ class Config:
         self.time_to_event_curves = load_time_to_event_curves(
             path_to_time_to_event_curves
         )
+        self.daily_costs = config_dict["daily_costs"]
         logger.info("🔧 Config loaded successfully")
