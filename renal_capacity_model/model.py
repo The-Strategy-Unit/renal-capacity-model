@@ -167,7 +167,6 @@ class Model:
                         print(
                             f"Patient {p.id} of age group {p.age_group} is in ICHD dialysis whilst waiting for transplant at time {self.env.now}."
                         )
-
                 else:
                     # they do receive a transplant in the simulation period
                     p.transplant_suitable = True
@@ -592,7 +591,6 @@ class Model:
                 )
             self.env.process(self.start_dialysis_modality_allocation(patient))
             yield self.env.timeout(0)
-
         else:
             # Patient is suitable for transplant and so we need to decide if they start pre-emptive transplant or dialysis whilst waiting for transplant
             patient.transplant_suitable = True
@@ -618,6 +616,12 @@ class Model:
                 patient.time_on_waiting_list = (
                     self.config.sim_duration + 1
                 )  # they're listed but don't receive a transplant in the simulation period
+                if self.config.trace:
+                    print(
+                        f"Patient {patient.id} of age group {patient.age_group} starts dialysis pathway at time {self.env.now} whilst waiting for Tx."
+                    )
+                self.env.process(self.start_dialysis_modality_allocation(patient))
+                yield self.env.timeout(0)
             else:
                 # Patient may receive a transplant in the simulation period
                 if patient.time_until_death is None:
@@ -665,7 +669,7 @@ class Model:
                         patient.time_enters_waiting_list = self.env.now
                         if self.config.trace:
                             print(
-                                f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with live donor at time {self.env.now}."
+                                f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant at time {self.env.now}."
                             )
                         self.env.process(
                             self.start_dialysis_whilst_waiting_for_transplant(patient)
@@ -694,7 +698,7 @@ class Model:
 
                         if self.config.trace:
                             print(
-                                f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant pathway with cadaver donor at time {self.env.now}."
+                                f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant at time {self.env.now}."
                             )
                         self.env.process(
                             self.start_dialysis_whilst_waiting_for_transplant(patient)
