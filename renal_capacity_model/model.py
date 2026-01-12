@@ -780,9 +780,6 @@ class Model:
             if patient.patient_flag == "incident":
                 random_number = truncate_2dp(self.rng.uniform(0, 1))
                 sampled_time = min(
-                    # self.config.time_to_event_curves[f"ttd_inc_received_Tx"].loc[
-                    #    random_number, patient.patient_type
-                    # ]
                     self.config.ttd_krt["incidence"]["received_Tx"][
                         patient.referral_type
                     ][patient.age_group][1]
@@ -803,9 +800,6 @@ class Model:
             else:  # prevalent patient
                 random_number = truncate_2dp(self.rng.uniform(0, 1))
                 sampled_time = min(
-                    # self.config.time_to_event_curves[f"ttd_prev_received_Tx"].loc[
-                    #    random_number, patient.patient_type
-                    # ]
                     self.config.ttd_krt["initialisation"]["received_Tx"][
                         patient.referral_type
                     ][patient.age_group][1]

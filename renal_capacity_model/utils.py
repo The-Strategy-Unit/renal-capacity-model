@@ -12,16 +12,6 @@ time_to_event_filenames = [
     "ttma_ichd_initialisation",
     "ttma_pd",
     "ttma_pd_initialisation",
-    # "tw_cadTx_England",
-    # "tw_liveTx_England",
-    # "tw_cadTx_England_initialisation",
-    # "tw_liveTx_England_initialisation",
-    # "ttd_inc_listed",
-    # "ttd_inc_not_listed",
-    # "ttd_inc_received_Tx",
-    # "ttd_prev_listed",
-    # "ttd_prev_not_listed",
-    # "ttd_prev_received_Tx",
 ]
 
 

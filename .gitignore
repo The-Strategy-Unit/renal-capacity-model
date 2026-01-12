@@ -101,17 +101,6 @@ build/
 
 # Specifically allow time_to_event CSV files
 # These are confirmed to be safe to share
-!reference/survival_time_to_event_curves/ttd_cadTx_initialisation.csv
-!reference/survival_time_to_event_curves/ttd_cadTx.csv
-!reference/survival_time_to_event_curves/ttd_hhd_initialisation.csv
-!reference/survival_time_to_event_curves/ttd_hhd.csv
-!reference/survival_time_to_event_curves/ttd_ichd.csv
-!reference/survival_time_to_event_curves/ttd_ichd_initialisation.csv
-!reference/survival_time_to_event_curves/ttd_initialisation.csv
-!reference/survival_time_to_event_curves/ttd_liveTx_initialisation.csv
-!reference/survival_time_to_event_curves/ttd_liveTx.csv
-!reference/survival_time_to_event_curves/ttd_pd_initialisation.csv
-!reference/survival_time_to_event_curves/ttd_pd.csv
 !reference/survival_time_to_event_curves/ttgf_cadTx_initialisation.csv
 !reference/survival_time_to_event_curves/ttgf_cadTx.csv
 !reference/survival_time_to_event_curves/ttgf_liveTx_initialisation.csv
@@ -122,5 +111,3 @@ build/
 !reference/survival_time_to_event_curves/ttma_ichd.csv
 !reference/survival_time_to_event_curves/ttma_pd_initialisation.csv
 !reference/survival_time_to_event_curves/ttma_pd.csv
-!reference/survival_time_to_event_curves/tw_cadTx_England.csv
-!reference/survival_time_to_event_curves/tw_liveTx_England.csv
