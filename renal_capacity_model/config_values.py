@@ -10,6 +10,44 @@ from renal_capacity_model.helpers import check_time_to_event_curve_dfs
 logger = get_logger(__name__)
 
 national_config_dict = {
+    "multipliers": {
+        "ttd": {
+            "inc": 1,
+            "prev": 1,
+        },
+        "ttma": {
+            "inc": {
+                "ichd": 1,
+                "hhd": 1,
+                "pd": 1,
+            },
+            "prev": {
+                "ichd": 1,
+                "hhd": 1,
+                "pd": 1,
+            },
+        },
+        "ttgf": {
+            "inc": {
+                "live": 1,
+                "cadaver": 1,
+            },
+            "prev": {
+                "live": 1,
+                "cadaver": 1,
+            },
+        },
+        "tw": {
+            "inc": {
+                "live": 1,
+                "cadaver": 1,
+            },
+            "prev": {
+                "live": 1,
+                "cadaver": 1,
+            },
+        },
+    },
     "arrival_rate": {
         1: 23.42,
         2: 24.61,
@@ -207,25 +245,6 @@ national_config_dict = {
     },
     "pre_emptive_transplant_cadaver_donor_dist": {
         y: {"early": 0.22, "late": 0.05} for y in range(1, 14)
-    },
-    "multipliers": {
-        "ttd": {
-            "inc": 1.0,
-            "prev": 1.0,
-        },
-        "ttma": {
-            "ichd": 1.0,
-            "hhd": 1.0,
-            "pd": 1.0,
-        },
-        "ttgf": {
-            "live": 1.0,
-            "cadaver": 1.0,
-        },
-        "tw": {
-            "live": 1.0,
-            "cadaver": 1.0,
-        },
     },
 }
 
