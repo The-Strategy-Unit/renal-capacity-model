@@ -901,7 +901,7 @@ def load_scenario_from_excel(
         "ichd": input_scenario.iat[36, 1],
         "hhd": input_scenario.iat[37, 1],
         "pd": input_scenario.iat[38, 1],
-        "living_with_transplant": input_scenario.iat[39, 1],
+        "transplant": input_scenario.iat[39, 1],
     }
 
     return config_from_excel
