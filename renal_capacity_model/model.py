@@ -12,6 +12,7 @@ from renal_capacity_model.helpers import (
     process_event_log,
     calculate_model_results,
     truncate_2dp,
+    calculate_time_to_event,
 )
 from renal_capacity_model.process_outputs import (
     create_results_folder,
@@ -95,9 +96,11 @@ class Model:
                 print(
                     f"Patient {p.id} of age group {p.age_group} is in conservative care at time {self.env.now}."
                 )
-            sampled_con_care_time = self.config.ttd_con_care[
-                "scale"
-            ] * self.rng.weibull(a=self.config.ttd_con_care["shape"], size=None)
+            sampled_con_care_time = calculate_time_to_event(
+                self.rng,
+                scale=self.config.ttd_con_care["scale"],
+                shape=self.config.ttd_con_care["shape"],
+            )
             self._update_event_log(
                 p,
                 "conservative_care",
@@ -121,18 +124,15 @@ class Model:
             ):
                 ## they aren't suitable for transplant
                 p.transplant_suitable = False
-                p.time_until_death = min(
-                    self.config.ttd_krt["initialisation"]["not_listed"][
+                p.time_until_death = calculate_time_to_event(
+                    self.rng,
+                    scale=self.config.ttd_krt["initialisation"]["not_listed"][
                         p.referral_type
-                    ][p.age_group][1]
-                    * self.rng.weibull(
-                        a=self.config.ttd_krt["initialisation"]["not_listed"][
-                            p.referral_type
-                        ][p.age_group][0],
-                        size=None,
-                    )
-                    * self.config.multipliers["ttd"]["prev"],
-                    self.config.sim_duration + 1,
+                    ][p.age_group]["scale"],
+                    shape=self.config.ttd_krt["initialisation"]["not_listed"][
+                        p.referral_type
+                    ][p.age_group]["shape"],
+                    multiplier=self.config.multipliers["ttd"]["prev"],
                 )
                 if self.config.trace:
                     print(
@@ -149,18 +149,15 @@ class Model:
                     p.time_on_waiting_list = (
                         self.config.sim_duration + 1
                     )  # they're listed but don't receive a transplant in the simulation period
-                    p.time_until_death = min(
-                        self.config.ttd_krt["initialisation"]["listed"][
+                    p.time_until_death = calculate_time_to_event(
+                        self.rng,
+                        scale=self.config.ttd_krt["initialisation"]["listed"][
                             p.referral_type
-                        ][p.age_group][1]
-                        * self.rng.weibull(
-                            a=self.config.ttd_krt["initialisation"]["listed"][
-                                p.referral_type
-                            ][p.age_group][0],
-                            size=None,
-                        )
-                        * self.config.multipliers["ttd"]["prev"],
-                        self.config.sim_duration + 1,
+                        ][p.age_group]["scale"],
+                        shape=self.config.ttd_krt["initialisation"]["listed"][
+                            p.referral_type
+                        ][p.age_group]["shape"],
+                        multiplier=self.config.multipliers["ttd"]["prev"],
                     )
                     p.time_enters_waiting_list = self.env.now
                     if self.config.trace:
@@ -170,18 +167,15 @@ class Model:
                 else:
                     # they do receive a transplant in the simulation period
                     p.transplant_suitable = True
-                    p.time_until_death = min(
-                        self.config.ttd_krt["initialisation"]["received_Tx"][
+                    p.time_until_death = calculate_time_to_event(
+                        self.rng,
+                        scale=self.config.ttd_krt["initialisation"]["received_Tx"][
                             p.referral_type
-                        ][p.age_group][1]
-                        * self.rng.weibull(
-                            a=self.config.ttd_krt["initialisation"]["received_Tx"][
-                                p.referral_type
-                            ][p.age_group][0],
-                            size=None,
-                        )
-                        * self.config.multipliers["ttd"]["prev"],
-                        self.config.sim_duration + 1,
+                        ][p.age_group]["scale"],
+                        shape=self.config.ttd_krt["initialisation"]["received_Tx"][
+                            p.referral_type
+                        ][p.age_group]["shape"],
+                        multiplier=self.config.multipliers["ttd"]["prev"],
                     )
                     p.time_enters_waiting_list = self.env.now
                     if self.config.trace:
@@ -194,23 +188,27 @@ class Model:
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
-                        p.time_on_waiting_list = (
-                            self.config.tw_liveTx_initialisation[p.age_group][1]
-                            * self.rng.weibull(
-                                a=self.config.tw_liveTx_initialisation[p.age_group][0],
-                                size=None,
-                            )
-                            * self.config.multipliers["tw"]["prev"]["live"]
+                        p.time_on_waiting_list = calculate_time_to_event(
+                            self.rng,
+                            scale=self.config.tw_liveTx_initialisation[p.age_group][
+                                "scale"
+                            ],
+                            shape=self.config.tw_liveTx_initialisation[p.age_group][
+                                "shape"
+                            ],
+                            multiplier=self.config.multipliers["tw"]["prev"]["live"],
                         )
                     else:
                         p.transplant_type = "cadaver"
-                        p.time_on_waiting_list = (
-                            self.config.tw_cadTx_initialisation[p.age_group][1]
-                            * self.rng.weibull(
-                                a=self.config.tw_cadTx_initialisation[p.age_group][0],
-                                size=None,
-                            )
-                            * self.config.multipliers["tw"]["prev"]["cadaver"]
+                        p.time_on_waiting_list = calculate_time_to_event(
+                            self.rng,
+                            scale=self.config.tw_cadTx_initialisation[p.age_group][
+                                "scale"
+                            ],
+                            shape=self.config.tw_cadTx_initialisation[p.age_group][
+                                "shape"
+                            ],
+                            multiplier=self.config.multipliers["tw"]["prev"]["cadaver"],
                         )
                 p.pre_emptive_transplant = False
             self.env.process(self.start_dialysis_modality(p))
@@ -222,18 +220,15 @@ class Model:
             ):
                 ## they aren't suitable for transplant
                 p.transplant_suitable = False
-                p.time_until_death = min(
-                    self.config.ttd_krt["initialisation"]["not_listed"][
+                p.time_until_death = calculate_time_to_event(
+                    self.rng,
+                    scale=self.config.ttd_krt["initialisation"]["not_listed"][
                         p.referral_type
-                    ][p.age_group][1]
-                    * self.rng.weibull(
-                        a=self.config.ttd_krt["initialisation"]["not_listed"][
-                            p.referral_type
-                        ][p.age_group][0],
-                        size=None,
-                    )
-                    * self.config.multipliers["ttd"]["prev"],
-                    self.config.sim_duration + 1,
+                    ][p.age_group]["scale"],
+                    shape=self.config.ttd_krt["initialisation"]["not_listed"][
+                        p.referral_type
+                    ][p.age_group]["shape"],
+                    multiplier=self.config.multipliers["ttd"]["prev"],
                 )
                 if self.config.trace:
                     print(
@@ -250,18 +245,15 @@ class Model:
                     p.time_on_waiting_list = (
                         self.config.sim_duration + 1
                     )  # they're listed but don't receive a transplant in the simulation period
-                    p.time_until_death = min(
-                        self.config.ttd_krt["initialisation"]["listed"][
+                    p.time_until_death = calculate_time_to_event(
+                        self.rng,
+                        scale=self.config.ttd_krt["initialisation"]["listed"][
                             p.referral_type
-                        ][p.age_group][1]
-                        * self.rng.weibull(
-                            a=self.config.ttd_krt["initialisation"]["listed"][
-                                p.referral_type
-                            ][p.age_group][0],
-                            size=None,
-                        )
-                        * self.config.multipliers["ttd"]["prev"],
-                        self.config.sim_duration + 1,
+                        ][p.age_group]["scale"],
+                        shape=self.config.ttd_krt["initialisation"]["listed"][
+                            p.referral_type
+                        ][p.age_group]["shape"],
+                        multiplier=self.config.multipliers["ttd"]["prev"],
                     )
                     p.time_enters_waiting_list = self.env.now
                     if self.config.trace:
@@ -271,18 +263,15 @@ class Model:
                 else:
                     # they do receive a transplant in the simulation period
                     p.transplant_suitable = True
-                    p.time_until_death = min(
-                        self.config.ttd_krt["initialisation"]["received_Tx"][
+                    p.time_until_death = calculate_time_to_event(
+                        self.rng,
+                        scale=self.config.ttd_krt["initialisation"]["received_Tx"][
                             p.referral_type
-                        ][p.age_group][1]
-                        * self.rng.weibull(
-                            a=self.config.ttd_krt["initialisation"]["received_Tx"][
-                                p.referral_type
-                            ][p.age_group][0],
-                            size=None,
-                        )
-                        * self.config.multipliers["ttd"]["prev"],
-                        self.config.sim_duration + 1,
+                        ][p.age_group]["scale"],
+                        shape=self.config.ttd_krt["initialisation"]["received_Tx"][
+                            p.referral_type
+                        ][p.age_group]["shape"],
+                        multiplier=self.config.multipliers["ttd"]["prev"],
                     )
                     p.time_enters_waiting_list = self.env.now
                     if self.config.trace:
@@ -295,23 +284,27 @@ class Model:
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
-                        p.time_on_waiting_list = (
-                            self.config.tw_liveTx_initialisation[p.age_group][1]
-                            * self.rng.weibull(
-                                a=self.config.tw_liveTx_initialisation[p.age_group][0],
-                                size=None,
-                            )
-                            * self.config.multipliers["tw"]["prev"]["live"]
+                        p.time_on_waiting_list = calculate_time_to_event(
+                            self.rng,
+                            scale=self.config.tw_liveTx_initialisation[p.age_group][
+                                "scale"
+                            ],
+                            shape=self.config.tw_liveTx_initialisation[p.age_group][
+                                "shape"
+                            ],
+                            multiplier=self.config.multipliers["tw"]["prev"]["live"],
                         )
                     else:
                         p.transplant_type = "cadaver"
-                        p.time_on_waiting_list = (
-                            self.config.tw_cadTx_initialisation[p.age_group][1]
-                            * self.rng.weibull(
-                                a=self.config.tw_cadTx_initialisation[p.age_group][0],
-                                size=None,
-                            )
-                            * self.config.multipliers["tw"]["prev"]["cadaver"]
+                        p.time_on_waiting_list = calculate_time_to_event(
+                            self.rng,
+                            scale=self.config.tw_cadTx_initialisation[p.age_group][
+                                "scale"
+                            ],
+                            shape=self.config.tw_cadTx_initialisation[p.age_group][
+                                "shape"
+                            ],
+                            multiplier=self.config.multipliers["tw"]["prev"]["cadaver"],
                         )
                 p.pre_emptive_transplant = False
             self.env.process(self.start_dialysis_modality(p))
@@ -323,18 +316,15 @@ class Model:
             ):
                 ## they aren't suitable for transplant
                 p.transplant_suitable = False
-                p.time_until_death = min(
-                    self.config.ttd_krt["initialisation"]["not_listed"][
+                p.time_until_death = calculate_time_to_event(
+                    self.rng,
+                    scale=self.config.ttd_krt["initialisation"]["not_listed"][
                         p.referral_type
-                    ][p.age_group][1]
-                    * self.rng.weibull(
-                        a=self.config.ttd_krt["initialisation"]["not_listed"][
-                            p.referral_type
-                        ][p.age_group][0],
-                        size=None,
-                    )
-                    * self.config.multipliers["ttd"]["prev"],
-                    self.config.sim_duration + 1,
+                    ][p.age_group]["scale"],
+                    shape=self.config.ttd_krt["initialisation"]["not_listed"][
+                        p.referral_type
+                    ][p.age_group]["shape"],
+                    multiplier=self.config.multipliers["ttd"]["prev"],
                 )
                 if self.config.trace:
                     print(
@@ -351,18 +341,15 @@ class Model:
                     p.time_on_waiting_list = (
                         self.config.sim_duration + 1
                     )  # they're listed but don't receive a transplant in the simulation period
-                    p.time_until_death = min(
-                        self.config.ttd_krt["initialisation"]["listed"][
+                    p.time_until_death = calculate_time_to_event(
+                        self.rng,
+                        scale=self.config.ttd_krt["initialisation"]["listed"][
                             p.referral_type
-                        ][p.age_group][1]
-                        * self.rng.weibull(
-                            a=self.config.ttd_krt["initialisation"]["listed"][
-                                p.referral_type
-                            ][p.age_group][0],
-                            size=None,
-                        )
-                        * self.config.multipliers["ttd"]["prev"],
-                        self.config.sim_duration + 1,
+                        ][p.age_group]["scale"],
+                        shape=self.config.ttd_krt["initialisation"]["listed"][
+                            p.referral_type
+                        ][p.age_group]["shape"],
+                        multiplier=self.config.multipliers["ttd"]["prev"],
                     )
                     p.time_enters_waiting_list = self.env.now
                     if self.config.trace:
@@ -372,18 +359,15 @@ class Model:
                 else:
                     # they do receive a transplant in the simulation period
                     p.transplant_suitable = True
-                    p.time_until_death = min(
-                        self.config.ttd_krt["initialisation"]["received_Tx"][
+                    p.time_until_death = calculate_time_to_event(
+                        self.rng,
+                        scale=self.config.ttd_krt["initialisation"]["received_Tx"][
                             p.referral_type
-                        ][p.age_group][1]
-                        * self.rng.weibull(
-                            a=self.config.ttd_krt["initialisation"]["received_Tx"][
-                                p.referral_type
-                            ][p.age_group][0],
-                            size=None,
-                        )
-                        * self.config.multipliers["ttd"]["prev"],
-                        self.config.sim_duration + 1,
+                        ][p.age_group]["scale"],
+                        shape=self.config.ttd_krt["initialisation"]["received_Tx"][
+                            p.referral_type
+                        ][p.age_group]["shape"],
+                        multiplier=self.config.multipliers["ttd"]["prev"],
                     )
                     p.time_enters_waiting_list = self.env.now
                     if self.config.trace:
@@ -396,70 +380,49 @@ class Model:
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
-                        p.time_on_waiting_list = (
-                            self.config.tw_liveTx_initialisation[p.age_group][1]
-                            * self.rng.weibull(
-                                a=self.config.tw_liveTx_initialisation[p.age_group][0],
-                                size=None,
-                            )
-                            * self.config.multipliers["tw"]["prev"]["live"]
+                        p.time_on_waiting_list = calculate_time_to_event(
+                            self.rng,
+                            scale=self.config.tw_liveTx_initialisation[p.age_group][
+                                "scale"
+                            ],
+                            shape=self.config.tw_liveTx_initialisation[p.age_group][
+                                "shape"
+                            ],
+                            multiplier=self.config.multipliers["tw"]["prev"]["live"],
                         )
                     else:
                         p.transplant_type = "cadaver"
-                        p.time_on_waiting_list = (
-                            self.config.tw_cadTx_initialisation[p.age_group][1]
-                            * self.rng.weibull(
-                                a=self.config.tw_cadTx_initialisation[p.age_group][0],
-                                size=None,
-                            )
-                            * self.config.multipliers["tw"]["prev"]["cadaver"]
+                        p.time_on_waiting_list = calculate_time_to_event(
+                            self.rng,
+                            scale=self.config.tw_cadTx_initialisation[p.age_group][
+                                "scale"
+                            ],
+                            shape=self.config.tw_cadTx_initialisation[p.age_group][
+                                "shape"
+                            ],
+                            multiplier=self.config.multipliers["tw"]["prev"]["cadaver"],
                         )
                 p.pre_emptive_transplant = False
             self.env.process(self.start_dialysis_modality(p))
-        elif location == "live_transplant":
+        elif "transplant" in location:
+            transplant_type = location.strip("_transplant")
             p.transplant_suitable = True
-            p.time_until_death = min(
-                self.config.ttd_krt["initialisation"]["received_Tx"][p.referral_type][
-                    p.age_group
-                ][1]
-                * self.rng.weibull(
-                    a=self.config.ttd_krt["initialisation"]["received_Tx"][
-                        p.referral_type
-                    ][p.age_group][0],
-                    size=None,
-                )
-                * self.config.multipliers["ttd"]["prev"],
-                self.config.sim_duration + 1,
+            p.time_until_death = calculate_time_to_event(
+                self.rng,
+                scale=self.config.ttd_krt["initialisation"]["received_Tx"][
+                    p.referral_type
+                ][p.age_group]["scale"],
+                shape=self.config.ttd_krt["initialisation"]["received_Tx"][
+                    p.referral_type
+                ][p.age_group]["shape"],
+                multiplier=self.config.multipliers["ttd"]["prev"],
             )
             p.pre_emptive_transplant = None  # Unknown for prevalent patients
             p.time_of_transplant = self.env.now
-            p.transplant_type = "live"
+            p.transplant_type = transplant_type
             if self.config.trace:
                 print(
-                    f"Patient {p.id} of age group {p.age_group} is living with live donor transplant at time {self.env.now}."
-                )
-            self.env.process(self.start_transplant(p))
-        elif location == "cadaver_transplant":
-            p.transplant_suitable = True
-            p.time_until_death = min(
-                self.config.ttd_krt["initialisation"]["received_Tx"][p.referral_type][
-                    p.age_group
-                ][1]
-                * self.rng.weibull(
-                    a=self.config.ttd_krt["initialisation"]["received_Tx"][
-                        p.referral_type
-                    ][p.age_group][0],
-                    size=None,
-                )
-                * self.config.multipliers["ttd"]["prev"],
-                self.config.sim_duration + 1,
-            )
-            p.pre_emptive_transplant = None  # Unknown for prevalent patients
-            p.time_of_transplant = self.env.now
-            p.transplant_type = "cadaver"
-            if self.config.trace:
-                print(
-                    f"Patient {p.id} of age group {p.age_group} is living with cadaver donor transplant at time {self.env.now}."
+                    f"Patient {p.id} of age group {p.age_group} is living with {transplant_type} transplant at time {self.env.now}."
                 )
             self.env.process(self.start_transplant(p))
 
@@ -571,20 +534,16 @@ class Model:
             # Patient is not suitable for transplant and so starts dialysis only pathway
             patient.transplant_suitable = False
             if patient.time_until_death == 0:
-                patient.time_until_death = min(
-                    self.config.ttd_krt["incidence"]["not_listed"][
+                patient.time_until_death = calculate_time_to_event(
+                    self.rng,
+                    scale=self.config.ttd_krt["incidence"]["not_listed"][
                         patient.referral_type
-                    ][patient.age_group][1]
-                    * self.rng.weibull(
-                        a=self.config.ttd_krt["incidence"]["not_listed"][
-                            patient.referral_type
-                        ][patient.age_group][0],
-                        size=None,
-                    )
-                    * self.config.multipliers["ttd"]["inc"],
-                    self.config.sim_duration + 1,
+                    ][patient.age_group]["scale"],
+                    shape=self.config.ttd_krt["incidence"]["not_listed"][
+                        patient.referral_type
+                    ][patient.age_group]["shape"],
+                    multiplier=self.config.multipliers["ttd"]["inc"],
                 )
-
             if self.config.trace:
                 print(
                     f"Patient {patient.id} of age group {patient.age_group} started dialysis only pathway at time {self.env.now}."
@@ -600,18 +559,15 @@ class Model:
             ):
                 # Although suitable for transplant, patient does not receive a transplant in the simulation period
                 if patient.time_until_death == 0:
-                    patient.time_until_death = min(
-                        self.config.ttd_krt["incidence"]["listed"][
+                    patient.time_until_death = calculate_time_to_event(
+                        self.rng,
+                        scale=self.config.ttd_krt["incidence"]["listed"][
                             patient.referral_type
-                        ][patient.age_group][1]
-                        * self.rng.weibull(
-                            a=self.config.ttd_krt["incidence"]["listed"][
-                                patient.referral_type
-                            ][patient.age_group][0],
-                            size=None,
-                        )
-                        * self.config.multipliers["ttd"]["inc"],
-                        self.config.sim_duration + 1,
+                        ][patient.age_group]["scale"],
+                        shape=self.config.ttd_krt["incidence"]["listed"][
+                            patient.referral_type
+                        ][patient.age_group]["shape"],
+                        multiplier=self.config.multipliers["ttd"]["inc"],
                     )
                 patient.time_on_waiting_list = (
                     self.config.sim_duration + 1
@@ -625,20 +581,16 @@ class Model:
             else:
                 # Patient may receive a transplant in the simulation period
                 if patient.time_until_death == 0:
-                    patient.time_until_death = min(
-                        self.config.ttd_krt["incidence"]["received_Tx"][
+                    patient.time_until_death = calculate_time_to_event(
+                        self.rng,
+                        scale=self.config.ttd_krt["incidence"]["received_Tx"][
                             patient.referral_type
-                        ][patient.age_group][1]
-                        * self.rng.weibull(
-                            a=self.config.ttd_krt["incidence"]["received_Tx"][
-                                patient.referral_type
-                            ][patient.age_group][0],
-                            size=None,
-                        )
-                        * self.config.multipliers["ttd"]["inc"],
-                        self.config.sim_duration + 1,
+                        ][patient.age_group]["scale"],
+                        shape=self.config.ttd_krt["incidence"]["received_Tx"][
+                            patient.referral_type
+                        ][patient.age_group]["shape"],
+                        multiplier=self.config.multipliers["ttd"]["inc"],
                     )
-
                 # We now assign a transplant type: live or cadaver as this impacts the probability of starting pre-emptive transplant
                 if (
                     self.rng.uniform(0, 1)
@@ -779,18 +731,15 @@ class Model:
             # adjust the time to death as this is a patient that has recieve (not just been listed for) a transplant
             if patient.patient_flag == "incident":
                 random_number = truncate_2dp(self.rng.uniform(0, 1))
-                sampled_time = min(
-                    self.config.ttd_krt["incidence"]["received_Tx"][
+                sampled_time = calculate_time_to_event(
+                    self.rng,
+                    scale=self.config.ttd_krt["incidence"]["received_Tx"][
                         patient.referral_type
-                    ][patient.age_group][1]
-                    * self.rng.weibull(
-                        a=self.config.ttd_krt["incidence"]["received_Tx"][
-                            patient.referral_type
-                        ][patient.age_group][0],
-                        size=None,
-                    )
-                    * self.config.multipliers["ttd"]["inc"],
-                    self.config.sim_duration + 1,
+                    ][patient.age_group]["scale"],
+                    shape=self.config.ttd_krt["incidence"]["received_Tx"][
+                        patient.referral_type
+                    ][patient.age_group]["shape"],
+                    multiplier=self.config.multipliers["ttd"]["inc"],
                 )
                 current_tud = patient.time_until_death
                 patient.time_until_death = max(
@@ -799,18 +748,15 @@ class Model:
                 )
             else:  # prevalent patient
                 random_number = truncate_2dp(self.rng.uniform(0, 1))
-                sampled_time = min(
-                    self.config.ttd_krt["initialisation"]["received_Tx"][
+                sampled_time = calculate_time_to_event(
+                    self.rng,
+                    scale=self.config.ttd_krt["initialisation"]["received_Tx"][
                         patient.referral_type
-                    ][patient.age_group][1]
-                    * self.rng.weibull(
-                        a=self.config.ttd_krt["initialisation"]["received_Tx"][
-                            patient.referral_type
-                        ][patient.age_group][0],
-                        size=None,
-                    )
-                    * self.config.multipliers["ttd"]["prev"],
-                    self.config.sim_duration + 1,
+                    ][patient.age_group]["scale"],
+                    shape=self.config.ttd_krt["initialisation"]["received_Tx"][
+                        patient.referral_type
+                    ][patient.age_group]["shape"],
+                    multiplier=self.config.multipliers["ttd"]["prev"],
                 )
                 current_tud = patient.time_until_death
                 patient.time_until_death = max(
