@@ -405,7 +405,7 @@ class Model:
                 p.pre_emptive_transplant = False
             self.env.process(self.start_dialysis_modality(p))
         elif "transplant" in location:
-            transplant_type = location.strip("_transplant")
+            transplant_type = location.split("_")[0]
             p.transplant_suitable = True
             p.time_until_death = calculate_time_to_event(
                 self.rng,
