@@ -40,6 +40,6 @@ class Patient:
         self.time_living_with_live_transplant: float | None = None
         self.time_living_with_cadaver_transplant: float | None = None
         self.transplant_count = 0
-        self.time_on_waiting_list = 0
+        self.time_on_waiting_list: float = 0
         self.time_enters_waiting_list: float | None = None
         self.time_of_transplant: float | None = None

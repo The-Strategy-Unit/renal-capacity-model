@@ -195,6 +195,7 @@ def write_results_to_excel(
     path_to_results_excel_file: str,
     combined_df: pd.DataFrame,
     costs_dfs: dict[str, pd.DataFrame],
+    sim_years: int,
 ):
     """Write combined model results from all model runs to Excel file
 
@@ -203,6 +204,7 @@ def write_results_to_excel(
         combined_df (pd.DataFrame): Dataframe of all model results combined and processed
         costs_dfs (pd.DataFrame): Dataframe of costs of activity for each year of
         model simulation, for each model run
+        sim_years (int): Number of years of sim duration, to truncate model result dataframes
     """
     with pd.ExcelWriter(
         path_to_results_excel_file,
@@ -211,11 +213,13 @@ def write_results_to_excel(
         if_sheet_exists="replace",
     ) as writer:
         for outcome in combined_df.index.get_level_values(0).drop_duplicates():
-            combined_df.loc[outcome].to_excel(
+            combined_df.loc[outcome].iloc[:, : sim_years + 1].to_excel(
                 writer, sheet_name=outcome.replace("waiting_for_transplant", "wft")
             )
         for activity, df in costs_dfs.items():
-            df.to_excel(writer, sheet_name=f"{activity}_yearly")
+            df.iloc[:, : sim_years + 1].to_excel(
+                writer, sheet_name=f"{activity}_yearly"
+            )
     logger.info(
         f"✅ 💾 Excel format model results written to: \n{path_to_results_excel_file}"
     )

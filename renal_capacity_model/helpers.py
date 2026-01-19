@@ -315,3 +315,21 @@ def check_time_to_event_curve_dfs(tte_df_name: str, tte_df: pd.DataFrame):
         assert list(tte_df.columns) == cols
     except AssertionError:
         raise ValueError(f"Check {tte_df_name} csv - incorrect indices/columns")
+
+
+def calculate_time_to_event(
+    rng: np.random.Generator, scale: float, shape: float, multiplier: float = 1
+) -> float:
+    """Calculate time to event, sampling from a Weibull distribution and multiplying
+    it with a scale and optional multiplier
+
+    Args:
+        rng (np.random.Generator): Random Number Generator
+        scale (float): Scale to be used for the calculation
+        shape (float): Shape parameter for Weibull distribution
+        multiplier (float, optional): Optional multiplier. Defaults to 1.
+
+    Returns:
+        float: Sampled time to event
+    """
+    return (scale * rng.weibull(shape)) * multiplier
