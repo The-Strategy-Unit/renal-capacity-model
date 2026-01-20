@@ -111,3 +111,8 @@ build/
 !reference/survival_time_to_event_curves/ttma_ichd.csv
 !reference/survival_time_to_event_curves/ttma_pd_initialisation.csv
 !reference/survival_time_to_event_curves/ttma_pd.csv
+
+# Also allow Renal Modelling Input and Output files for the fictional region
+# These are also confirmed to be safe to share as they contain fictional inputs
+!data/Renal_Modelling_Input_File - Fictional Region.xlsx
+!data/Renal_Modelling_Output_File - Fictional Region.xlsx

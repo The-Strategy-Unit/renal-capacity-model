@@ -9,7 +9,7 @@
 
 This repository contains the Python code for the Renal Capacity Model, an open source implementation of the Discrete Event Simulation (DES) [Renal Services model created in collaboration with the Midlands Renal Operational Delivery Network (MRODN)](https://www.strategyunitwm.nhs.uk/news/planning-rising-renal-demand-simulating-capacity-across-care-system).
 
-The code in this repository has been geared towards working with input Excel files that are adapted for specific regions in England. To obtain an input Excel file for your region, please contact [the Strategy Unit](mailto:strategy.unit@nhs.net).
+The code in this repository has been geared towards working with input Excel files that are adapted for specific regions in England. To obtain an input Excel file for your region, please contact [the Strategy Unit](mailto:strategy.unit@nhs.net). An example input and output file for a fictional region is provided in the `data` folder.
 
 The default config contains the values for the national version of the model. However this has not yet been validated and documentation is sparse. We will provide further details on how to run the national version of the model, or adapt the model to be used without an input Excel file, in due course.
 
@@ -70,9 +70,13 @@ Your results will be saved in the `results` folder, in a subfolder with the date
         └── Output - REGION_20260101-1201.xlsx
 ```
 
+### Example model run with fictional region
+
+Example input and output files for a fictional region are provided in the `data` folder. You can run the model using the fictional region input file to see how the model works and what the output looks like. Run the model using `uv run -m renal_capacity_model.main --input_filepath 'data/Renal_Modelling_Input_File - Fictional Region.xlsx'`.
+
 ### National model
 
-Run the model using `uv run -m renal_capacity_model.main`. This runs a full trial using national values, stored in `config_values.py`. Note that the size of the national model is very large and will take several hours to complete. We also have not yet validated the national version of the model.
+Run the model at national level using `uv run -m renal_capacity_model.main`. This runs a full trial using national values, stored in `config_values.py`. Note that the size of the national model is very large and will take several hours to complete. We also have not yet validated the national version of the model.
 
 ## Information for developers
 
