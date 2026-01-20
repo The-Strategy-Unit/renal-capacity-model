@@ -142,7 +142,7 @@ class Model:
                 # they are suitable for transplant
                 if (
                     self.rng.uniform(0, 1)
-                    > self.config.receives_transplant_dist["prev"][p.age_group]
+                    > self.config.receives_transplant_dist[1]["prev"][p.age_group]
                 ):
                     # they don't receive a transplant in the simulation period
                     p.transplant_suitable = True
@@ -238,7 +238,7 @@ class Model:
                 # they are suitable for transplant
                 if (
                     self.rng.uniform(0, 1)
-                    > self.config.receives_transplant_dist["prev"][p.age_group]
+                    > self.config.receives_transplant_dist[1]["prev"][p.age_group]
                 ):
                     # they don't receive a transplant in the simulation period
                     p.transplant_suitable = True
@@ -334,7 +334,7 @@ class Model:
                 # they are suitable for transplant
                 if (
                     self.rng.uniform(0, 1)
-                    > self.config.receives_transplant_dist["prev"][p.age_group]
+                    > self.config.receives_transplant_dist[1]["prev"][p.age_group]
                 ):
                     # they don't receive a transplant in the simulation period
                     p.transplant_suitable = True
@@ -555,7 +555,7 @@ class Model:
             patient.transplant_suitable = True
             if (
                 self.rng.uniform(0, 1)
-                > self.config.receives_transplant_dist["inc"][patient.age_group]
+                > self.config.receives_transplant_dist[year]["inc"][patient.age_group]
             ):
                 # Although suitable for transplant, patient does not receive a transplant in the simulation period
                 if patient.time_until_death == 0:
