@@ -2,7 +2,7 @@
 
 <!-- badges: start -->
 
-[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![codecov](https://codecov.io/gh/The-Strategy-Unit/renal-capacity-model/graph/badge.svg?token=lr1OaInPCf)](https://codecov.io/gh/The-Strategy-Unit/renal-capacity-model)
 
 <!-- badges: end -->
@@ -20,8 +20,7 @@ The default config contains the values for the national version of the model. Ho
 ### Data preparation
 
 1. [Clone a copy](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) of the repository to your local machine.
-1. Create a `data` folder. Put your `Renal_Modelling_Input_File - REGION.xlsx` and `Renal_Modelling_Output_File - REGION.xlsx` in this folder.
-1. Optional: Create a results folder for your model results.
+1. Put your `Renal_Modelling_Input_File - REGION.xlsx` and `Renal_Modelling_Output_File - REGION.xlsx` in the `data` folder.
 
 Your repository structure should look like the below:
 
@@ -39,7 +38,6 @@ Your repository structure should look like the below:
 │   ├── config_values.py
 │   ├── config.py
 │   └── ...
-├── results/
 ├── tests/
 │   └── ...
 ├── .gitignore
@@ -61,7 +59,7 @@ Our preferred tool for dependency management is [uv](https://github.com/astral-s
 
 ### Viewing model results
 
-Your results will be saved in the `results` folder, in a subfolder with the date and time of the model run. For example:
+Your results will be saved in a `results` folder, in a subfolder with the date and time of the model run. For example:
 
 ```bash
 ├── results/
