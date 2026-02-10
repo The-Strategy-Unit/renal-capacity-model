@@ -10,6 +10,8 @@ from renal_capacity_model.helpers import check_time_to_event_curve_dfs
 logger = get_logger(__name__)
 
 national_config_dict = {
+    "region": {"England"},
+    "centre": {"All"},
     "multipliers": {
         "ttd": {
             "inc": 1,

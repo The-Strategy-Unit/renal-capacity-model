@@ -4,6 +4,7 @@ import pandas as pd
 from renal_capacity_model.helpers import get_logger
 import os
 import shutil
+from openpyxl import load_workbook
 
 logger = get_logger(__name__)
 
@@ -193,6 +194,8 @@ def copy_excel_files(path_to_file: str, run_start_time: str) -> str:
 
 def write_results_to_excel(
     path_to_results_excel_file: str,
+    model_region: str,
+    model_centre: str,
     combined_df: pd.DataFrame,
     costs_dfs: dict[str, pd.DataFrame],
     sim_years: int,
@@ -206,6 +209,14 @@ def write_results_to_excel(
         model simulation, for each model run
         sim_years (int): Number of years of sim duration, to truncate model result dataframes
     """
+
+    """Write region and centre name into the simulation summary results sheet"""
+    workbook = load_workbook(path_to_results_excel_file)
+    sheet_name = "Experiment Summary"
+    sheet = workbook[sheet_name]
+    sheet["G14"] = model_region
+    sheet["G15"] = model_centre
+    workbook.save(path_to_results_excel_file)
     with pd.ExcelWriter(
         path_to_results_excel_file,
         engine="openpyxl",
@@ -220,6 +231,7 @@ def write_results_to_excel(
             df.iloc[:, : sim_years + 1].to_excel(
                 writer, sheet_name=f"{activity}_yearly"
             )
+
     logger.info(
         f"✅ 💾 Excel format model results written to: \n{path_to_results_excel_file}"
     )
