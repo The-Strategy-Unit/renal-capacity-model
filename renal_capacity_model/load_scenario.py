@@ -231,6 +231,8 @@ def load_scenario_from_excel(
             },
         }
     # The config values below this point are not different between validation and experimentation
+    config_from_excel["region"] = input_scenario.iat[0, 4]
+    config_from_excel["centre"] = input_scenario.iat[0, 6]
     config_from_excel["sim_duration"] = input_scenario.iat[0, 1]
     config_from_excel["age_dist"] = {
         1: input_scenario.iat[6, 1],

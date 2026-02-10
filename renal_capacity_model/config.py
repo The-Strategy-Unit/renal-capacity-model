@@ -39,6 +39,8 @@ class Config:
             config_dict (dict, optional): Dict containing values to be used to run the model. Defaults to national_config_dict.
             path_to_time_to_event_curves (str, optional): Path to folder containing time to event curves as CSV files. Defaults to "reference/survival_time_to_event_curves".
         """
+        self.region = config_dict["region"]
+        self.centre = config_dict["centre"]
         self.trace = config_dict.get("trace", False)
         self.initialise_prevalent_patients = config_dict.get(
             "initialise_prevalent_patients", True

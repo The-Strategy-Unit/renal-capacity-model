@@ -62,6 +62,8 @@ def main(
             filepaths.append(copy_excel_files(excel_file, run_start_time))
         write_results_to_excel(
             filepaths[1],
+            config.region,
+            config.centre,
             combined_results,
             trial.costs_dfs,
             sim_years=int(config.sim_duration / 365),
