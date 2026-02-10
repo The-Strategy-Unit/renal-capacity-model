@@ -4,6 +4,7 @@
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![codecov](https://codecov.io/gh/The-Strategy-Unit/renal-capacity-model/graph/badge.svg?token=lr1OaInPCf)](https://codecov.io/gh/The-Strategy-Unit/renal-capacity-model)
+[![DOI](https://zenodo.org/badge/1024199297.svg)](https://doi.org/10.5281/zenodo.18599117)
 
 <!-- badges: end -->
 
