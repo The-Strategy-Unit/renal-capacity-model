@@ -1,0 +1,37 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Renal Capacity Model
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - email: lucy.morgan48@nhs.net
+    orcid: 'https://orcid.org/0000-0003-0987-2350'
+    affiliation: The Strategy Unit
+    given-names: Lucy
+    family-names: Morgan
+  - given-names: YiWen
+    family-names: Hon
+    email: yiwen.hon1@nhs.net
+    affiliation: The Strategy Unit
+    orcid: 'https://orcid.org/0000-0002-6105-1309'
+identifiers:
+  - type: url
+    value: >-
+      https://github.com/The-Strategy-Unit/renal-capacity-model
+repository-code: 'https://github.com/The-Strategy-Unit/renal-capacity-model'
+abstract: >-
+  Code repository for the open source Renal Capacity Model,
+  a discrete event simulation model for estimating demand
+  for kidney replacement therapy in England.
+keywords:
+  - nhs
+  - python
+  - health
+  - simpy
+  - simulation
+license: MIT
+version: v1.0.1
