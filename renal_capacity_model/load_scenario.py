@@ -635,9 +635,9 @@ def load_scenario_from_excel(
                 "pd": input_scenario.iat[69, 7],
             },
             "ichd": {
-                "ichd": input_scenario.iat[75, 2],
-                "hhd": input_scenario.iat[75, 3],
-                "pd": input_scenario.iat[75, 4],
+                "ichd": input_scenario.iat[75, 5],
+                "hhd": input_scenario.iat[75, 6],
+                "pd": input_scenario.iat[75, 7],
             },
             "hhd": {
                 "ichd": input_scenario.iat[81, 2],
@@ -657,9 +657,9 @@ def load_scenario_from_excel(
                 "pd": input_scenario.iat[69, 10],
             },
             "ichd": {
-                "ichd": input_scenario.iat[75, 2],
-                "hhd": input_scenario.iat[75, 3],
-                "pd": input_scenario.iat[75, 4],
+                "ichd": input_scenario.iat[75, 5],
+                "hhd": input_scenario.iat[75, 6],
+                "pd": input_scenario.iat[75, 7],
             },
             "hhd": {
                 "ichd": input_scenario.iat[81, 2],
@@ -679,9 +679,9 @@ def load_scenario_from_excel(
                 "pd": input_scenario.iat[69, 13],
             },
             "ichd": {
-                "ichd": input_scenario.iat[75, 2],
-                "hhd": input_scenario.iat[75, 3],
-                "pd": input_scenario.iat[75, 4],
+                "ichd": input_scenario.iat[75, 5],
+                "hhd": input_scenario.iat[75, 6],
+                "pd": input_scenario.iat[75, 7],
             },
             "hhd": {
                 "ichd": input_scenario.iat[81, 2],
@@ -701,9 +701,9 @@ def load_scenario_from_excel(
                 "pd": input_scenario.iat[69, 16],
             },
             "ichd": {
-                "ichd": input_scenario.iat[75, 2],
-                "hhd": input_scenario.iat[75, 3],
-                "pd": input_scenario.iat[75, 4],
+                "ichd": input_scenario.iat[75, 5],
+                "hhd": input_scenario.iat[75, 6],
+                "pd": input_scenario.iat[75, 7],
             },
             "hhd": {
                 "ichd": input_scenario.iat[81, 2],
@@ -723,9 +723,9 @@ def load_scenario_from_excel(
                 "pd": input_scenario.iat[69, 19],
             },
             "ichd": {
-                "ichd": input_scenario.iat[75, 2],
-                "hhd": input_scenario.iat[75, 3],
-                "pd": input_scenario.iat[75, 4],
+                "ichd": input_scenario.iat[75, 5],
+                "hhd": input_scenario.iat[75, 6],
+                "pd": input_scenario.iat[75, 7],
             },
             "hhd": {
                 "ichd": input_scenario.iat[81, 2],
@@ -745,9 +745,9 @@ def load_scenario_from_excel(
                 "pd": input_scenario.iat[69, 22],
             },
             "ichd": {
-                "ichd": input_scenario.iat[75, 2],
-                "hhd": input_scenario.iat[75, 3],
-                "pd": input_scenario.iat[75, 4],
+                "ichd": input_scenario.iat[75, 5],
+                "hhd": input_scenario.iat[75, 6],
+                "pd": input_scenario.iat[75, 7],
             },
             "hhd": {
                 "ichd": input_scenario.iat[81, 2],
@@ -767,9 +767,9 @@ def load_scenario_from_excel(
                 "pd": input_scenario.iat[69, 25],
             },
             "ichd": {
-                "ichd": input_scenario.iat[75, 2],
-                "hhd": input_scenario.iat[75, 3],
-                "pd": input_scenario.iat[75, 4],
+                "ichd": input_scenario.iat[75, 5],
+                "hhd": input_scenario.iat[75, 6],
+                "pd": input_scenario.iat[75, 7],
             },
             "hhd": {
                 "ichd": input_scenario.iat[81, 2],
@@ -789,9 +789,9 @@ def load_scenario_from_excel(
                 "pd": input_scenario.iat[69, 28],
             },
             "ichd": {
-                "ichd": input_scenario.iat[75, 2],
-                "hhd": input_scenario.iat[75, 3],
-                "pd": input_scenario.iat[75, 4],
+                "ichd": input_scenario.iat[75, 5],
+                "hhd": input_scenario.iat[75, 6],
+                "pd": input_scenario.iat[75, 7],
             },
             "hhd": {
                 "ichd": input_scenario.iat[81, 2],
@@ -811,9 +811,9 @@ def load_scenario_from_excel(
                 "pd": input_scenario.iat[69, 31],
             },
             "ichd": {
-                "ichd": input_scenario.iat[75, 2],
-                "hhd": input_scenario.iat[75, 3],
-                "pd": input_scenario.iat[75, 4],
+                "ichd": input_scenario.iat[75, 5],
+                "hhd": input_scenario.iat[75, 6],
+                "pd": input_scenario.iat[75, 7],
             },
             "hhd": {
                 "ichd": input_scenario.iat[81, 2],
@@ -833,9 +833,9 @@ def load_scenario_from_excel(
                 "pd": input_scenario.iat[69, 34],
             },
             "ichd": {
-                "ichd": input_scenario.iat[75, 2],
-                "hhd": input_scenario.iat[75, 3],
-                "pd": input_scenario.iat[75, 4],
+                "ichd": input_scenario.iat[75, 5],
+                "hhd": input_scenario.iat[75, 6],
+                "pd": input_scenario.iat[75, 7],
             },
             "hhd": {
                 "ichd": input_scenario.iat[81, 2],
@@ -855,9 +855,9 @@ def load_scenario_from_excel(
                 "pd": input_scenario.iat[69, 37],
             },
             "ichd": {
-                "ichd": input_scenario.iat[75, 2],
-                "hhd": input_scenario.iat[75, 3],
-                "pd": input_scenario.iat[75, 4],
+                "ichd": input_scenario.iat[75, 5],
+                "hhd": input_scenario.iat[75, 6],
+                "pd": input_scenario.iat[75, 7],
             },
             "hhd": {
                 "ichd": input_scenario.iat[81, 2],
@@ -877,9 +877,9 @@ def load_scenario_from_excel(
                 "pd": input_scenario.iat[69, 40],
             },
             "ichd": {
-                "ichd": input_scenario.iat[75, 2],
-                "hhd": input_scenario.iat[75, 3],
-                "pd": input_scenario.iat[75, 4],
+                "ichd": input_scenario.iat[75, 5],
+                "hhd": input_scenario.iat[75, 6],
+                "pd": input_scenario.iat[75, 7],
             },
             "hhd": {
                 "ichd": input_scenario.iat[81, 2],
@@ -899,9 +899,9 @@ def load_scenario_from_excel(
                 "pd": input_scenario.iat[69, 43],
             },
             "ichd": {
-                "ichd": input_scenario.iat[75, 2],
-                "hhd": input_scenario.iat[75, 3],
-                "pd": input_scenario.iat[75, 4],
+                "ichd": input_scenario.iat[75, 5],
+                "hhd": input_scenario.iat[75, 6],
+                "pd": input_scenario.iat[75, 7],
             },
             "hhd": {
                 "ichd": input_scenario.iat[81, 2],
