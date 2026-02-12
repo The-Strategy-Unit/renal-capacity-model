@@ -14,8 +14,6 @@ The code in this repository has been geared towards working with input Excel fil
 
 The default config contains the values for the national version of the model. However this has not yet been validated and documentation is sparse. We will provide further details on how to run the national version of the model, or adapt the model to be used without an input Excel file, in due course.
 
-⚠️ **Please note that the code in this repository is still in development**
-
 ## How to use this package using an input Excel file
 
 ### Data preparation
