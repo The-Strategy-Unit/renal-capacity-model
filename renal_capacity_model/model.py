@@ -146,7 +146,7 @@ class Model:
                 ):
                     # they don't receive a transplant in the simulation period
                     p.transplant_suitable = True
-                    p.time_on_waiting_list = (
+                    p.remaining_time_on_transplant_list = (
                         self.config.sim_duration + 1
                     )  # they're listed but don't receive a transplant in the simulation period
                     p.time_until_death = calculate_time_to_event(
@@ -188,24 +188,24 @@ class Model:
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
-                        p.time_on_waiting_list = calculate_time_to_event(
+                        p.remaining_time_on_transplant_list = calculate_time_to_event(
                             self.rng,
-                            scale=self.config.tw_liveTx_initialisation[p.age_group][
+                            scale=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "scale"
                             ],
-                            shape=self.config.tw_liveTx_initialisation[p.age_group][
+                            shape=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "shape"
                             ],
                             multiplier=self.config.multipliers["tw"]["prev"]["live"],
                         )
                     else:
                         p.transplant_type = "cadaver"
-                        p.time_on_waiting_list = calculate_time_to_event(
+                        p.remaining_time_on_transplant_list = calculate_time_to_event(
                             self.rng,
-                            scale=self.config.tw_cadTx_initialisation[p.age_group][
+                            scale=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "scale"
                             ],
-                            shape=self.config.tw_cadTx_initialisation[p.age_group][
+                            shape=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "shape"
                             ],
                             multiplier=self.config.multipliers["tw"]["prev"]["cadaver"],
@@ -242,7 +242,7 @@ class Model:
                 ):
                     # they don't receive a transplant in the simulation period
                     p.transplant_suitable = True
-                    p.time_on_waiting_list = (
+                    p.remaining_time_on_transplant_list = (
                         self.config.sim_duration + 1
                     )  # they're listed but don't receive a transplant in the simulation period
                     p.time_until_death = calculate_time_to_event(
@@ -284,24 +284,24 @@ class Model:
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
-                        p.time_on_waiting_list = calculate_time_to_event(
+                        p.remaining_time_on_transplant_list = calculate_time_to_event(
                             self.rng,
-                            scale=self.config.tw_liveTx_initialisation[p.age_group][
+                            scale=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "scale"
                             ],
-                            shape=self.config.tw_liveTx_initialisation[p.age_group][
+                            shape=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "shape"
                             ],
                             multiplier=self.config.multipliers["tw"]["prev"]["live"],
                         )
                     else:
                         p.transplant_type = "cadaver"
-                        p.time_on_waiting_list = calculate_time_to_event(
+                        p.remaining_time_on_transplant_list = calculate_time_to_event(
                             self.rng,
-                            scale=self.config.tw_cadTx_initialisation[p.age_group][
+                            scale=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "scale"
                             ],
-                            shape=self.config.tw_cadTx_initialisation[p.age_group][
+                            shape=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "shape"
                             ],
                             multiplier=self.config.multipliers["tw"]["prev"]["cadaver"],
@@ -338,7 +338,7 @@ class Model:
                 ):
                     # they don't receive a transplant in the simulation period
                     p.transplant_suitable = True
-                    p.time_on_waiting_list = (
+                    p.remaining_time_on_transplant_list = (
                         self.config.sim_duration + 1
                     )  # they're listed but don't receive a transplant in the simulation period
                     p.time_until_death = calculate_time_to_event(
@@ -380,24 +380,24 @@ class Model:
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
-                        p.time_on_waiting_list = calculate_time_to_event(
+                        p.remaining_time_on_transplant_list = calculate_time_to_event(
                             self.rng,
-                            scale=self.config.tw_liveTx_initialisation[p.age_group][
+                            scale=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "scale"
                             ],
-                            shape=self.config.tw_liveTx_initialisation[p.age_group][
+                            shape=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "shape"
                             ],
                             multiplier=self.config.multipliers["tw"]["prev"]["live"],
                         )
                     else:
                         p.transplant_type = "cadaver"
-                        p.time_on_waiting_list = calculate_time_to_event(
+                        p.remaining_time_on_transplant_list = calculate_time_to_event(
                             self.rng,
-                            scale=self.config.tw_cadTx_initialisation[p.age_group][
+                            scale=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "scale"
                             ],
-                            shape=self.config.tw_cadTx_initialisation[p.age_group][
+                            shape=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "shape"
                             ],
                             multiplier=self.config.multipliers["tw"]["prev"]["cadaver"],
@@ -569,7 +569,7 @@ class Model:
                         ][patient.age_group]["shape"],
                         multiplier=self.config.multipliers["ttd"]["inc"],
                     )
-                patient.time_on_waiting_list = (
+                patient.remaining_time_on_transplant_list = (
                     self.config.sim_duration + 1
                 )  # they're listed but don't receive a transplant in the simulation period
                 if self.config.trace:
@@ -619,6 +619,18 @@ class Model:
                         # Patient starts dialysis whilst waiting for transplant
                         patient.pre_emptive_transplant = False
                         patient.time_enters_waiting_list = self.env.now
+                        patient.remaining_time_on_transplant_list = (
+                            calculate_time_to_event(
+                                self.rng,
+                                scale=self.config.tw_liveTx["incidence"][
+                                    patient.age_group
+                                ]["scale"],
+                                shape=self.config.tw_liveTx["incidence"][
+                                    patient.age_group
+                                ]["shape"],
+                                multiplier=self.config.multipliers["tw"]["inc"]["live"],
+                            )
+                        )  # sample the time they'll be waiting for transplant
                         if self.config.trace:
                             print(
                                 f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant at time {self.env.now}."
@@ -647,7 +659,20 @@ class Model:
                         # Patient starts dialysis whilst waiting for transplant
                         patient.pre_emptive_transplant = False
                         patient.time_enters_waiting_list = self.env.now
-
+                        patient.remaining_time_on_transplant_list = (
+                            calculate_time_to_event(
+                                self.rng,
+                                scale=self.config.tw_cadTx["incidence"][
+                                    patient.age_group
+                                ]["scale"],
+                                shape=self.config.tw_cadTx["incidence"][
+                                    patient.age_group
+                                ]["shape"],
+                                multiplier=self.config.multipliers["tw"]["inc"][
+                                    "cadaver"
+                                ],
+                            )
+                        )
                         if self.config.trace:
                             print(
                                 f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant at time {self.env.now}."
@@ -884,7 +909,7 @@ class Model:
             next_event = ["start_dialysis", "pre_emptive_transplant", "death"]
             time_to_next_event = [
                 sampled_wait_time,
-                patient.time_on_waiting_list,
+                patient.remaining_time_on_transplant_list,
                 patient.time_until_death,
             ]
             event_time = np.min(time_to_next_event)
@@ -901,6 +926,7 @@ class Model:
                 )
                 yield self.env.timeout(event_time)
                 patient.time_until_death -= event_time
+                patient.remaining_time_on_transplant_list -= event_time
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} has pre-emptive {patient.transplant_type} transplant at time {self.env.now}."
@@ -917,6 +943,7 @@ class Model:
                 )
                 yield self.env.timeout(event_time)
                 patient.time_until_death -= event_time
+                patient.remaining_time_on_transplant_list -= event_time
                 patient.time_on_waiting_list -= (
                     event_time  ## remove time waiting from total time on waiting list
                 )
@@ -990,7 +1017,7 @@ class Model:
         time_to_next_event = [
             sampled_time,
             patient.time_until_death,
-            patient.time_on_waiting_list,
+            patient.remaining_time_on_transplant_list,
         ]
         ## now we judge what the next step is based on smallest time to transplant, modality change or death
         if not patient.transplant_suitable:
@@ -1024,6 +1051,7 @@ class Model:
                 yield self.env.timeout(event_time)
                 patient.time_on_dialysis[patient.dialysis_modality] = event_time
                 patient.time_until_death -= event_time
+
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} changed dialysis modality at time {self.env.now}."
@@ -1061,6 +1089,7 @@ class Model:
                 yield self.env.timeout(event_time)
                 patient.time_on_dialysis[patient.dialysis_modality] = event_time
                 patient.time_until_death -= event_time
+                patient.remaining_time_on_transplant_list -= event_time
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} changed dialysis modality at time {self.env.now}."
@@ -1079,6 +1108,7 @@ class Model:
                 yield self.env.timeout(event_time)
                 patient.time_on_dialysis[patient.dialysis_modality] = event_time
                 patient.time_until_death -= event_time
+                patient.remaining_time_on_transplant_list -= event_time
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} has {patient.transplant_type} transplant at time {self.env.now}."

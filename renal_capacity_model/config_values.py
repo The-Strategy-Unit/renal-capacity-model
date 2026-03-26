@@ -159,7 +159,7 @@ national_config_dict = {
         5: 0.24,
         6: 0.39,
     },
-    "referral_dist": {"early": 0.82, "late": 0.18},
+    "referral_dist": {y: {"early": 0.82, "late": 0.18} for y in range(1, 14)},
     "con_care_dist": {
         y: {1: 0.1, 2: 0.1, 3: 0.1, 4: 0.1, 5: 0.25, 6: 0.5} for y in range(1, 14)
     },
@@ -380,41 +380,44 @@ ttd_krt_values = {  ## weibull shape and scale parameters
     },
 }
 
-tw_cadTx_values = {
-    1: {"shape": 1.12, "scale": 719},
-    2: {"shape": 1.23, "scale": 734},
-    3: {"shape": 1.31, "scale": 794},
-    4: {"shape": 1.31, "scale": 762},
-    5: {"shape": 1.23, "scale": 619},
-    6: {"shape": 1.02, "scale": 385},
+tw_cadTx = {
+    "initialisation": {
+        1: {"shape": 1.12, "scale": 1336},
+        2: {"shape": 1.13, "scale": 1163},
+        3: {"shape": 1.22, "scale": 1194},
+        4: {"shape": 1.26, "scale": 1023},
+        5: {"shape": 1.28, "scale": 839},
+        6: {"shape": 1.28, "scale": 409},
+    },
+    "incidence": {
+        1: {"shape": 1.12, "scale": 719},
+        2: {"shape": 1.23, "scale": 734},
+        3: {"shape": 1.31, "scale": 794},
+        4: {"shape": 1.31, "scale": 762},
+        5: {"shape": 1.23, "scale": 619},
+        6: {"shape": 1.02, "scale": 385},
+    },
 }
 
-tw_liveTx_values = {
-    1: {"shape": 1.03, "scale": 399},
-    2: {"shape": 1.06, "scale": 464},
-    3: {"shape": 1.08, "scale": 417},
-    4: {"shape": 1.09, "scale": 420},
-    5: {"shape": 1.22, "scale": 391},
-    6: {"shape": 1.01, "scale": 342},
+tw_liveTx = {
+    "initialisation": {
+        1: {"shape": 0.96, "scale": 752},
+        2: {"shape": 1.05, "scale": 1006},
+        3: {"shape": 0.96, "scale": 903},
+        4: {"shape": 1.01, "scale": 665},
+        5: {"shape": 1.27, "scale": 765},
+        6: {"shape": 1.27, "scale": 765},
+    },
+    "incidence": {
+        1: {"shape": 1.03, "scale": 399},
+        2: {"shape": 1.06, "scale": 464},
+        3: {"shape": 1.08, "scale": 417},
+        4: {"shape": 1.09, "scale": 420},
+        5: {"shape": 1.22, "scale": 391},
+        6: {"shape": 1.01, "scale": 342},
+    },
 }
 
-tw_cadTx_initialisation_values = {
-    1: {"shape": 1.12, "scale": 1336},
-    2: {"shape": 1.13, "scale": 1163},
-    3: {"shape": 1.22, "scale": 1194},
-    4: {"shape": 1.26, "scale": 1023},
-    5: {"shape": 1.28, "scale": 839},
-    6: {"shape": 1.28, "scale": 409},
-}
-
-tw_liveTx_initialisation_values = {
-    1: {"shape": 0.96, "scale": 752},
-    2: {"shape": 1.05, "scale": 1006},
-    3: {"shape": 0.96, "scale": 903},
-    4: {"shape": 1.01, "scale": 665},
-    5: {"shape": 1.27, "scale": 765},
-    6: {"shape": 1.27, "scale": 765},
-}
 
 # Time waiting before dialysis
 tw_before_dialysis_values = {
