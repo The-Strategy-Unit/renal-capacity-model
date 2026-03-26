@@ -244,8 +244,58 @@ def load_scenario_from_excel(
     }
 
     config_from_excel["referral_dist"] = {
-        "early": input_scenario.iat[9, 1],
-        "late": input_scenario.iat[10, 1],
+        1: {
+            "early": input_scenario.iat[9, 1],
+            "late": input_scenario.iat[10, 1],
+        },
+        2: {
+            "early": input_scenario.iat[9, 2],
+            "late": input_scenario.iat[10, 2],
+        },
+        3: {
+            "early": input_scenario.iat[9, 3],
+            "late": input_scenario.iat[10, 3],
+        },
+        4: {
+            "early": input_scenario.iat[9, 4],
+            "late": input_scenario.iat[10, 4],
+        },
+        5: {
+            "early": input_scenario.iat[9, 5],
+            "late": input_scenario.iat[10, 5],
+        },
+        6: {
+            "early": input_scenario.iat[9, 6],
+            "late": input_scenario.iat[10, 6],
+        },
+        7: {
+            "early": input_scenario.iat[9, 7],
+            "late": input_scenario.iat[10, 7],
+        },
+        8: {
+            "early": input_scenario.iat[9, 8],
+            "late": input_scenario.iat[10, 8],
+        },
+        9: {
+            "early": input_scenario.iat[9, 9],
+            "late": input_scenario.iat[10, 9],
+        },
+        10: {
+            "early": input_scenario.iat[9, 10],
+            "late": input_scenario.iat[10, 10],
+        },
+        11: {
+            "early": input_scenario.iat[9, 11],
+            "late": input_scenario.iat[10, 11],
+        },
+        12: {
+            "early": input_scenario.iat[9, 12],
+            "late": input_scenario.iat[10, 12],
+        },
+        13: {
+            "early": input_scenario.iat[9, 13],
+            "late": input_scenario.iat[10, 13],
+        },
     }
 
     config_from_excel["con_care_dist"] = {
