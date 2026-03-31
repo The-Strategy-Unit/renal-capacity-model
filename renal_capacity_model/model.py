@@ -118,7 +118,7 @@ class Model:
             yield self.env.timeout(sampled_con_care_time)
             self.patients_in_system[patient_type] -= 1
             # print(len(self.patient_objects))
-            self.patient_objects.remove(p)
+            # self.patient_objects.remove(p)
             ##print(len(self.patient_objects))
             if self.config.trace:
                 print(
@@ -220,7 +220,11 @@ class Model:
                             multiplier=self.config.multipliers["tw"]["prev"]["cadaver"],
                         )
                 p.pre_emptive_transplant = False
-            self.processes[p.id] = self.env.process(self.start_dialysis_modality(p))
+            try:
+                self.processes[p.id] = self.env.process(self.start_dialysis_modality(p))
+            except simpy.Interrupt:
+                pass  # this can happen when a patient switches modality due to intervention
+
         elif location == "hhd":
             p.dialysis_modality = "hhd"
             if (
@@ -316,7 +320,10 @@ class Model:
                             multiplier=self.config.multipliers["tw"]["prev"]["cadaver"],
                         )
                 p.pre_emptive_transplant = False
-            self.processes[p.id] = self.env.process(self.start_dialysis_modality(p))
+            try:
+                self.processes[p.id] = self.env.process(self.start_dialysis_modality(p))
+            except simpy.Interrupt:
+                pass  # this can happen when a patient switches modality due to intervention
         elif location == "pd":
             p.dialysis_modality = "pd"
             if (
@@ -412,7 +419,10 @@ class Model:
                             multiplier=self.config.multipliers["tw"]["prev"]["cadaver"],
                         )
                 p.pre_emptive_transplant = False
-            self.processes[p.id] = self.env.process(self.start_dialysis_modality(p))
+            try:
+                self.processes[p.id] = self.env.process(self.start_dialysis_modality(p))
+            except simpy.Interrupt:
+                pass  # this can happen when a patient switches modality due to intervention
         elif "transplant" in location:
             transplant_type = location.split("_")[0]
             p.transplant_suitable = True
@@ -522,7 +532,7 @@ class Model:
         )
         ##print(len(self.patient_objects))
         self.patients_in_system[p.patient_type] -= 1
-        self.patient_objects.remove(p)
+        # self.patient_objects.remove(p)
         ##print(len(self.patient_objects))
         if self.config.trace:
             print(
@@ -752,11 +762,13 @@ class Model:
                 patient.dialysis_modality = "ichd"
             else:
                 patient.dialysis_modality = "hhd"
-
-        self.processes[patient.id] = self.env.process(
-            self.start_dialysis_modality(patient)
-        )
-        yield self.env.timeout(0)
+        try:
+            self.processes[patient.id] = self.env.process(
+                self.start_dialysis_modality(patient)
+            )
+            yield self.env.timeout(0)
+        except simpy.Interrupt:
+            pass  # this can happen when a patient switches modality due to intervention
 
     def start_transplant(self, patient: Patient) -> Generator:
         """Function containing the logic for the transplant pathway
@@ -892,7 +904,7 @@ class Model:
 
             self.patients_in_system[patient.patient_type] -= 1
             ##print(len(self.patient_objects))
-            self.patient_objects.remove(patient)
+            # self.patient_objects.remove(patient)
             ##print(len(self.patient_objects))
             if self.config.trace:
                 print(
@@ -980,7 +992,7 @@ class Model:
                 yield self.env.timeout(event_time)
                 self.patients_in_system[patient.patient_type] -= 1
                 ##print(len(self.patient_objects))
-                self.patient_objects.remove(patient)
+                # self.patient_objects.remove(patient)
                 ##print(len(self.patient_objects))
                 if self.config.trace:
                     print(
@@ -1060,7 +1072,7 @@ class Model:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} died on dialysis at time {self.env.now}."
                     )
-                self.patient_objects.remove(patient)
+                # self.patient_objects.remove(patient)
                 ##print(len(self.patient_objects))
 
             else:  # modality change
@@ -1098,7 +1110,7 @@ class Model:
                 patient.time_on_dialysis[patient.dialysis_modality] = event_time
                 self.patients_in_system[patient.patient_type] -= 1
                 ##print(len(self.patient_objects))
-                self.patient_objects.remove(patient)
+                # self.patient_objects.remove(patient)
                 ##print(len(self.patient_objects))
                 if self.config.trace:
                     print(
@@ -1162,15 +1174,33 @@ class Model:
         years = calculate_lookup_year(self.config.sim_duration)
         for i in range(1, years + 1):
             yield (self.env.timeout(365))
-            dialysis_activity = [
-                getattr(i, "dialysis_modality") for i in self.patient_objects
-            ]
-            hhd_count = dialysis_activity.count("hhd")
-            total_dialysis_count = (
-                dialysis_activity.count("hhd")
-                + dialysis_activity.count("ichd")
-                + dialysis_activity.count("pd")
-            )
+            # dialysis_activity = [
+            #    getattr(i, "dialysis_modality") for i in self.patient_objects
+            # ]
+            ##hhd_count2 = dialysis_activity.count("hhd")
+            last_entries = self.event_log.groupby("patient_id").tail(1)
+            hhd_count = last_entries[
+                (last_entries["activity_from"] == "hhd")
+                & (
+                    (last_entries["activity_to"] != "death")
+                    | (
+                        last_entries["time_starting_activity_from"]
+                        + last_entries["time_spent_in_activity_from"]
+                        > self.env.now
+                    )
+                )
+            ].shape[0]
+            total_dialysis_count = last_entries[
+                (last_entries["activity_from"].isin(["hhd", "ichd", "pd"]))
+                & (
+                    (last_entries["activity_to"] != "death")
+                    | (
+                        last_entries["time_starting_activity_from"]
+                        + last_entries["time_spent_in_activity_from"]
+                        > self.env.now
+                    )
+                )
+            ].shape[0]
             hhd_proportion = (
                 hhd_count / total_dialysis_count if total_dialysis_count > 0 else 0
             )
@@ -1181,9 +1211,22 @@ class Model:
                 hhd_target = self.config.hhd_intervention_target[i]
                 if hhd_proportion < hhd_target:
                     ## we take from ichd and give to hhd
-                    ichd_patients = [
-                        i for i in self.patient_objects if i.dialysis_modality == "ichd"
-                    ]
+                    # ichd_patients = [
+                    #    i for i in self.patient_objects if i.dialysis_modality == "ichd"
+                    # ]
+                    ichd_patients = last_entries[
+                        (last_entries["activity_from"] == "ichd")
+                        & (
+                            (last_entries["activity_to"] != "death")
+                            | (
+                                last_entries["time_starting_activity_from"]
+                                + last_entries["time_spent_in_activity_from"]
+                                > self.env.now
+                            )
+                        )
+                    ][
+                        "patient_id"
+                    ].tolist()  # get list of patients currently on ichd
                     ichd_patients = np.array(ichd_patients)
                     total_patients_to_move = int(
                         hhd_target * total_dialysis_count - hhd_count
@@ -1192,20 +1235,39 @@ class Model:
                         ichd_patients, size=total_patients_to_move, replace=False
                     )
                     # randomly select patients to move from ichd to hhd
-                    for patient in patients_to_move:
-                        patient.dialysis_modality = "hhd"
-                        self.stop_patient(
-                            patient
-                        )  ## interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
-                        self.processes[patient.id] = self.env.process(
-                            self.start_dialysis_modality(patient)
-                        )
-                        logger.info(f"Patient {patient.id} moved from ICHD to HHD.")
+                    for patient in self.patient_objects:
+                        if patient.id in patients_to_move:
+                            patient.dialysis_modality = "hhd"
+                            self.stop_patient(
+                                self.processes[
+                                    patient.id
+                                ]  ## pass in the process we want to interrupt
+                            )  ## interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
+                            try:
+                                self.processes[patient.id] = self.env.process(
+                                    self.start_dialysis_modality(patient)
+                                )
+                            except simpy.Interrupt:
+                                pass  # this can happen when a patient switches modality due to intervention
+                            logger.info(f"Patient {patient.id} moved from ICHD to HHD.")
                 else:
                     # we take from hhd and give to ichd
-                    hhd_patients = [
-                        i for i in self.patient_objects if i.dialysis_modality == "hhd"
-                    ]
+                    # hhd_patients = [
+                    #    i for i in self.patient_objects if i.dialysis_modality == "hhd"
+                    # ]
+                    hhd_patients = last_entries[
+                        (last_entries["activity_from"] == "hhd")
+                        & (
+                            (last_entries["activity_to"] != "death")
+                            | (
+                                last_entries["time_starting_activity_from"]
+                                + last_entries["time_spent_in_activity_from"]
+                                > self.env.now
+                            )
+                        )
+                    ][
+                        "patient_id"
+                    ].tolist()  # get list of patients currently on hhd
                     hhd_patients = np.array(hhd_patients)
                     total_patients_to_move = -int(
                         hhd_target * total_dialysis_count - hhd_count
@@ -1213,25 +1275,35 @@ class Model:
                     patients_to_move = np.random.choice(
                         hhd_patients, size=total_patients_to_move, replace=False
                     )
-                    for patient in patients_to_move:
-                        patient.dialysis_modality = "ichd"
-                        self.stop_patient(
-                            patient
-                        )  ## interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
-                        self.processes[patient.id] = self.env.process(
-                            self.start_dialysis_modality(patient)
-                        )
-                        logger.info(f"Patient {patient.id} moved from HHD to ICHD.")
+                    for patient in self.patient_objects:
+                        if patient.id in patients_to_move:
+                            patient.dialysis_modality = "ichd"
+                            self.stop_patient(
+                                self.processes[
+                                    patient.id
+                                ]  ## pass in the process we want to interrupt
+                            )  ## interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
+                            try:
+                                self.processes[patient.id] = self.env.process(
+                                    self.start_dialysis_modality(patient)
+                                )
+                            except simpy.Interrupt:
+                                pass  # this can happen when a patient switches modality due to intervention
+                            logger.info(f"Patient {patient.id} moved from HHD to ICHD.")
             else:
                 logger.info(
                     f"Proportion of patients on Home Haemodialysis: {hhd_proportion:.2%} with no intervention in place."
                 )
 
-    def stop_patient(self, patient):
-        proc = self.processes.get(patient.id)
+    def stop_patient(self, process):
+        proc = process
+        yield self.env.timeout(0)
         if proc:
             proc.interrupt(
-                f"Stopped {patient.id} undergoing {patient.dialysis_modality}"
+                cause=f"Stopped {proc.patient.id} undergoing {proc.patient.dialysis_modality}"
+            )
+            print(
+                f"Stopped {proc.patient.id} undergoing {proc.patient.dialysis_modality}"
             )
 
     def save_model_iteration_result_files(self, df_name: str):
