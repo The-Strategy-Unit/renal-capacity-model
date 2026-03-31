@@ -12,6 +12,9 @@ logger = get_logger(__name__)
 national_config_dict = {
     "region": "England",
     "centre": "All",
+    "hhd_intervention_target": {
+        y: {""} for y in range(1, 14)
+    },  # target proportion of patients on HHD for the HHD capacity intervention - if "" then no intervention is applied
     "multipliers": {
         "ttd": {
             "inc": 1,

@@ -44,3 +44,6 @@ class Patient:
         self.time_on_waiting_list: float = 0
         self.time_enters_waiting_list: float | None = None
         self.time_of_transplant: float | None = None
+        self.process = (
+            None  # simpy process for the patient, assigned when they enter the model
+        )

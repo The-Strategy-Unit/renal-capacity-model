@@ -1173,5 +1173,20 @@ def load_scenario_from_excel(
         "pd": input_scenario.iat[38, 1],
         "transplant": input_scenario.iat[39, 1],
     }
+    config_from_excel["hhd_intervention_target"] = {
+        1: input_scenario.iat[253, 2],
+        2: input_scenario.iat[253, 3],
+        3: input_scenario.iat[253, 4],
+        4: input_scenario.iat[253, 5],
+        5: input_scenario.iat[253, 6],
+        6: input_scenario.iat[253, 7],
+        7: input_scenario.iat[253, 8],
+        8: input_scenario.iat[253, 9],
+        9: input_scenario.iat[253, 10],
+        10: input_scenario.iat[253, 11],
+        11: input_scenario.iat[253, 12],
+        12: input_scenario.iat[253, 13],
+        13: input_scenario.iat[253, 14],
+    }
 
     return config_from_excel
