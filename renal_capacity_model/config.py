@@ -39,7 +39,7 @@ class Config:
         """
         self.region = config_dict["region"]
         self.centre = config_dict["centre"]
-        self.trace = config_dict.get("trace", True)
+        self.trace = config_dict.get("trace", False)
         self.initialise_prevalent_patients = config_dict.get(
             "initialise_prevalent_patients", True
         )  # whether to initialise model with prevalent counts (takes a long time using default national values)
