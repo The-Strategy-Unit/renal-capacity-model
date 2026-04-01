@@ -1301,7 +1301,7 @@ class Model:
                 hhd_count / total_dialysis_count if total_dialysis_count > 0 else 0
             )
             which_year = calculate_lookup_year(self.env.now)
-            if int(self.config.hhd_intervention_target[which_year]) > 0:
+            if self.config.hhd_intervention_target[which_year] > 0:
                 logger.info(
                     f"HHD capacity intervention in place from year {which_year} with target of {self.config.hhd_intervention_target[which_year]:.2%} of patients on HHD."
                 )
