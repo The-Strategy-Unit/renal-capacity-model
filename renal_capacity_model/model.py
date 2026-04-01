@@ -3,7 +3,6 @@ Module containing the Model class. Contains most of the logic for the simulation
 """
 
 import simpy
-import random
 from renal_capacity_model.entity import Patient
 import numpy as np
 from renal_capacity_model.config import Config
