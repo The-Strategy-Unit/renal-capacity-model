@@ -1064,7 +1064,6 @@ class Model:
         Yields:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
         """
-
         if self.config.trace:
             print(
                 f"Patient {patient.id} of age group {patient.age_group} starts {patient.dialysis_modality} at time {self.env.now}."
@@ -1104,14 +1103,25 @@ class Model:
             event_time = np.min(time_to_next_event[:2])
             event = next_event[np.argmin(time_to_next_event[:2])]
             if event == "death":
+                # Capture now before the yield, as process can be interrupted
+                activity_start_time = float(self.env.now)
+
+                try:
+                    yield self.env.timeout(event_time)
+                except simpy.Interrupt:
+                    if self.config.trace:
+                        print(f"Patient {patient.id} ICHD process interrupted at t={self.env.now}")
+                    return
+
+                # Only log after yield to avoid duplicate rows if interrupted
                 self._update_event_log(
                     patient,
                     patient.dialysis_modality,
                     "death",
-                    float(self.env.now),
+                    activity_start_time,
                     event_time,
                 )
-                yield self.env.timeout(event_time)
+
                 patient.time_on_dialysis[patient.dialysis_modality] = event_time
                 self.patients_in_system[patient.patient_type] -= 1
                 ##print(len(self.patient_objects))
@@ -1123,15 +1133,26 @@ class Model:
                 ##print(len(self.patient_objects))
 
             else:  # modality change
+                # Capture now before the yield, as process can be interrupted
+                activity_start_time = float(self.env.now)
+
+                try:
+                    yield self.env.timeout(event_time)
+                except simpy.Interrupt:
+                    if self.config.trace:
+                        print(f"Patient {patient.id} ICHD process interrupted at t={self.env.now}")
+                    return
+
+                # Only log after yield to avoid duplicate rows if interrupted
                 self._update_event_log(
                     patient,
                     patient.dialysis_modality,
                     "modality_allocation",
-                    float(self.env.now),
+                    activity_start_time,
                     event_time,
                 )
                 patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again so let's just always do this
-                yield self.env.timeout(event_time)
+
                 patient.time_on_dialysis[patient.dialysis_modality] = event_time
                 patient.time_until_death -= event_time
 
@@ -1148,14 +1169,25 @@ class Model:
             print(time_to_next_event)
             event = next_event[np.argmin(time_to_next_event)]
             if event == "death":
+                # Capture now before the yield, as process can be interrupted
+                activity_start_time = float(self.env.now)
+
+                try:
+                    yield self.env.timeout(event_time)
+                except simpy.Interrupt:
+                    if self.config.trace:
+                        print(f"Patient {patient.id} ICHD process interrupted at t={self.env.now}")
+                    return
+
+                # Only log after yield to avoid duplicate rows if interrupted
                 self._update_event_log(
                     patient,
                     patient.dialysis_modality,
                     "death",
-                    float(self.env.now),
+                    activity_start_time,
                     event_time,
                 )
-                yield self.env.timeout(event_time)
+
                 patient.time_on_dialysis[patient.dialysis_modality] = event_time
                 self.patients_in_system[patient.patient_type] -= 1
                 ##print(len(self.patient_objects))
@@ -1166,15 +1198,26 @@ class Model:
                         f"Patient {patient.id} of age group {patient.age_group} died on dialysis at time {self.env.now}."
                     )
             elif event == "modality_change":  # modality change
+                # Capture now before the yield, as process can be interrupted
+                activity_start_time = float(self.env.now)
+
+                try:
+                    yield self.env.timeout(event_time)
+                except simpy.Interrupt:
+                    if self.config.trace:
+                        print(f"Patient {patient.id} ICHD process interrupted at t={self.env.now}")
+                    return
+
+                # Only log after yield to avoid duplicate rows if interrupted
                 self._update_event_log(
                     patient,
                     patient.dialysis_modality,
                     "modality_allocation",
-                    float(self.env.now),
+                    activity_start_time,
                     event_time,
                 )
                 patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again so let's just always do this
-                yield self.env.timeout(event_time)
+
                 patient.time_on_dialysis[patient.dialysis_modality] = event_time
                 patient.time_until_death -= event_time
                 patient.remaining_time_on_transplant_list -= event_time
@@ -1192,15 +1235,26 @@ class Model:
 
                 self.env.process(self.start_dialysis_modality_allocation(patient))
             else:  # transplant
+                # Capture now before the yield, as process can be interrupted
+                activity_start_time = float(self.env.now)
+
+                try:
+                    yield self.env.timeout(event_time)
+                except simpy.Interrupt:
+                    if self.config.trace:
+                        print(f"Patient {patient.id} ICHD process interrupted at t={self.env.now}")
+                    return
+
+                # Only log after yield to avoid duplicate rows if interrupted
                 self._update_event_log(
                     patient,
                     patient.dialysis_modality,
                     patient.transplant_type,
-                    float(self.env.now),
+                    activity_start_time,
                     event_time,
                 )
                 patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again
-                yield self.env.timeout(event_time)
+
                 patient.time_on_dialysis[patient.dialysis_modality] = event_time
                 patient.time_until_death -= event_time
                 patient.remaining_time_on_transplant_list -= event_time
@@ -1301,11 +1355,14 @@ class Model:
                     for patient in self.patient_objects:
                         if patient.id in patients_to_move:
                             patient.dialysis_modality = "hhd"
+
+                            # pass in the process we want to interrupt
+                            # interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
                             self.stop_patient(
-                                self.processes[
-                                    patient.id
-                                ]  ## pass in the process we want to interrupt
-                            )  ## interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
+                                process=self.processes[patient.id],
+                                patient=patient
+                            )  
+
                             patient.time_until_death -= np.float64(
                                 self.env.now
                             ) - np.float64(patient.time_starts_dialysis)
@@ -1350,11 +1407,14 @@ class Model:
                     for patient in self.patient_objects:
                         if patient.id in patients_to_move:
                             patient.dialysis_modality = "ichd"
+                            
+                            # pass in the process we want to interrupt
+                            # interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
                             self.stop_patient(
-                                self.processes[
-                                    patient.id
-                                ]  ## pass in the process we want to interrupt
-                            )  ## interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
+                                process=self.processes[patient.id],
+                                patient=patient
+                            )  
+
                             patient.time_until_death -= np.float64(
                                 self.env.now
                             ) - np.float64(patient.time_starts_dialysis)
@@ -1375,15 +1435,12 @@ class Model:
                     f"Proportion of patients on Home Haemodialysis: {hhd_proportion:.2%} with no intervention in place."
                 )
 
-    def stop_patient(self, process):
+    def stop_patient(self, process, patient):
         proc = process
-        yield self.env.timeout(0)
-        if proc:
-            proc.interrupt(
-                cause=f"Stopped {proc.patient.id} undergoing {proc.patient.dialysis_modality}"
-            )
+        if proc and proc.is_alive:
+            proc.interrupt(cause="Modality changed by HHD intervention")
             print(
-                f"Stopped {proc.patient.id} undergoing {proc.patient.dialysis_modality}"
+                f"Stopped {patient.id} undergoing {patient.dialysis_modality}"
             )
 
     def save_model_iteration_result_files(self, df_name: str):
