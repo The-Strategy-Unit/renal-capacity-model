@@ -1299,9 +1299,7 @@ class Model:
                                 > self.env.now
                             )
                         )
-                    ][
-                        "patient_id"
-                    ].tolist()  # get list of patients currently on ichd
+                    ]["patient_id"].tolist()  # get list of patients currently on ichd
                     ichd_patients = np.array(ichd_patients)
                     total_patients_to_move = int(
                         hhd_target * total_dialysis_count - hhd_count
@@ -1351,9 +1349,7 @@ class Model:
                                 > self.env.now
                             )
                         )
-                    ][
-                        "patient_id"
-                    ].tolist()  # get list of patients currently on hhd
+                    ]["patient_id"].tolist()  # get list of patients currently on hhd
                     hhd_patients = np.array(hhd_patients)
                     total_patients_to_move = -int(
                         hhd_target * total_dialysis_count - hhd_count
