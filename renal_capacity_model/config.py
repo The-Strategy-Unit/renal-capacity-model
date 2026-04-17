@@ -43,7 +43,7 @@ class Config:
         self.initialise_prevalent_patients = config_dict.get(
             "initialise_prevalent_patients", True
         )  # whether to initialise model with prevalent counts (takes a long time using default national values)
-        self.number_of_runs = config_dict.get("number_of_runs", 10)
+        self.number_of_runs = config_dict.get("number_of_runs", 20)
         self.sim_duration = config_dict.get(
             "sim_duration", int(13 * 365)
         )  # in days, but should be a multiple of 365 i.e. years.
