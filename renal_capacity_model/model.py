@@ -1321,7 +1321,7 @@ class Model:
                             patient.time_until_death -= np.float64(
                                 self.env.now
                             ) - np.float64(patient.time_starts_dialysis)
-                            if patient.transplant_suitable:
+                            if patient.transplant_suitable and patient.remaining_time_on_transplant_list:
                                 patient.remaining_time_on_transplant_list -= np.float64(
                                     self.env.now
                                 ) - np.float64(patient.time_starts_dialysis)
