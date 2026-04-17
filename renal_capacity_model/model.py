@@ -1003,13 +1003,6 @@ class Model:
                 yield self.env.timeout(event_time)
                 patient.time_until_death -= event_time
                 patient.remaining_time_on_transplant_list -= event_time
-                if patient.remaining_time_on_transplant_list < 0:
-                    print(
-                        "OOPS:Negative time on transplant list for patient ",
-                        patient.id,
-                        "time is",
-                        patient.remaining_time_on_transplant_list,
-                    )
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant at time {self.env.now}."
@@ -1200,13 +1193,6 @@ class Model:
                 patient.time_on_dialysis[patient.dialysis_modality] = event_time
                 patient.time_until_death -= event_time
                 patient.remaining_time_on_transplant_list -= event_time
-                if patient.remaining_time_on_transplant_list < 0:
-                    print(
-                        "OOPSY:Negative time on transplant list for patient ",
-                        patient.id,
-                        "time is",
-                        patient.remaining_time_on_transplant_list,
-                    )
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} changed dialysis modality at time {self.env.now}."
@@ -1238,13 +1224,6 @@ class Model:
                 patient.time_on_dialysis[patient.dialysis_modality] = event_time
                 patient.time_until_death -= event_time
                 patient.remaining_time_on_transplant_list -= event_time
-                if patient.remaining_time_on_transplant_list < 0:
-                    print(
-                        "GOSH:Negative time on transplant list for patient ",
-                        patient.id,
-                        "time is",
-                        patient.remaining_time_on_transplant_list,
-                    )
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} has {patient.transplant_type} transplant at time {self.env.now}."
@@ -1320,7 +1299,9 @@ class Model:
                                 > self.env.now
                             )
                         )
-                    ]["patient_id"].tolist()  # get list of patients currently on ichd
+                    ][
+                        "patient_id"
+                    ].tolist()  # get list of patients currently on ichd
                     ichd_patients = np.array(ichd_patients)
                     total_patients_to_move = int(
                         hhd_target * total_dialysis_count - hhd_count
@@ -1370,7 +1351,9 @@ class Model:
                                 > self.env.now
                             )
                         )
-                    ]["patient_id"].tolist()  # get list of patients currently on hhd
+                    ][
+                        "patient_id"
+                    ].tolist()  # get list of patients currently on hhd
                     hhd_patients = np.array(hhd_patients)
                     total_patients_to_move = -int(
                         hhd_target * total_dialysis_count - hhd_count
