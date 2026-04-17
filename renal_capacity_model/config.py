@@ -13,10 +13,8 @@ from renal_capacity_model.config_values import (
     ttd_con_care_values,
     tw_before_dialysis_values,
     ttd_krt_values,
-    tw_cadTx_values,
-    tw_liveTx_values,
-    tw_cadTx_initialisation_values,
-    tw_liveTx_initialisation_values,
+    tw_cadTx,
+    tw_liveTx,
 )
 from renal_capacity_model.utils import get_logger
 
@@ -45,7 +43,7 @@ class Config:
         self.initialise_prevalent_patients = config_dict.get(
             "initialise_prevalent_patients", True
         )  # whether to initialise model with prevalent counts (takes a long time using default national values)
-        self.number_of_runs = config_dict.get("number_of_runs", 10)
+        self.number_of_runs = config_dict.get("number_of_runs", 20)
         self.sim_duration = config_dict.get(
             "sim_duration", int(13 * 365)
         )  # in days, but should be a multiple of 365 i.e. years.
@@ -81,14 +79,13 @@ class Config:
         # time to event distribution parameters (these are the same regardless of geography)
         self.ttd_con_care = ttd_con_care_values
         self.ttd_krt = ttd_krt_values
-        self.tw_cadTx = tw_cadTx_values
-        self.tw_liveTx = tw_liveTx_values
-        self.tw_cadTx_initialisation = tw_cadTx_initialisation_values
-        self.tw_liveTx_initialisation = tw_liveTx_initialisation_values
+        self.tw_cadTx = tw_cadTx
+        self.tw_liveTx = tw_liveTx
         self.tw_before_dialysis = tw_before_dialysis_values
         self.multipliers = config_dict["multipliers"]
         self.time_to_event_curves = load_time_to_event_curves(
             path_to_time_to_event_curves
         )
+        self.hhd_intervention_target = config_dict["hhd_intervention_target"]
         self.daily_costs = config_dict["daily_costs"]
         logger.info("🔧 Config loaded successfully")

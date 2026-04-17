@@ -29,7 +29,7 @@ def get_yearly_arrival_rate(config: "Config") -> dict[int, dict]:
     years = calculate_lookup_year(config.sim_duration)
     for year in range(1, years + 1):
         mean_arrival_rates[year] = get_arrival_rate(
-            config.arrival_rate[year], config.referral_dist, config.age_dist
+            config.arrival_rate[year], config.referral_dist[year], config.age_dist
         )
     return mean_arrival_rates
 

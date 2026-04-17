@@ -52,8 +52,10 @@ class Model:
         self.rng = rng
         self.patient_types = self.config.mean_iat_over_time_dfs.keys()
         self.patients_in_system: dict = {k: 0 for k in self.patient_types}
+        self.patient_objects: list[Patient] = []
         self.event_log: pd.DataFrame = self._setup_event_log()
         self.run_start_time = run_start_time
+        self.processes = {}
 
     def _setup_event_log(self) -> pd.DataFrame:
         """Sets up DataFrame for recording model events
@@ -90,6 +92,7 @@ class Model:
 
         p = Patient(self.patient_counter, patient_type, 0, patient_flag="prevalent")
         self.patients_in_system[patient_type] += 1
+        self.patient_objects.append(p)
         if location == "conservative_care":
             # these patients are diverted to conservative care. We don't need a process here as all these patients do is wait a while before leaving the system
             if self.config.trace:
@@ -115,9 +118,9 @@ class Model:
                 print(
                     f"Prevalent Patient {p.id} of age group {p.age_group} diverted to conservative care and left the system after {sampled_con_care_time} time units."
                 )
-                # print(self.patients_in_system)
         elif location == "ichd":
             p.dialysis_modality = "ichd"
+            p.time_starts_dialysis = self.env.now
             if (
                 self.rng.uniform(0, 1)
                 > self.config.suitable_for_transplant_dist["prev"][p.age_group]
@@ -146,7 +149,7 @@ class Model:
                 ):
                     # they don't receive a transplant in the simulation period
                     p.transplant_suitable = True
-                    p.time_on_waiting_list = (
+                    p.remaining_time_on_transplant_list = (
                         self.config.sim_duration + 1
                     )  # they're listed but don't receive a transplant in the simulation period
                     p.time_until_death = calculate_time_to_event(
@@ -188,32 +191,47 @@ class Model:
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
-                        p.time_on_waiting_list = calculate_time_to_event(
+                        p.remaining_time_on_transplant_list = calculate_time_to_event(
                             self.rng,
-                            scale=self.config.tw_liveTx_initialisation[p.age_group][
+                            scale=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "scale"
                             ],
-                            shape=self.config.tw_liveTx_initialisation[p.age_group][
+                            shape=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "shape"
                             ],
                             multiplier=self.config.multipliers["tw"]["prev"]["live"],
                         )
+                        if p.remaining_time_on_transplant_list < 0:
+                            print(
+                                "WARNING:Negative time on transplant list for patient ",
+                                p.id,
+                            )
                     else:
                         p.transplant_type = "cadaver"
-                        p.time_on_waiting_list = calculate_time_to_event(
+                        p.remaining_time_on_transplant_list = calculate_time_to_event(
                             self.rng,
-                            scale=self.config.tw_cadTx_initialisation[p.age_group][
+                            scale=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "scale"
                             ],
-                            shape=self.config.tw_cadTx_initialisation[p.age_group][
+                            shape=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "shape"
                             ],
                             multiplier=self.config.multipliers["tw"]["prev"]["cadaver"],
                         )
+                        if p.remaining_time_on_transplant_list < 0:
+                            print(
+                                "WARNING:Negative time on transplant list for patient ",
+                                p.id,
+                            )
                 p.pre_emptive_transplant = False
-            self.env.process(self.start_dialysis_modality(p))
+            try:
+                self.processes[p.id] = self.env.process(self.start_dialysis_modality(p))
+            except simpy.Interrupt:
+                return  # this can happen when a patient switches modality due to intervention
+
         elif location == "hhd":
             p.dialysis_modality = "hhd"
+            p.time_starts_dialysis = self.env.now
             if (
                 self.rng.uniform(0, 1)
                 > self.config.suitable_for_transplant_dist["prev"][p.age_group]
@@ -242,7 +260,7 @@ class Model:
                 ):
                     # they don't receive a transplant in the simulation period
                     p.transplant_suitable = True
-                    p.time_on_waiting_list = (
+                    p.remaining_time_on_transplant_list = (
                         self.config.sim_duration + 1
                     )  # they're listed but don't receive a transplant in the simulation period
                     p.time_until_death = calculate_time_to_event(
@@ -284,32 +302,46 @@ class Model:
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
-                        p.time_on_waiting_list = calculate_time_to_event(
+                        p.remaining_time_on_transplant_list = calculate_time_to_event(
                             self.rng,
-                            scale=self.config.tw_liveTx_initialisation[p.age_group][
+                            scale=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "scale"
                             ],
-                            shape=self.config.tw_liveTx_initialisation[p.age_group][
+                            shape=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "shape"
                             ],
                             multiplier=self.config.multipliers["tw"]["prev"]["live"],
                         )
+                        if p.remaining_time_on_transplant_list < 0:
+                            print(
+                                "WARNING:Negative time on transplant list for patient ",
+                                p.id,
+                            )
                     else:
                         p.transplant_type = "cadaver"
-                        p.time_on_waiting_list = calculate_time_to_event(
+                        p.remaining_time_on_transplant_list = calculate_time_to_event(
                             self.rng,
-                            scale=self.config.tw_cadTx_initialisation[p.age_group][
+                            scale=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "scale"
                             ],
-                            shape=self.config.tw_cadTx_initialisation[p.age_group][
+                            shape=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "shape"
                             ],
                             multiplier=self.config.multipliers["tw"]["prev"]["cadaver"],
                         )
+                        if p.remaining_time_on_transplant_list < 0:
+                            print(
+                                "WARNING:Negative time on transplant list for patient ",
+                                p.id,
+                            )
                 p.pre_emptive_transplant = False
-            self.env.process(self.start_dialysis_modality(p))
+            try:
+                self.processes[p.id] = self.env.process(self.start_dialysis_modality(p))
+            except simpy.Interrupt:
+                return  # this can happen when a patient switches modality due to intervention
         elif location == "pd":
             p.dialysis_modality = "pd"
+            p.time_starts_dialysis = self.env.now
             if (
                 self.rng.uniform(0, 1)
                 > self.config.suitable_for_transplant_dist["prev"][p.age_group]
@@ -338,7 +370,7 @@ class Model:
                 ):
                     # they don't receive a transplant in the simulation period
                     p.transplant_suitable = True
-                    p.time_on_waiting_list = (
+                    p.remaining_time_on_transplant_list = (
                         self.config.sim_duration + 1
                     )  # they're listed but don't receive a transplant in the simulation period
                     p.time_until_death = calculate_time_to_event(
@@ -380,30 +412,43 @@ class Model:
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
-                        p.time_on_waiting_list = calculate_time_to_event(
+                        p.remaining_time_on_transplant_list = calculate_time_to_event(
                             self.rng,
-                            scale=self.config.tw_liveTx_initialisation[p.age_group][
+                            scale=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "scale"
                             ],
-                            shape=self.config.tw_liveTx_initialisation[p.age_group][
+                            shape=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "shape"
                             ],
                             multiplier=self.config.multipliers["tw"]["prev"]["live"],
                         )
+                        if p.remaining_time_on_transplant_list < 0:
+                            print(
+                                "WARNING:Negative time on transplant list for patient ",
+                                p.id,
+                            )
                     else:
                         p.transplant_type = "cadaver"
-                        p.time_on_waiting_list = calculate_time_to_event(
+                        p.remaining_time_on_transplant_list = calculate_time_to_event(
                             self.rng,
-                            scale=self.config.tw_cadTx_initialisation[p.age_group][
+                            scale=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "scale"
                             ],
-                            shape=self.config.tw_cadTx_initialisation[p.age_group][
+                            shape=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "shape"
                             ],
                             multiplier=self.config.multipliers["tw"]["prev"]["cadaver"],
                         )
+                        if p.remaining_time_on_transplant_list < 0:
+                            print(
+                                "WARNING:Negative time on transplant list for patient ",
+                                p.id,
+                            )
                 p.pre_emptive_transplant = False
-            self.env.process(self.start_dialysis_modality(p))
+            try:
+                self.processes[p.id] = self.env.process(self.start_dialysis_modality(p))
+            except simpy.Interrupt:
+                return  # this can happen when a patient switches modality due to intervention
         elif "transplant" in location:
             transplant_type = location.split("_")[0]
             p.transplant_suitable = True
@@ -483,6 +528,7 @@ class Model:
                     f"Patient {p.id} of age group {p.age_group} entered the system at {self.env.now}."
                 )
             self.patients_in_system[patient_type] += 1
+            self.patient_objects.append(p)
 
             year = calculate_lookup_year(self.env.now)
             if self.rng.uniform(0, 1) > self.config.con_care_dist[year][p.age_group]:
@@ -569,7 +615,7 @@ class Model:
                         ][patient.age_group]["shape"],
                         multiplier=self.config.multipliers["ttd"]["inc"],
                     )
-                patient.time_on_waiting_list = (
+                patient.remaining_time_on_transplant_list = (
                     self.config.sim_duration + 1
                 )  # they're listed but don't receive a transplant in the simulation period
                 if self.config.trace:
@@ -619,6 +665,23 @@ class Model:
                         # Patient starts dialysis whilst waiting for transplant
                         patient.pre_emptive_transplant = False
                         patient.time_enters_waiting_list = self.env.now
+                        patient.remaining_time_on_transplant_list = (
+                            calculate_time_to_event(
+                                self.rng,
+                                scale=self.config.tw_liveTx["incidence"][
+                                    patient.age_group
+                                ]["scale"],
+                                shape=self.config.tw_liveTx["incidence"][
+                                    patient.age_group
+                                ]["shape"],
+                                multiplier=self.config.multipliers["tw"]["inc"]["live"],
+                            )
+                        )  # sample the time they'll be waiting for transplant
+                        if patient.remaining_time_on_transplant_list < 0:
+                            print(
+                                "WARNING:Negative time on transplant list for patient ",
+                                patient.id,
+                            )
                         if self.config.trace:
                             print(
                                 f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant at time {self.env.now}."
@@ -647,7 +710,25 @@ class Model:
                         # Patient starts dialysis whilst waiting for transplant
                         patient.pre_emptive_transplant = False
                         patient.time_enters_waiting_list = self.env.now
-
+                        patient.remaining_time_on_transplant_list = (
+                            calculate_time_to_event(
+                                self.rng,
+                                scale=self.config.tw_cadTx["incidence"][
+                                    patient.age_group
+                                ]["scale"],
+                                shape=self.config.tw_cadTx["incidence"][
+                                    patient.age_group
+                                ]["shape"],
+                                multiplier=self.config.multipliers["tw"]["inc"][
+                                    "cadaver"
+                                ],
+                            )
+                        )
+                        if patient.remaining_time_on_transplant_list < 0:
+                            print(
+                                "WARNING:Negative time on transplant list for patient ",
+                                patient.id,
+                            )
                         if self.config.trace:
                             print(
                                 f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant at time {self.env.now}."
@@ -714,9 +795,13 @@ class Model:
                 patient.dialysis_modality = "ichd"
             else:
                 patient.dialysis_modality = "hhd"
-
-        self.env.process(self.start_dialysis_modality(patient))
-        yield self.env.timeout(0)
+        try:
+            self.processes[patient.id] = self.env.process(
+                self.start_dialysis_modality(patient)
+            )
+            yield self.env.timeout(0)
+        except simpy.Interrupt:
+            return  # this can happen when a patient switches modality due to intervention
 
     def start_transplant(self, patient: Patient) -> Generator:
         """Function containing the logic for the transplant pathway
@@ -833,7 +918,7 @@ class Model:
             patient.time_on_dialysis = {"ichd": 0.0, "hhd": 0.0, "pd": 0.0}
             patient.time_living_with_live_transplant = None
             patient.time_living_with_cadaver_transplant = None
-            patient.time_on_waiting_list = 0
+            patient.remaining_time_on_transplant_list = None
             patient.time_enters_waiting_list = None
             patient.time_of_transplant = None
 
@@ -851,7 +936,6 @@ class Model:
             patient.time_living_with_live_transplant = event_time
 
             self.patients_in_system[patient.patient_type] -= 1
-
             if self.config.trace:
                 print(
                     f"Patient {patient.id} of age group {patient.age_group} died after live transplant at time {self.env.now}."
@@ -884,7 +968,7 @@ class Model:
             next_event = ["start_dialysis", "pre_emptive_transplant", "death"]
             time_to_next_event = [
                 sampled_wait_time,
-                patient.time_on_waiting_list,
+                patient.remaining_time_on_transplant_list,
                 patient.time_until_death,
             ]
             event_time = np.min(time_to_next_event)
@@ -901,6 +985,7 @@ class Model:
                 )
                 yield self.env.timeout(event_time)
                 patient.time_until_death -= event_time
+                patient.remaining_time_on_transplant_list -= event_time
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} has pre-emptive {patient.transplant_type} transplant at time {self.env.now}."
@@ -917,9 +1002,7 @@ class Model:
                 )
                 yield self.env.timeout(event_time)
                 patient.time_until_death -= event_time
-                patient.time_on_waiting_list -= (
-                    event_time  ## remove time waiting from total time on waiting list
-                )
+                patient.remaining_time_on_transplant_list -= event_time
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} started dialysis whilst waiting for transplant at time {self.env.now}."
@@ -958,7 +1041,6 @@ class Model:
         Yields:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the start time for the specific patient in the system
         """
-
         if self.config.trace:
             print(
                 f"Patient {patient.id} of age group {patient.age_group} starts {patient.dialysis_modality} at time {self.env.now}."
@@ -990,7 +1072,7 @@ class Model:
         time_to_next_event = [
             sampled_time,
             patient.time_until_death,
-            patient.time_on_waiting_list,
+            patient.remaining_time_on_transplant_list,
         ]
         ## now we judge what the next step is based on smallest time to transplant, modality change or death
         if not patient.transplant_suitable:
@@ -998,32 +1080,59 @@ class Model:
             event_time = np.min(time_to_next_event[:2])
             event = next_event[np.argmin(time_to_next_event[:2])]
             if event == "death":
+                # Capture now before the yield, as process can be interrupted
+                activity_start_time = float(self.env.now)
                 self._update_event_log(
                     patient,
                     patient.dialysis_modality,
                     "death",
-                    float(self.env.now),
+                    activity_start_time,
                     event_time,
                 )
-                yield self.env.timeout(event_time)
+                try:
+                    yield self.env.timeout(event_time)
+                except simpy.Interrupt:
+                    if self.config.trace:
+                        print(
+                            f"Patient {patient.id} ICHD process interrupted at t={self.env.now}"
+                        )
+                    return
+
+                # Only log after yield to avoid duplicate rows if interrupted
+
                 patient.time_on_dialysis[patient.dialysis_modality] = event_time
                 self.patients_in_system[patient.patient_type] -= 1
+
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} died on dialysis at time {self.env.now}."
                     )
+
             else:  # modality change
+                # Capture now before the yield, as process can be interrupted
+                activity_start_time = float(self.env.now)
+
                 self._update_event_log(
                     patient,
                     patient.dialysis_modality,
                     "modality_allocation",
-                    float(self.env.now),
+                    activity_start_time,
                     event_time,
                 )
+                try:
+                    yield self.env.timeout(event_time)
+                except simpy.Interrupt:
+                    if self.config.trace:
+                        print(
+                            f"Patient {patient.id} ICHD process interrupted at t={self.env.now}"
+                        )
+                    return
+
                 patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again so let's just always do this
-                yield self.env.timeout(event_time)
+
                 patient.time_on_dialysis[patient.dialysis_modality] = event_time
                 patient.time_until_death -= event_time
+
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} changed dialysis modality at time {self.env.now}."
@@ -1035,14 +1144,25 @@ class Model:
             event_time = np.min(time_to_next_event)
             event = next_event[np.argmin(time_to_next_event)]
             if event == "death":
+                # Capture now before the yield, as process can be interrupted
+                activity_start_time = float(self.env.now)
+
                 self._update_event_log(
                     patient,
                     patient.dialysis_modality,
                     "death",
-                    float(self.env.now),
+                    activity_start_time,
                     event_time,
                 )
-                yield self.env.timeout(event_time)
+                try:
+                    yield self.env.timeout(event_time)
+                except simpy.Interrupt:
+                    if self.config.trace:
+                        print(
+                            f"Patient {patient.id} ICHD process interrupted at t={self.env.now}"
+                        )
+                    return
+
                 patient.time_on_dialysis[patient.dialysis_modality] = event_time
                 self.patients_in_system[patient.patient_type] -= 1
                 if self.config.trace:
@@ -1050,17 +1170,29 @@ class Model:
                         f"Patient {patient.id} of age group {patient.age_group} died on dialysis at time {self.env.now}."
                     )
             elif event == "modality_change":  # modality change
+                # Capture now before the yield, as process can be interrupted
+                activity_start_time = float(self.env.now)
                 self._update_event_log(
                     patient,
                     patient.dialysis_modality,
                     "modality_allocation",
-                    float(self.env.now),
+                    activity_start_time,
                     event_time,
                 )
+                try:
+                    yield self.env.timeout(event_time)
+                except simpy.Interrupt:
+                    if self.config.trace:
+                        print(
+                            f"Patient {patient.id} ICHD process interrupted at t={self.env.now}"
+                        )
+                    return
+
                 patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again so let's just always do this
-                yield self.env.timeout(event_time)
+
                 patient.time_on_dialysis[patient.dialysis_modality] = event_time
                 patient.time_until_death -= event_time
+                patient.remaining_time_on_transplant_list -= event_time
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} changed dialysis modality at time {self.env.now}."
@@ -1068,17 +1200,30 @@ class Model:
 
                 self.env.process(self.start_dialysis_modality_allocation(patient))
             else:  # transplant
+                # Capture now before the yield, as process can be interrupted
+                activity_start_time = float(self.env.now)
+                # Only log after yield to avoid duplicate rows if interrupted
                 self._update_event_log(
                     patient,
                     patient.dialysis_modality,
                     patient.transplant_type,
-                    float(self.env.now),
+                    activity_start_time,
                     event_time,
                 )
+                try:
+                    yield self.env.timeout(event_time)
+                except simpy.Interrupt:
+                    if self.config.trace:
+                        print(
+                            f"Patient {patient.id} ICHD process interrupted at t={self.env.now}"
+                        )
+                    return
+
                 patient.patient_flag = "incident"  # after prevalent patient ends their dialysis episode we treat them as incident again
-                yield self.env.timeout(event_time)
+
                 patient.time_on_dialysis[patient.dialysis_modality] = event_time
                 patient.time_until_death -= event_time
+                patient.remaining_time_on_transplant_list -= event_time
                 if self.config.trace:
                     print(
                         f"Patient {patient.id} of age group {patient.age_group} has {patient.transplant_type} transplant at time {self.env.now}."
@@ -1096,6 +1241,168 @@ class Model:
             yield (self.env.timeout(365))
             logger.info(f"{i} year(s) of simulation complete")
 
+    def hhd_capacity_intervention(self) -> Generator:
+        """Function for tracking the proportion of patients on Home Haemodialysis, for user information
+
+        Yields:
+            simpy.Environment.Timeout: Simpy Timeout event with a delay of each year of simulation
+        """
+        years = calculate_lookup_year(self.config.sim_duration)
+        for i in range(1, years + 1):
+            yield (
+                self.env.timeout(364)
+            )  # this means the last year doesn't tail off in the output plots
+            last_entries = self.event_log.groupby("patient_id").tail(1)
+            hhd_count = last_entries[
+                (last_entries["activity_from"] == "hhd")
+                & (
+                    (last_entries["activity_to"] != "death")
+                    | (
+                        last_entries["time_starting_activity_from"]
+                        + last_entries["time_spent_in_activity_from"]
+                        > self.env.now
+                    )
+                )
+            ].shape[0]
+            total_dialysis_count = last_entries[
+                (last_entries["activity_from"].isin(["hhd", "ichd", "pd"]))
+                & (
+                    (last_entries["activity_to"] != "death")
+                    | (
+                        last_entries["time_starting_activity_from"]
+                        + last_entries["time_spent_in_activity_from"]
+                        > self.env.now
+                    )
+                )
+            ].shape[0]
+            hhd_proportion = (
+                hhd_count / total_dialysis_count if total_dialysis_count > 0 else 0
+            )
+            which_year = calculate_lookup_year(self.env.now)
+            if self.config.hhd_intervention_target[which_year] > 0:
+                logger.info(
+                    f"HHD capacity intervention in place from year {which_year} with target of {self.config.hhd_intervention_target[which_year]:.2%} of patients on HHD."
+                )
+                hhd_target = self.config.hhd_intervention_target[which_year]
+                if hhd_proportion < hhd_target:
+                    ## we take from ichd and give to hhd
+                    # ichd_patients = [
+                    #    i for i in self.patient_objects if i.dialysis_modality == "ichd"
+                    # ]
+                    ichd_patients = last_entries[
+                        (last_entries["activity_from"] == "ichd")
+                        & (
+                            (last_entries["activity_to"] != "death")
+                            | (
+                                last_entries["time_starting_activity_from"]
+                                + last_entries["time_spent_in_activity_from"]
+                                > self.env.now
+                            )
+                        )
+                    ]["patient_id"].tolist()  # get list of patients currently on ichd
+                    ichd_patients = np.array(ichd_patients)
+                    total_patients_to_move = int(
+                        hhd_target * total_dialysis_count - hhd_count
+                    )  # how many patients do we need to move to hhd to meet the target?
+                    patients_to_move = np.random.choice(
+                        ichd_patients, size=total_patients_to_move, replace=False
+                    )
+                    # randomly select patients to move from ichd to hhd
+                    for patient in self.patient_objects:
+                        if patient.id in patients_to_move:
+                            patient.dialysis_modality = "hhd"
+
+                            # pass in the process we want to interrupt
+                            # interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
+                            self.stop_patient(
+                                process=self.processes[patient.id], patient=patient
+                            )
+
+                            patient.time_until_death -= np.float64(
+                                self.env.now
+                            ) - np.float64(patient.time_starts_dialysis)
+                            if (
+                                patient.transplant_suitable
+                                and patient.remaining_time_on_transplant_list
+                            ):
+                                patient.remaining_time_on_transplant_list -= np.float64(
+                                    self.env.now
+                                ) - np.float64(patient.time_starts_dialysis)
+                            patient.time_starts_dialysis = self.env.now
+                            # patient.time_on_dialysis = {"ichd": 0.0, "hhd": 0.0, "pd": 0.0}
+                            try:
+                                self.processes[patient.id] = self.env.process(
+                                    self.start_dialysis_modality(patient)
+                                )
+                            except simpy.Interrupt:
+                                return  # this can happen when a patient switches modality due to intervention
+                            # logger.info(f"Patient {patient.id} moved from ICHD to HHD.")
+                else:
+                    # we take from hhd and give to ichd
+                    # hhd_patients = [
+                    #    i for i in self.patient_objects if i.dialysis_modality == "hhd"
+                    # ]
+                    hhd_patients = last_entries[
+                        (last_entries["activity_from"] == "hhd")
+                        & (
+                            (last_entries["activity_to"] != "death")
+                            | (
+                                last_entries["time_starting_activity_from"]
+                                + last_entries["time_spent_in_activity_from"]
+                                > self.env.now
+                            )
+                        )
+                    ]["patient_id"].tolist()  # get list of patients currently on hhd
+                    hhd_patients = np.array(hhd_patients)
+                    total_patients_to_move = -int(
+                        hhd_target * total_dialysis_count - hhd_count
+                    )  # how many patients do we need to move to hhd to meet the target?
+                    patients_to_move = np.random.choice(
+                        hhd_patients, size=total_patients_to_move, replace=False
+                    )
+                    for patient in self.patient_objects:
+                        if patient.id in patients_to_move:
+                            patient.dialysis_modality = "ichd"
+
+                            # pass in the process we want to interrupt
+                            # interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
+                            self.stop_patient(
+                                process=self.processes[patient.id], patient=patient
+                            )
+
+                            patient.time_until_death -= np.float64(
+                                self.env.now
+                            ) - np.float64(patient.time_starts_dialysis)
+                            if (
+                                patient.transplant_suitable
+                                and patient.remaining_time_on_transplant_list
+                            ):
+                                patient.remaining_time_on_transplant_list -= np.float64(
+                                    self.env.now
+                                ) - np.float64(patient.time_starts_dialysis)
+                            patient.time_starts_dialysis = self.env.now
+                            try:
+                                self.processes[patient.id] = self.env.process(
+                                    self.start_dialysis_modality(patient)
+                                )
+                            except simpy.Interrupt:
+                                return  # this can happen when a patient switches modality due to intervention
+                            # logger.info(f"Patient {patient.id} moved from HHD to ICHD.")
+            else:
+                # logger.info(
+                #    f"Proportion of patients on Home Haemodialysis: {hhd_proportion:.2%} with no intervention in place."
+                # )
+                pass
+
+    def stop_patient(self, process, patient):
+        proc = process
+        if proc and proc.is_alive:
+            proc.interrupt(cause="Modality changed by HHD intervention")
+            if self.config.trace:
+                print(
+                    f"Stopped {patient.id} undergoing ichd for HHD intervention at time {self.env.now}"
+                )
+
     def save_model_iteration_result_files(self, df_name: str):
         """Saves dataframes from Model class
 
@@ -1110,7 +1417,6 @@ class Model:
 
     def run(self):
         """Runs the model"""
-        # print(self.config.con_care_dist)
         if self.config.initialise_prevalent_patients:
             logger.info("Initialising prevalent patients...")
             # We first initialize the model with patients that were in the system at time zero - we look at each location in turn (conservative care, ichd, hhd, pd, live transplant, cadaver transplant)
@@ -1156,6 +1462,7 @@ class Model:
         self.env.process(self.time_tracker())
         for patient_type in self.patient_types:
             self.env.process(self.generator_patient_arrivals(patient_type))
+        self.env.process(self.hhd_capacity_intervention())
         self.env.run(until=self.config.sim_duration)
         logger.info("✅ Model run complete!")
         self.event_log = process_event_log(self.event_log)
