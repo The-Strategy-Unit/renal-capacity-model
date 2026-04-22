@@ -2,25 +2,27 @@
 Module containing the Model class. Contains most of the logic for the simulation.
 """
 
-import simpy
-from renal_capacity_model.entity import Patient
+from typing import Generator
+
 import numpy as np
+import pandas as pd
+import simpy
+
 from renal_capacity_model.config import Config
+from renal_capacity_model.entity import Patient
 from renal_capacity_model.helpers import (
-    check_config_duration_valid,
     calculate_lookup_year,
-    process_event_log,
     calculate_model_results,
-    truncate_2dp,
     calculate_time_to_event,
+    check_config_duration_valid,
+    process_event_log,
+    truncate_2dp,
 )
 from renal_capacity_model.process_outputs import (
     create_results_folder,
     save_result_files,
 )
 from renal_capacity_model.utils import get_logger
-import pandas as pd
-from typing import Generator
 
 logger = get_logger(__name__)
 
@@ -795,6 +797,21 @@ class Model:
                 patient.dialysis_modality = "ichd"
             else:
                 patient.dialysis_modality = "hhd"
+        ## replace "modality_allocation" in the event log with the specific modality allocated to the patient
+        if not self.event_log.loc[self.event_log["patient_id"] == patient.id].empty:
+            if (
+                self.event_log.loc[
+                    self.event_log["patient_id"] == patient.id, "activity_to"
+                ].iloc[-1]
+                == "modality_allocation"
+            ):
+                condition = (self.event_log["patient_id"] == patient.id) & (
+                    self.event_log["activity_to"] == "modality_allocation"
+                )
+                last_index = self.event_log.loc[condition].index.max()
+                self.event_log.loc[last_index, "activity_to"] = (
+                    patient.dialysis_modality
+                )
         try:
             self.processes[patient.id] = self.env.process(
                 self.start_dialysis_modality(patient)
@@ -996,7 +1013,7 @@ class Model:
                 self._update_event_log(
                     patient,
                     "waiting_for_transplant",
-                    "dialysis_modality_allocation",
+                    "modality_allocation",
                     float(self.env.now),
                     event_time,
                 )
@@ -1310,14 +1327,31 @@ class Model:
                     # randomly select patients to move from ichd to hhd
                     for patient in self.patient_objects:
                         if patient.id in patients_to_move:
-                            patient.dialysis_modality = "hhd"
-
                             # pass in the process we want to interrupt
                             # interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
                             self.stop_patient(
                                 process=self.processes[patient.id], patient=patient
                             )
-
+                            ## get rid of the last entry in the log for this patient
+                            # if not self.event_log.loc[
+                            #    self.event_log["patient_id"] == patient.id
+                            # ].empty:
+                            #    if patient.time_starts_dialysis != self.env.now - 364:
+                            # self.event_log = self.event_log.drop(
+                            #    self.event_log.index[
+                            #        (self.event_log["patient_id"] == patient.id)
+                            #    ][-1]
+                            # )
+                            #        pass
+                            ## add new entry in the log for this patient ## we remove the old one at the end of the experiment
+                            self._update_event_log(
+                                patient,
+                                "ichd",
+                                "hhd",
+                                patient.time_starts_dialysis,
+                                float(self.env.now)
+                                - float(patient.time_starts_dialysis),
+                            )
                             patient.time_until_death -= np.float64(
                                 self.env.now
                             ) - np.float64(patient.time_starts_dialysis)
@@ -1328,8 +1362,8 @@ class Model:
                                 patient.remaining_time_on_transplant_list -= np.float64(
                                     self.env.now
                                 ) - np.float64(patient.time_starts_dialysis)
+                            patient.dialysis_modality = "hhd"
                             patient.time_starts_dialysis = self.env.now
-                            # patient.time_on_dialysis = {"ichd": 0.0, "hhd": 0.0, "pd": 0.0}
                             try:
                                 self.processes[patient.id] = self.env.process(
                                     self.start_dialysis_modality(patient)
