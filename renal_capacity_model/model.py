@@ -1349,8 +1349,8 @@ class Model:
                                 "ichd",
                                 "hhd",
                                 patient.time_starts_dialysis,
-                                float(self.env.now)
-                                - float(patient.time_starts_dialysis),
+                                np.float64(self.env.now)
+                                - np.float64(patient.time_starts_dialysis),
                             )
                             patient.time_until_death -= np.float64(
                                 self.env.now
