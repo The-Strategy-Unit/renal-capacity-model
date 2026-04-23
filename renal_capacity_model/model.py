@@ -53,9 +53,14 @@ class Model:
         self.run_number = run_number
         self.rng = rng
         ## new
-        seeds = rng.integers(0, 2**31, size=5)
+        seeds = rng.integers(0, 2**31, size=10)
         self.arrivals_rng = np.random.default_rng(seeds[0])
         self.interventions_rng = np.random.default_rng(seeds[1])
+        self.deaths_rng = np.random.default_rng(seeds[2])
+        self.waiting_for_live_transplant_rng = np.random.default_rng(seeds[3])
+        self.waiting_for_cadaver_transplant_rng = np.random.default_rng(seeds[4])
+        self.live_graft_failure_rng = np.random.default_rng(seeds[5])
+        self.cadaver_graft_failure_rng = np.random.default_rng(seeds[6])
         ##
         self.patient_types = self.config.mean_iat_over_time_dfs.keys()
         self.patients_in_system: dict = {k: 0 for k in self.patient_types}
@@ -135,7 +140,7 @@ class Model:
                 ## they aren't suitable for transplant
                 p.transplant_suitable = False
                 p.time_until_death = calculate_time_to_event(
-                    self.rng,
+                    self.deaths_rng,
                     scale=self.config.ttd_krt["initialisation"]["not_listed"][
                         p.referral_type
                     ][p.age_group]["scale"],
@@ -160,7 +165,7 @@ class Model:
                         self.config.sim_duration + 1
                     )  # they're listed but don't receive a transplant in the simulation period
                     p.time_until_death = calculate_time_to_event(
-                        self.rng,
+                        self.deaths_rng,
                         scale=self.config.ttd_krt["initialisation"]["listed"][
                             p.referral_type
                         ][p.age_group]["scale"],
@@ -178,7 +183,7 @@ class Model:
                     # they do receive a transplant in the simulation period
                     p.transplant_suitable = True
                     p.time_until_death = calculate_time_to_event(
-                        self.rng,
+                        self.deaths_rng,
                         scale=self.config.ttd_krt["initialisation"]["received_Tx"][
                             p.referral_type
                         ][p.age_group]["scale"],
@@ -199,7 +204,7 @@ class Model:
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
                         p.remaining_time_on_transplant_list = calculate_time_to_event(
-                            self.rng,
+                            self.waiting_for_live_transplant_rng,
                             scale=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "scale"
                             ],
@@ -216,7 +221,7 @@ class Model:
                     else:
                         p.transplant_type = "cadaver"
                         p.remaining_time_on_transplant_list = calculate_time_to_event(
-                            self.rng,
+                            self.waiting_for_cadaver_transplant_rng,
                             scale=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "scale"
                             ],
@@ -246,7 +251,7 @@ class Model:
                 ## they aren't suitable for transplant
                 p.transplant_suitable = False
                 p.time_until_death = calculate_time_to_event(
-                    self.rng,
+                    self.deaths_rng,
                     scale=self.config.ttd_krt["initialisation"]["not_listed"][
                         p.referral_type
                     ][p.age_group]["scale"],
@@ -271,7 +276,7 @@ class Model:
                         self.config.sim_duration + 1
                     )  # they're listed but don't receive a transplant in the simulation period
                     p.time_until_death = calculate_time_to_event(
-                        self.rng,
+                        self.deaths_rng,
                         scale=self.config.ttd_krt["initialisation"]["listed"][
                             p.referral_type
                         ][p.age_group]["scale"],
@@ -289,7 +294,7 @@ class Model:
                     # they do receive a transplant in the simulation period
                     p.transplant_suitable = True
                     p.time_until_death = calculate_time_to_event(
-                        self.rng,
+                        self.deaths_rng,
                         scale=self.config.ttd_krt["initialisation"]["received_Tx"][
                             p.referral_type
                         ][p.age_group]["scale"],
@@ -310,7 +315,7 @@ class Model:
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
                         p.remaining_time_on_transplant_list = calculate_time_to_event(
-                            self.rng,
+                            self.waiting_for_live_transplant_rng,
                             scale=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "scale"
                             ],
@@ -327,7 +332,7 @@ class Model:
                     else:
                         p.transplant_type = "cadaver"
                         p.remaining_time_on_transplant_list = calculate_time_to_event(
-                            self.rng,
+                            self.waiting_for_cadaver_transplant_rng,
                             scale=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "scale"
                             ],
@@ -356,7 +361,7 @@ class Model:
                 ## they aren't suitable for transplant
                 p.transplant_suitable = False
                 p.time_until_death = calculate_time_to_event(
-                    self.rng,
+                    self.deaths_rng,
                     scale=self.config.ttd_krt["initialisation"]["not_listed"][
                         p.referral_type
                     ][p.age_group]["scale"],
@@ -381,7 +386,7 @@ class Model:
                         self.config.sim_duration + 1
                     )  # they're listed but don't receive a transplant in the simulation period
                     p.time_until_death = calculate_time_to_event(
-                        self.rng,
+                        self.deaths_rng,
                         scale=self.config.ttd_krt["initialisation"]["listed"][
                             p.referral_type
                         ][p.age_group]["scale"],
@@ -399,7 +404,7 @@ class Model:
                     # they do receive a transplant in the simulation period
                     p.transplant_suitable = True
                     p.time_until_death = calculate_time_to_event(
-                        self.rng,
+                        self.deaths_rng,
                         scale=self.config.ttd_krt["initialisation"]["received_Tx"][
                             p.referral_type
                         ][p.age_group]["scale"],
@@ -420,7 +425,7 @@ class Model:
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
                         p.remaining_time_on_transplant_list = calculate_time_to_event(
-                            self.rng,
+                            self.waiting_for_live_transplant_rng,
                             scale=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "scale"
                             ],
@@ -437,7 +442,7 @@ class Model:
                     else:
                         p.transplant_type = "cadaver"
                         p.remaining_time_on_transplant_list = calculate_time_to_event(
-                            self.rng,
+                            self.waiting_for_cadaver_transplant_rng,
                             scale=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "scale"
                             ],
@@ -460,7 +465,7 @@ class Model:
             transplant_type = location.split("_")[0]
             p.transplant_suitable = True
             p.time_until_death = calculate_time_to_event(
-                self.rng,
+                self.deaths_rng,
                 scale=self.config.ttd_krt["initialisation"]["received_Tx"][
                     p.referral_type
                 ][p.age_group]["scale"],
@@ -588,7 +593,7 @@ class Model:
             patient.transplant_suitable = False
             if patient.time_until_death == 0:
                 patient.time_until_death = calculate_time_to_event(
-                    self.rng,
+                    self.deaths_rng,
                     scale=self.config.ttd_krt["incidence"]["not_listed"][
                         patient.referral_type
                     ][patient.age_group]["scale"],
@@ -613,7 +618,7 @@ class Model:
                 # Although suitable for transplant, patient does not receive a transplant in the simulation period
                 if patient.time_until_death == 0:
                     patient.time_until_death = calculate_time_to_event(
-                        self.rng,
+                        self.deaths_rng,
                         scale=self.config.ttd_krt["incidence"]["listed"][
                             patient.referral_type
                         ][patient.age_group]["scale"],
@@ -635,7 +640,7 @@ class Model:
                 # Patient may receive a transplant in the simulation period
                 if patient.time_until_death == 0:
                     patient.time_until_death = calculate_time_to_event(
-                        self.rng,
+                        self.deaths_rng,
                         scale=self.config.ttd_krt["incidence"]["received_Tx"][
                             patient.referral_type
                         ][patient.age_group]["scale"],
@@ -674,7 +679,7 @@ class Model:
                         patient.time_enters_waiting_list = self.env.now
                         patient.remaining_time_on_transplant_list = (
                             calculate_time_to_event(
-                                self.rng,
+                                self.waiting_for_live_transplant_rng,
                                 scale=self.config.tw_liveTx["incidence"][
                                     patient.age_group
                                 ]["scale"],
@@ -719,7 +724,7 @@ class Model:
                         patient.time_enters_waiting_list = self.env.now
                         patient.remaining_time_on_transplant_list = (
                             calculate_time_to_event(
-                                self.rng,
+                                self.waiting_for_cadaver_transplant_rng,
                                 scale=self.config.tw_cadTx["incidence"][
                                     patient.age_group
                                 ]["scale"],
@@ -839,7 +844,7 @@ class Model:
             if patient.patient_flag == "incident":
                 random_number = truncate_2dp(self.rng.uniform(0, 1))
                 sampled_time = calculate_time_to_event(
-                    self.rng,
+                    self.deaths_rng,
                     scale=self.config.ttd_krt["incidence"]["received_Tx"][
                         patient.referral_type
                     ][patient.age_group]["scale"],
@@ -856,7 +861,7 @@ class Model:
             else:  # prevalent patient
                 random_number = truncate_2dp(self.rng.uniform(0, 1))
                 sampled_time = calculate_time_to_event(
-                    self.rng,
+                    self.deaths_rng,
                     scale=self.config.ttd_krt["initialisation"]["received_Tx"][
                         patient.referral_type
                     ][patient.age_group]["scale"],
@@ -877,7 +882,7 @@ class Model:
             # how long the graft lasts depends on where they go next: death or back to start_krt
             ## sampled_wait_time depends on whether patient is incident or not
             if patient.patient_flag == "incident":
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                random_number = truncate_2dp(self.live_graft_failure_rng.uniform(0, 1))
                 sampled_wait_time = (
                     self.config.time_to_event_curves["ttgf_liveTx"].loc[
                         random_number, patient.patient_type
@@ -885,7 +890,7 @@ class Model:
                     * self.config.multipliers["ttgf"]["inc"]["live"]
                 )
             else:  # prevalent patient
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                random_number = truncate_2dp(self.live_graft_failure_rng.uniform(0, 1))
                 sampled_wait_time = (
                     self.config.time_to_event_curves["ttgf_liveTx_initialisation"].loc[
                         random_number, patient.patient_type
@@ -894,7 +899,9 @@ class Model:
                 )
         else:  # cadaver
             if patient.patient_flag == "incident":
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                random_number = truncate_2dp(
+                    self.cadaver_graft_failure_rng.uniform(0, 1)
+                )
                 sampled_wait_time = (
                     self.config.time_to_event_curves["ttgf_cadTx"].loc[
                         random_number, patient.patient_type
@@ -902,7 +909,9 @@ class Model:
                     * self.config.multipliers["ttgf"]["inc"]["cadaver"]
                 )
             else:  # prevalent patient
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                random_number = truncate_2dp(
+                    self.cadaver_graft_failure_rng.uniform(0, 1)
+                )
                 sampled_wait_time = (
                     self.config.time_to_event_curves["ttgf_liveTx_initialisation"].loc[
                         random_number, patient.patient_type
