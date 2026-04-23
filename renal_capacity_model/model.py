@@ -52,6 +52,11 @@ class Model:
         self.patient_counter: int = 0
         self.run_number = run_number
         self.rng = rng
+        ## new
+        seeds = rng.integers(0, 2**31, size=5)
+        self.arrivals_rng = np.random.default_rng(seeds[0])
+        self.interventions_rng = np.random.default_rng(seeds[1])
+        ##
         self.patient_types = self.config.mean_iat_over_time_dfs.keys()
         self.patients_in_system: dict = {k: 0 for k in self.patient_types}
         self.patient_objects: list[Patient] = []
@@ -514,7 +519,7 @@ class Model:
             mean_iat = self.config.mean_iat_over_time_dfs[patient_type].loc[
                 year, "mean_iat"
             ]
-            sampled_iat = self.rng.exponential(mean_iat)
+            sampled_iat = self.arrivals_rng.exponential(mean_iat)
             yield self.env.timeout(sampled_iat)
             self.patient_counter += (
                 1  # we use the patient_counter for the ID so this must come first
@@ -1302,10 +1307,6 @@ class Model:
                 )
                 hhd_target = self.config.hhd_intervention_target[which_year]
                 if hhd_proportion < hhd_target:
-                    ## we take from ichd and give to hhd
-                    # ichd_patients = [
-                    #    i for i in self.patient_objects if i.dialysis_modality == "ichd"
-                    # ]
                     ichd_patients = last_entries[
                         (last_entries["activity_from"] == "ichd")
                         & (
@@ -1321,7 +1322,7 @@ class Model:
                     total_patients_to_move = int(
                         hhd_target * total_dialysis_count - hhd_count
                     )  # how many patients do we need to move to hhd to meet the target?
-                    patients_to_move = np.random.choice(
+                    patients_to_move = self.interventions_rng.choice(
                         ichd_patients, size=total_patients_to_move, replace=False
                     )
                     # randomly select patients to move from ichd to hhd
@@ -1332,19 +1333,7 @@ class Model:
                             self.stop_patient(
                                 process=self.processes[patient.id], patient=patient
                             )
-                            ## get rid of the last entry in the log for this patient
-                            # if not self.event_log.loc[
-                            #    self.event_log["patient_id"] == patient.id
-                            # ].empty:
-                            #    if patient.time_starts_dialysis != self.env.now - 364:
-                            # self.event_log = self.event_log.drop(
-                            #    self.event_log.index[
-                            #        (self.event_log["patient_id"] == patient.id)
-                            #    ][-1]
-                            # )
-                            #        pass
-                            ## add new entry in the log for this patient ## we remove the old one at the end of the experiment
-                            self._update_event_log(
+                            self._update_event_log(  ## note that the event log is processed at the end of experiment to remove redundant prior entry that was interrupted
                                 patient,
                                 "ichd",
                                 "hhd",
@@ -1391,19 +1380,24 @@ class Model:
                     total_patients_to_move = -int(
                         hhd_target * total_dialysis_count - hhd_count
                     )  # how many patients do we need to move to hhd to meet the target?
-                    patients_to_move = np.random.choice(
+                    patients_to_move = self.interventions_rng.choice(
                         hhd_patients, size=total_patients_to_move, replace=False
                     )
                     for patient in self.patient_objects:
                         if patient.id in patients_to_move:
-                            patient.dialysis_modality = "ichd"
-
                             # pass in the process we want to interrupt
                             # interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
                             self.stop_patient(
                                 process=self.processes[patient.id], patient=patient
                             )
-
+                            self._update_event_log(  ## note that the event log is processed at the end of experiment to remove redundant prior entry that was interrupted
+                                patient,
+                                "hhd",
+                                "ichd",
+                                patient.time_starts_dialysis,
+                                np.float64(self.env.now)
+                                - np.float64(patient.time_starts_dialysis),
+                            )
                             patient.time_until_death -= np.float64(
                                 self.env.now
                             ) - np.float64(patient.time_starts_dialysis)
@@ -1414,6 +1408,7 @@ class Model:
                                 patient.remaining_time_on_transplant_list -= np.float64(
                                     self.env.now
                                 ) - np.float64(patient.time_starts_dialysis)
+                            patient.dialysis_modality = "ichd"
                             patient.time_starts_dialysis = self.env.now
                             try:
                                 self.processes[patient.id] = self.env.process(

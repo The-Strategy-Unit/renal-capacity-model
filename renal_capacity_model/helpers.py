@@ -249,7 +249,6 @@ def process_event_log(event_log: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame with additional columns ("year_start", "end_time", "year_end")
         and clearer information on which modality was next
     """
-
     ## loop through the patient ids and remove any rows where time_starting_activity_from is equal to time_starting_activity from in the row below.
     for patient_id in event_log["patient_id"].unique():
         if (
@@ -265,7 +264,6 @@ def process_event_log(event_log: pd.DataFrame) -> pd.DataFrame:
             duplicates_mask = df.duplicated(keep=False)
             duplicate_index = df.index[duplicates_mask].tolist()[0]
             event_log = event_log.drop(duplicate_index)
-
     event_log["year_start"] = event_log["time_starting_activity_from"].apply(
         calculate_lookup_year
     )
