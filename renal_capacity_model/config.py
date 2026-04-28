@@ -3,18 +3,18 @@ This module contains the configuration for running the model.
 It can be adapted to take inputs from users
 """
 
-from renal_capacity_model.helpers import (
-    get_yearly_arrival_rate,
-    get_mean_iat_over_time_from_arrival_rate,
-)
 from renal_capacity_model.config_values import (
-    national_config_dict,
     load_time_to_event_curves,
+    national_config_dict,
     ttd_con_care_values,
-    tw_before_dialysis_values,
     ttd_krt_values,
+    tw_before_dialysis_values,
     tw_cadTx,
     tw_liveTx,
+)
+from renal_capacity_model.helpers import (
+    get_mean_iat_over_time_from_arrival_rate,
+    get_yearly_arrival_rate,
 )
 from renal_capacity_model.utils import get_logger
 
@@ -47,7 +47,7 @@ class Config:
         self.sim_duration = config_dict.get(
             "sim_duration", int(13 * 365)
         )  # in days, but should be a multiple of 365 i.e. years.
-        self.random_seed = config_dict.get("random_seed", 0)
+        self.random_seed = config_dict.get("random_seed", 0)  ### our base random seed
         self.arrival_rate = config_dict["arrival_rate"]
         # how often to take a snapshot of the results_df
         self.snapshot_interval = config_dict.get("snapshot_interval", int(365))

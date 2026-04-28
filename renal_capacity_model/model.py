@@ -2,25 +2,27 @@
 Module containing the Model class. Contains most of the logic for the simulation.
 """
 
-import simpy
-from renal_capacity_model.entity import Patient
+from typing import Generator
+
 import numpy as np
+import pandas as pd
+import simpy
+
 from renal_capacity_model.config import Config
+from renal_capacity_model.entity import Patient
 from renal_capacity_model.helpers import (
-    check_config_duration_valid,
     calculate_lookup_year,
-    process_event_log,
     calculate_model_results,
-    truncate_2dp,
     calculate_time_to_event,
+    check_config_duration_valid,
+    process_event_log,
+    truncate_2dp,
 )
 from renal_capacity_model.process_outputs import (
     create_results_folder,
     save_result_files,
 )
 from renal_capacity_model.utils import get_logger
-import pandas as pd
-from typing import Generator
 
 logger = get_logger(__name__)
 
@@ -50,6 +52,40 @@ class Model:
         self.patient_counter: int = 0
         self.run_number = run_number
         self.rng = rng
+
+        # set up the random number streams - we need separate streams for different events so that when we run multiple iterations of the model,
+        # the same patients have the same sequence of events across iterations, allowing for a fair comparison of results across iterations.
+        # We can achieve this by using our base random seed to generate a set of seeds for each event stream, and then using those seeds to create
+        # separate random number generators for each event stream.
+        seeds = rng.integers(0, 2**31, size=100)
+
+        self.arrivals_rng = np.random.default_rng(seeds[0])
+
+        # routing rng streams
+        self.con_care_rng = np.random.default_rng(seeds[1])
+        self.suitable_for_transplant_rng = np.random.default_rng(seeds[2])
+        self.receives_transplant_rng = np.random.default_rng(seeds[3])
+        self.live_or_cadaver_transplant_rng = np.random.default_rng(seeds[4])
+        self.preemptive_live_transplant_rng = np.random.default_rng(seeds[5])
+        self.preemptive_cadaver_transplant_rng = np.random.default_rng(seeds[6])
+        self.modality_allocation_rng = np.random.default_rng(seeds[7])
+        self.modality_switch_from_ichd_rng = np.random.default_rng(seeds[19])
+        self.modality_switch_from_hhd_rng = np.random.default_rng(seeds[20])
+        self.modality_switch_from_pd_rng = np.random.default_rng(seeds[21])
+        # event time rng streams
+        self.ttd_rng = np.random.default_rng(seeds[8])
+        self.tw_for_live_transplant_rng = np.random.default_rng(seeds[9])
+        self.tw_for_cadaver_transplant_rng = np.random.default_rng(seeds[10])
+        self.ttgf_live_rng = np.random.default_rng(seeds[11])
+        self.ttgf_cadaver_rng = np.random.default_rng(seeds[12])
+        self.ttma_ichd_rng = np.random.default_rng(seeds[13])
+        self.ttma_hhd_rng = np.random.default_rng(seeds[14])
+        self.ttma_pd_rng = np.random.default_rng(seeds[15])
+        self.tw_post_transplant_before_dialysis_rng = np.random.default_rng(seeds[16])
+        self.ttd_con_care_rng = np.random.default_rng(seeds[17])
+        # interventions rng stream
+        self.interventions_rng = np.random.default_rng(seeds[18])
+
         self.patient_types = self.config.mean_iat_over_time_dfs.keys()
         self.patients_in_system: dict = {k: 0 for k in self.patient_types}
         self.patient_objects: list[Patient] = []
@@ -100,7 +136,7 @@ class Model:
                     f"Patient {p.id} of age group {p.age_group} is in conservative care at time {self.env.now}."
                 )
             sampled_con_care_time = calculate_time_to_event(
-                self.rng,
+                self.ttd_con_care_rng,
                 scale=self.config.ttd_con_care["scale"],
                 shape=self.config.ttd_con_care["shape"],
             )
@@ -122,13 +158,13 @@ class Model:
             p.dialysis_modality = "ichd"
             p.time_starts_dialysis = self.env.now
             if (
-                self.rng.uniform(0, 1)
+                self.suitable_for_transplant_rng.uniform(0, 1)
                 > self.config.suitable_for_transplant_dist["prev"][p.age_group]
             ):
                 ## they aren't suitable for transplant
                 p.transplant_suitable = False
                 p.time_until_death = calculate_time_to_event(
-                    self.rng,
+                    self.ttd_rng,
                     scale=self.config.ttd_krt["initialisation"]["not_listed"][
                         p.referral_type
                     ][p.age_group]["scale"],
@@ -144,7 +180,7 @@ class Model:
             else:
                 # they are suitable for transplant
                 if (
-                    self.rng.uniform(0, 1)
+                    self.receives_transplant_rng.uniform(0, 1)
                     > self.config.receives_transplant_dist[1]["prev"][p.age_group]
                 ):
                     # they don't receive a transplant in the simulation period
@@ -153,7 +189,7 @@ class Model:
                         self.config.sim_duration + 1
                     )  # they're listed but don't receive a transplant in the simulation period
                     p.time_until_death = calculate_time_to_event(
-                        self.rng,
+                        self.ttd_rng,
                         scale=self.config.ttd_krt["initialisation"]["listed"][
                             p.referral_type
                         ][p.age_group]["scale"],
@@ -171,7 +207,7 @@ class Model:
                     # they do receive a transplant in the simulation period
                     p.transplant_suitable = True
                     p.time_until_death = calculate_time_to_event(
-                        self.rng,
+                        self.ttd_rng,
                         scale=self.config.ttd_krt["initialisation"]["received_Tx"][
                             p.referral_type
                         ][p.age_group]["scale"],
@@ -186,13 +222,13 @@ class Model:
                             f"Patient {p.id} of age group {p.age_group} is in ICHD dialysis whilst waiting for transplant at time {self.env.now}."
                         )
                     if (
-                        self.rng.uniform(0, 1)
+                        self.live_or_cadaver_transplant_rng.uniform(0, 1)
                         < self.config.transplant_type_dist["prev"][p.age_group]
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
                         p.remaining_time_on_transplant_list = calculate_time_to_event(
-                            self.rng,
+                            self.tw_for_live_transplant_rng,
                             scale=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "scale"
                             ],
@@ -209,7 +245,7 @@ class Model:
                     else:
                         p.transplant_type = "cadaver"
                         p.remaining_time_on_transplant_list = calculate_time_to_event(
-                            self.rng,
+                            self.tw_for_cadaver_transplant_rng,
                             scale=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "scale"
                             ],
@@ -233,13 +269,13 @@ class Model:
             p.dialysis_modality = "hhd"
             p.time_starts_dialysis = self.env.now
             if (
-                self.rng.uniform(0, 1)
+                self.suitable_for_transplant_rng.uniform(0, 1)
                 > self.config.suitable_for_transplant_dist["prev"][p.age_group]
             ):
                 ## they aren't suitable for transplant
                 p.transplant_suitable = False
                 p.time_until_death = calculate_time_to_event(
-                    self.rng,
+                    self.ttd_rng,
                     scale=self.config.ttd_krt["initialisation"]["not_listed"][
                         p.referral_type
                     ][p.age_group]["scale"],
@@ -255,7 +291,7 @@ class Model:
             else:
                 # they are suitable for transplant
                 if (
-                    self.rng.uniform(0, 1)
+                    self.receives_transplant_rng.uniform(0, 1)
                     > self.config.receives_transplant_dist[1]["prev"][p.age_group]
                 ):
                     # they don't receive a transplant in the simulation period
@@ -264,7 +300,7 @@ class Model:
                         self.config.sim_duration + 1
                     )  # they're listed but don't receive a transplant in the simulation period
                     p.time_until_death = calculate_time_to_event(
-                        self.rng,
+                        self.ttd_rng,
                         scale=self.config.ttd_krt["initialisation"]["listed"][
                             p.referral_type
                         ][p.age_group]["scale"],
@@ -282,7 +318,7 @@ class Model:
                     # they do receive a transplant in the simulation period
                     p.transplant_suitable = True
                     p.time_until_death = calculate_time_to_event(
-                        self.rng,
+                        self.ttd_rng,
                         scale=self.config.ttd_krt["initialisation"]["received_Tx"][
                             p.referral_type
                         ][p.age_group]["scale"],
@@ -297,13 +333,13 @@ class Model:
                             f"Patient {p.id} of age group {p.age_group} is in HHD dialysis whilst waiting for transplant at time {self.env.now}."
                         )
                     if (
-                        self.rng.uniform(0, 1)
+                        self.live_or_cadaver_transplant_rng.uniform(0, 1)
                         < self.config.transplant_type_dist["prev"][p.age_group]
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
                         p.remaining_time_on_transplant_list = calculate_time_to_event(
-                            self.rng,
+                            self.tw_for_live_transplant_rng,
                             scale=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "scale"
                             ],
@@ -320,7 +356,7 @@ class Model:
                     else:
                         p.transplant_type = "cadaver"
                         p.remaining_time_on_transplant_list = calculate_time_to_event(
-                            self.rng,
+                            self.tw_for_cadaver_transplant_rng,
                             scale=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "scale"
                             ],
@@ -343,13 +379,13 @@ class Model:
             p.dialysis_modality = "pd"
             p.time_starts_dialysis = self.env.now
             if (
-                self.rng.uniform(0, 1)
+                self.suitable_for_transplant_rng.uniform(0, 1)
                 > self.config.suitable_for_transplant_dist["prev"][p.age_group]
             ):
                 ## they aren't suitable for transplant
                 p.transplant_suitable = False
                 p.time_until_death = calculate_time_to_event(
-                    self.rng,
+                    self.ttd_rng,
                     scale=self.config.ttd_krt["initialisation"]["not_listed"][
                         p.referral_type
                     ][p.age_group]["scale"],
@@ -365,7 +401,7 @@ class Model:
             else:
                 # they are suitable for transplant
                 if (
-                    self.rng.uniform(0, 1)
+                    self.receives_transplant_rng.uniform(0, 1)
                     > self.config.receives_transplant_dist[1]["prev"][p.age_group]
                 ):
                     # they don't receive a transplant in the simulation period
@@ -374,7 +410,7 @@ class Model:
                         self.config.sim_duration + 1
                     )  # they're listed but don't receive a transplant in the simulation period
                     p.time_until_death = calculate_time_to_event(
-                        self.rng,
+                        self.ttd_rng,
                         scale=self.config.ttd_krt["initialisation"]["listed"][
                             p.referral_type
                         ][p.age_group]["scale"],
@@ -392,7 +428,7 @@ class Model:
                     # they do receive a transplant in the simulation period
                     p.transplant_suitable = True
                     p.time_until_death = calculate_time_to_event(
-                        self.rng,
+                        self.ttd_rng,
                         scale=self.config.ttd_krt["initialisation"]["received_Tx"][
                             p.referral_type
                         ][p.age_group]["scale"],
@@ -407,13 +443,13 @@ class Model:
                             f"Patient {p.id} of age group {p.age_group} is in PD dialysis whilst waiting for transplant at time {self.env.now}."
                         )
                     if (
-                        self.rng.uniform(0, 1)
+                        self.live_or_cadaver_transplant_rng.uniform(0, 1)
                         < self.config.transplant_type_dist["prev"][p.age_group]
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
                         p.remaining_time_on_transplant_list = calculate_time_to_event(
-                            self.rng,
+                            self.tw_for_live_transplant_rng,
                             scale=self.config.tw_liveTx["initialisation"][p.age_group][
                                 "scale"
                             ],
@@ -430,7 +466,7 @@ class Model:
                     else:
                         p.transplant_type = "cadaver"
                         p.remaining_time_on_transplant_list = calculate_time_to_event(
-                            self.rng,
+                            self.tw_for_cadaver_transplant_rng,
                             scale=self.config.tw_cadTx["initialisation"][p.age_group][
                                 "scale"
                             ],
@@ -453,7 +489,7 @@ class Model:
             transplant_type = location.split("_")[0]
             p.transplant_suitable = True
             p.time_until_death = calculate_time_to_event(
-                self.rng,
+                self.ttd_rng,
                 scale=self.config.ttd_krt["initialisation"]["received_Tx"][
                     p.referral_type
                 ][p.age_group]["scale"],
@@ -512,7 +548,7 @@ class Model:
             mean_iat = self.config.mean_iat_over_time_dfs[patient_type].loc[
                 year, "mean_iat"
             ]
-            sampled_iat = self.rng.exponential(mean_iat)
+            sampled_iat = self.arrivals_rng.exponential(mean_iat)
             yield self.env.timeout(sampled_iat)
             self.patient_counter += (
                 1  # we use the patient_counter for the ID so this must come first
@@ -531,7 +567,10 @@ class Model:
             self.patient_objects.append(p)
 
             year = calculate_lookup_year(self.env.now)
-            if self.rng.uniform(0, 1) > self.config.con_care_dist[year][p.age_group]:
+            if (
+                self.con_care_rng.uniform(0, 1)
+                > self.config.con_care_dist[year][p.age_group]
+            ):
                 # If the patient is not diverted to conservative care they start KRT
                 self.env.process(self.start_krt(p))
             else:
@@ -546,7 +585,9 @@ class Model:
         Yields:
             simpy.Environment.Timeout: Simpy Timeout event with a delay of the sampled inter-arrival time
         """
-        sampled_con_care_time = self.config.ttd_con_care["scale"] * self.rng.weibull(
+        sampled_con_care_time = self.config.ttd_con_care[
+            "scale"
+        ] * self.ttd_con_care_rng.weibull(
             a=self.config.ttd_con_care["shape"], size=None
         )
         self._update_event_log(
@@ -574,14 +615,14 @@ class Model:
         """
         year = calculate_lookup_year(self.env.now)
         if (
-            self.rng.uniform(0, 1)
+            self.suitable_for_transplant_rng.uniform(0, 1)
             > self.config.suitable_for_transplant_dist["inc"][patient.age_group]
         ):
             # Patient is not suitable for transplant and so starts dialysis only pathway
             patient.transplant_suitable = False
             if patient.time_until_death == 0:
                 patient.time_until_death = calculate_time_to_event(
-                    self.rng,
+                    self.ttd_rng,
                     scale=self.config.ttd_krt["incidence"]["not_listed"][
                         patient.referral_type
                     ][patient.age_group]["scale"],
@@ -600,13 +641,13 @@ class Model:
             # Patient is suitable for transplant and so we need to decide if they start pre-emptive transplant or dialysis whilst waiting for transplant
             patient.transplant_suitable = True
             if (
-                self.rng.uniform(0, 1)
+                self.receives_transplant_rng.uniform(0, 1)
                 > self.config.receives_transplant_dist[year]["inc"][patient.age_group]
             ):
                 # Although suitable for transplant, patient does not receive a transplant in the simulation period
                 if patient.time_until_death == 0:
                     patient.time_until_death = calculate_time_to_event(
-                        self.rng,
+                        self.ttd_rng,
                         scale=self.config.ttd_krt["incidence"]["listed"][
                             patient.referral_type
                         ][patient.age_group]["scale"],
@@ -628,7 +669,7 @@ class Model:
                 # Patient may receive a transplant in the simulation period
                 if patient.time_until_death == 0:
                     patient.time_until_death = calculate_time_to_event(
-                        self.rng,
+                        self.ttd_rng,
                         scale=self.config.ttd_krt["incidence"]["received_Tx"][
                             patient.referral_type
                         ][patient.age_group]["scale"],
@@ -639,7 +680,7 @@ class Model:
                     )
                 # We now assign a transplant type: live or cadaver as this impacts the probability of starting pre-emptive transplant
                 if (
-                    self.rng.uniform(0, 1)
+                    self.live_or_cadaver_transplant_rng.uniform(0, 1)
                     < self.config.transplant_type_dist["inc"][patient.age_group]
                 ):
                     patient.transplant_type = "live"
@@ -648,7 +689,7 @@ class Model:
 
                 if patient.transplant_type == "live":
                     if (
-                        self.rng.uniform(0, 1)
+                        self.preemptive_live_transplant_rng.uniform(0, 1)
                         < self.config.pre_emptive_transplant_live_donor_dist[year][
                             patient.referral_type
                         ]
@@ -667,7 +708,7 @@ class Model:
                         patient.time_enters_waiting_list = self.env.now
                         patient.remaining_time_on_transplant_list = (
                             calculate_time_to_event(
-                                self.rng,
+                                self.tw_for_live_transplant_rng,
                                 scale=self.config.tw_liveTx["incidence"][
                                     patient.age_group
                                 ]["scale"],
@@ -691,7 +732,7 @@ class Model:
                         )
                 else:  # cadaver
                     if (
-                        self.rng.uniform(0, 1)
+                        self.preemptive_cadaver_transplant_rng.uniform(0, 1)
                         < self.config.pre_emptive_transplant_cadaver_donor_dist[year][
                             patient.referral_type
                         ]
@@ -712,7 +753,7 @@ class Model:
                         patient.time_enters_waiting_list = self.env.now
                         patient.remaining_time_on_transplant_list = (
                             calculate_time_to_event(
-                                self.rng,
+                                self.tw_for_cadaver_transplant_rng,
                                 scale=self.config.tw_cadTx["incidence"][
                                     patient.age_group
                                 ]["scale"],
@@ -754,7 +795,7 @@ class Model:
         modality_allocation_distributions = (
             self.config.modality_allocation_distributions[year]
         )
-        random_number = self.rng.uniform(0, 1)
+        random_number = self.modality_allocation_rng.uniform(0, 1)
         current_modality = patient.dialysis_modality
         if current_modality == "none":
             if (
@@ -773,7 +814,7 @@ class Model:
                 patient.dialysis_modality = "pd"
         elif current_modality == "ichd":
             if (
-                self.rng.uniform(0, 1)
+                self.modality_switch_from_ichd_rng.uniform(0, 1)
                 < modality_allocation_distributions[current_modality]["hhd"]
             ):
                 patient.dialysis_modality = "hhd"
@@ -781,7 +822,7 @@ class Model:
                 patient.dialysis_modality = "pd"
         elif current_modality == "hhd":
             if (
-                self.rng.uniform(0, 1)
+                self.modality_switch_from_hhd_rng.uniform(0, 1)
                 < modality_allocation_distributions[current_modality]["ichd"]
             ):
                 patient.dialysis_modality = "ichd"
@@ -789,12 +830,27 @@ class Model:
                 patient.dialysis_modality = "pd"
         elif current_modality == "pd":
             if (
-                self.rng.uniform(0, 1)
+                self.modality_switch_from_pd_rng.uniform(0, 1)
                 < modality_allocation_distributions[current_modality]["ichd"]
             ):
                 patient.dialysis_modality = "ichd"
             else:
                 patient.dialysis_modality = "hhd"
+        ## replace "modality_allocation" in the event log with the specific modality allocated to the patient
+        if not self.event_log.loc[self.event_log["patient_id"] == patient.id].empty:
+            if (
+                self.event_log.loc[
+                    self.event_log["patient_id"] == patient.id, "activity_to"
+                ].iloc[-1]
+                == "modality_allocation"
+            ):
+                condition = (self.event_log["patient_id"] == patient.id) & (
+                    self.event_log["activity_to"] == "modality_allocation"
+                )
+                last_index = self.event_log.loc[condition].index.max()
+                self.event_log.loc[last_index, "activity_to"] = (
+                    patient.dialysis_modality
+                )
         try:
             self.processes[patient.id] = self.env.process(
                 self.start_dialysis_modality(patient)
@@ -815,9 +871,9 @@ class Model:
         if patient.transplant_count == 0:
             # adjust the time to death as this is a patient that has recieve (not just been listed for) a transplant
             if patient.patient_flag == "incident":
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                # random_number = truncate_2dp(self.rng.uniform(0, 1))
                 sampled_time = calculate_time_to_event(
-                    self.rng,
+                    self.ttd_rng,
                     scale=self.config.ttd_krt["incidence"]["received_Tx"][
                         patient.referral_type
                     ][patient.age_group]["scale"],
@@ -832,9 +888,9 @@ class Model:
                     current_tud,
                 )
             else:  # prevalent patient
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                # random_number = truncate_2dp(self.rng.uniform(0, 1))
                 sampled_time = calculate_time_to_event(
-                    self.rng,
+                    self.ttd_rng,
                     scale=self.config.ttd_krt["initialisation"]["received_Tx"][
                         patient.referral_type
                     ][patient.age_group]["scale"],
@@ -855,7 +911,7 @@ class Model:
             # how long the graft lasts depends on where they go next: death or back to start_krt
             ## sampled_wait_time depends on whether patient is incident or not
             if patient.patient_flag == "incident":
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                random_number = truncate_2dp(self.ttgf_live_rng.uniform(0, 1))
                 sampled_wait_time = (
                     self.config.time_to_event_curves["ttgf_liveTx"].loc[
                         random_number, patient.patient_type
@@ -863,7 +919,7 @@ class Model:
                     * self.config.multipliers["ttgf"]["inc"]["live"]
                 )
             else:  # prevalent patient
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                random_number = truncate_2dp(self.ttgf_live_rng.uniform(0, 1))
                 sampled_wait_time = (
                     self.config.time_to_event_curves["ttgf_liveTx_initialisation"].loc[
                         random_number, patient.patient_type
@@ -872,7 +928,7 @@ class Model:
                 )
         else:  # cadaver
             if patient.patient_flag == "incident":
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                random_number = truncate_2dp(self.ttgf_cadaver_rng.uniform(0, 1))
                 sampled_wait_time = (
                     self.config.time_to_event_curves["ttgf_cadTx"].loc[
                         random_number, patient.patient_type
@@ -880,7 +936,7 @@ class Model:
                     * self.config.multipliers["ttgf"]["inc"]["cadaver"]
                 )
             else:  # prevalent patient
-                random_number = truncate_2dp(self.rng.uniform(0, 1))
+                random_number = truncate_2dp(self.ttgf_cadaver_rng.uniform(0, 1))
                 sampled_wait_time = (
                     self.config.time_to_event_curves["ttgf_liveTx_initialisation"].loc[
                         random_number, patient.patient_type
@@ -963,7 +1019,9 @@ class Model:
             # if it is longer than their time on the waiting list they start transplant pre-emptively
             sampled_wait_time = self.config.tw_before_dialysis[
                 "scale"
-            ] * self.rng.weibull(a=self.config.tw_before_dialysis["shape"], size=None)
+            ] * self.tw_post_transplant_before_dialysis_rng.weibull(
+                a=self.config.tw_before_dialysis["shape"], size=None
+            )
 
             next_event = ["start_dialysis", "pre_emptive_transplant", "death"]
             time_to_next_event = [
@@ -996,7 +1054,7 @@ class Model:
                 self._update_event_log(
                     patient,
                     "waiting_for_transplant",
-                    "dialysis_modality_allocation",
+                    "modality_allocation",
                     float(self.env.now),
                     event_time,
                 )
@@ -1052,7 +1110,12 @@ class Model:
 
         ## sampled_time depends on whether patient is incident or not
         if patient.patient_flag == "incident":
-            random_number = truncate_2dp(self.rng.uniform(0, 1))
+            if patient.dialysis_modality == "ichd":
+                random_number = truncate_2dp(self.ttma_ichd_rng.uniform(0, 1))
+            elif patient.dialysis_modality == "hhd":
+                random_number = truncate_2dp(self.ttma_hhd_rng.uniform(0, 1))
+            else:
+                random_number = truncate_2dp(self.ttma_pd_rng.uniform(0, 1))
             sampled_time = (
                 self.config.time_to_event_curves[
                     f"ttma_{patient.dialysis_modality}"
@@ -1060,7 +1123,12 @@ class Model:
                 * self.config.multipliers["ttma"]["inc"][patient.dialysis_modality]
             )
         else:  ## prevalent patient
-            random_number = truncate_2dp(self.rng.uniform(0, 1))
+            if patient.dialysis_modality == "ichd":
+                random_number = truncate_2dp(self.ttma_ichd_rng.uniform(0, 1))
+            elif patient.dialysis_modality == "hhd":
+                random_number = truncate_2dp(self.ttma_hhd_rng.uniform(0, 1))
+            else:
+                random_number = truncate_2dp(self.ttma_pd_rng.uniform(0, 1))
             sampled_time = (
                 self.config.time_to_event_curves[
                     f"ttma_{patient.dialysis_modality}_initialisation"
@@ -1285,10 +1353,6 @@ class Model:
                 )
                 hhd_target = self.config.hhd_intervention_target[which_year]
                 if hhd_proportion < hhd_target:
-                    ## we take from ichd and give to hhd
-                    # ichd_patients = [
-                    #    i for i in self.patient_objects if i.dialysis_modality == "ichd"
-                    # ]
                     ichd_patients = last_entries[
                         (last_entries["activity_from"] == "ichd")
                         & (
@@ -1304,20 +1368,25 @@ class Model:
                     total_patients_to_move = int(
                         hhd_target * total_dialysis_count - hhd_count
                     )  # how many patients do we need to move to hhd to meet the target?
-                    patients_to_move = np.random.choice(
+                    patients_to_move = self.interventions_rng.choice(
                         ichd_patients, size=total_patients_to_move, replace=False
                     )
                     # randomly select patients to move from ichd to hhd
                     for patient in self.patient_objects:
                         if patient.id in patients_to_move:
-                            patient.dialysis_modality = "hhd"
-
                             # pass in the process we want to interrupt
                             # interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
                             self.stop_patient(
                                 process=self.processes[patient.id], patient=patient
                             )
-
+                            self._update_event_log(  ## note that the event log is processed at the end of experiment to remove redundant prior entry that was interrupted
+                                patient,
+                                "ichd",
+                                "hhd",
+                                patient.time_starts_dialysis,
+                                np.float64(self.env.now)
+                                - np.float64(patient.time_starts_dialysis),
+                            )
                             patient.time_until_death -= np.float64(
                                 self.env.now
                             ) - np.float64(patient.time_starts_dialysis)
@@ -1328,8 +1397,8 @@ class Model:
                                 patient.remaining_time_on_transplant_list -= np.float64(
                                     self.env.now
                                 ) - np.float64(patient.time_starts_dialysis)
+                            patient.dialysis_modality = "hhd"
                             patient.time_starts_dialysis = self.env.now
-                            # patient.time_on_dialysis = {"ichd": 0.0, "hhd": 0.0, "pd": 0.0}
                             try:
                                 self.processes[patient.id] = self.env.process(
                                     self.start_dialysis_modality(patient)
@@ -1357,19 +1426,24 @@ class Model:
                     total_patients_to_move = -int(
                         hhd_target * total_dialysis_count - hhd_count
                     )  # how many patients do we need to move to hhd to meet the target?
-                    patients_to_move = np.random.choice(
+                    patients_to_move = self.interventions_rng.choice(
                         hhd_patients, size=total_patients_to_move, replace=False
                     )
                     for patient in self.patient_objects:
                         if patient.id in patients_to_move:
-                            patient.dialysis_modality = "ichd"
-
                             # pass in the process we want to interrupt
                             # interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
                             self.stop_patient(
                                 process=self.processes[patient.id], patient=patient
                             )
-
+                            self._update_event_log(  ## note that the event log is processed at the end of experiment to remove redundant prior entry that was interrupted
+                                patient,
+                                "hhd",
+                                "ichd",
+                                patient.time_starts_dialysis,
+                                np.float64(self.env.now)
+                                - np.float64(patient.time_starts_dialysis),
+                            )
                             patient.time_until_death -= np.float64(
                                 self.env.now
                             ) - np.float64(patient.time_starts_dialysis)
@@ -1380,6 +1454,7 @@ class Model:
                                 patient.remaining_time_on_transplant_list -= np.float64(
                                     self.env.now
                                 ) - np.float64(patient.time_starts_dialysis)
+                            patient.dialysis_modality = "ichd"
                             patient.time_starts_dialysis = self.env.now
                             try:
                                 self.processes[patient.id] = self.env.process(

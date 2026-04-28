@@ -2,12 +2,14 @@
 Module with helper functions
 """
 
-from renal_capacity_model.utils import get_logger
-import pandas as pd
-import numpy as np
-from itertools import product
 import math
+from itertools import product
 from typing import TYPE_CHECKING
+
+import numpy as np
+import pandas as pd
+
+from renal_capacity_model.utils import get_logger
 
 if TYPE_CHECKING:
     from renal_capacity_model.config import Config
@@ -238,7 +240,7 @@ def adjust_next_modality(event_log: pd.DataFrame) -> pd.DataFrame:
 
 
 def process_event_log(event_log: pd.DataFrame) -> pd.DataFrame:
-    """Processes event log for easier validation and debugging
+    """Processes event log for easier validation and debugging. Also removes unnecessary rows that were outdated by the HHD intervention if applied.
 
     Args:
         event_log (pd.DataFrame): event log
@@ -247,6 +249,21 @@ def process_event_log(event_log: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame with additional columns ("year_start", "end_time", "year_end")
         and clearer information on which modality was next
     """
+    ## loop through the patient ids and remove any rows where time_starting_activity_from is equal to time_starting_activity from in the row below.
+    for patient_id in event_log["patient_id"].unique():
+        if (
+            event_log.loc[
+                event_log["patient_id"] == patient_id, "time_starting_activity_from"
+            ]
+            .duplicated()
+            .any()
+        ):
+            df = event_log.loc[
+                event_log["patient_id"] == patient_id, "time_starting_activity_from"
+            ]
+            duplicates_mask = df.duplicated(keep=False)
+            duplicate_index = df.index[duplicates_mask].tolist()[0]
+            event_log = event_log.drop(duplicate_index)
     event_log["year_start"] = event_log["time_starting_activity_from"].apply(
         calculate_lookup_year
     )
