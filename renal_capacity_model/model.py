@@ -1107,21 +1107,27 @@ class Model:
         # what is the next step modality change, transplant or death
         # if they're waiting for transplant we'll compare the time generated to patient.time on waiting list
         # we'll compare all generated times to time of death
+        patient.switches += 1  # count the number of times a patient has switched modality, this includes the initial modality allocation as a "switch" from none to a modality
 
         ## sampled_time depends on whether patient is incident or not
         if patient.patient_flag == "incident":
-            if patient.dialysis_modality == "ichd":
-                random_number = truncate_2dp(self.ttma_ichd_rng.uniform(0, 1))
-            elif patient.dialysis_modality == "hhd":
-                random_number = truncate_2dp(self.ttma_hhd_rng.uniform(0, 1))
+            if patient.switches > 1:
+                sampled_time = (
+                    self.config.sim_duration - self.env.now + 1
+                )  # if they've switched modality more than 1 times we assume they stay on the second modality until the end of the simulation to avoid excessive switching
             else:
-                random_number = truncate_2dp(self.ttma_pd_rng.uniform(0, 1))
-            sampled_time = (
-                self.config.time_to_event_curves[
-                    f"ttma_{patient.dialysis_modality}"
-                ].loc[random_number, patient.patient_type]
-                * self.config.multipliers["ttma"]["inc"][patient.dialysis_modality]
-            )
+                if patient.dialysis_modality == "ichd":
+                    random_number = truncate_2dp(self.ttma_ichd_rng.uniform(0, 1))
+                elif patient.dialysis_modality == "hhd":
+                    random_number = truncate_2dp(self.ttma_hhd_rng.uniform(0, 1))
+                else:
+                    random_number = truncate_2dp(self.ttma_pd_rng.uniform(0, 1))
+                sampled_time = (
+                    self.config.time_to_event_curves[
+                        f"ttma_{patient.dialysis_modality}"
+                    ].loc[random_number, patient.patient_type]
+                    * self.config.multipliers["ttma"]["inc"][patient.dialysis_modality]
+                )
         else:  ## prevalent patient
             if patient.dialysis_modality == "ichd":
                 random_number = truncate_2dp(self.ttma_ichd_rng.uniform(0, 1))

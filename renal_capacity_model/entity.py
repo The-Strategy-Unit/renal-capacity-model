@@ -47,3 +47,4 @@ class Patient:
         self.process = (
             None  # simpy process for the patient, assigned when they enter the model
         )
+        self.switches = 0  # number of times patient has switched modality
