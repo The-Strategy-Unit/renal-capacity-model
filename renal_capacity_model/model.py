@@ -1111,7 +1111,7 @@ class Model:
 
         ## sampled_time depends on whether patient is incident or not
         if patient.patient_flag == "incident":
-            if patient.switches > 1:
+            if patient.switches > 2:
                 sampled_time = (
                     self.config.sim_duration - self.env.now + 1
                 )  # if they've switched modality more than 1 times we assume they stay on the second modality until the end of the simulation to avoid excessive switching
@@ -1382,6 +1382,7 @@ class Model:
                         if patient.id in patients_to_move:
                             # pass in the process we want to interrupt
                             # interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
+                            patient.switches += 1
                             self.stop_patient(
                                 process=self.processes[patient.id], patient=patient
                             )
@@ -1439,6 +1440,7 @@ class Model:
                         if patient.id in patients_to_move:
                             # pass in the process we want to interrupt
                             # interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
+                            patient.switches += 1
                             self.stop_patient(
                                 process=self.processes[patient.id], patient=patient
                             )
