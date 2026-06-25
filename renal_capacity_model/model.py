@@ -223,7 +223,7 @@ class Model:
                         )
                     if (
                         self.live_or_cadaver_transplant_rng.uniform(0, 1)
-                        < self.config.transplant_type_dist["prev"][p.age_group]
+                        < self.config.transplant_type_dist[1]["prev"][p.age_group]
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
@@ -334,7 +334,7 @@ class Model:
                         )
                     if (
                         self.live_or_cadaver_transplant_rng.uniform(0, 1)
-                        < self.config.transplant_type_dist["prev"][p.age_group]
+                        < self.config.transplant_type_dist[1]["prev"][p.age_group]
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
@@ -444,7 +444,7 @@ class Model:
                         )
                     if (
                         self.live_or_cadaver_transplant_rng.uniform(0, 1)
-                        < self.config.transplant_type_dist["prev"][p.age_group]
+                        < self.config.transplant_type_dist[1]["prev"][p.age_group]
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
@@ -681,7 +681,7 @@ class Model:
                 # We now assign a transplant type: live or cadaver as this impacts the probability of starting pre-emptive transplant
                 if (
                     self.live_or_cadaver_transplant_rng.uniform(0, 1)
-                    < self.config.transplant_type_dist["inc"][patient.age_group]
+                    < self.config.transplant_type_dist[year]["inc"][patient.age_group]
                 ):
                     patient.transplant_type = "live"
                 else:
