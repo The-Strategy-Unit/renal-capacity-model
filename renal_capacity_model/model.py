@@ -1114,7 +1114,7 @@ class Model:
             if patient.switches > 2:
                 sampled_time = (
                     self.config.sim_duration - self.env.now + 1
-                )  # if they've switched modality more than 1 times we assume they stay on the second modality until the end of the simulation to avoid excessive switching
+                )  # if they've switched modality more than 2 times we assume they stay on the second modality until the end of the simulation to avoid excessive switching
             else:
                 if patient.dialysis_modality == "ichd":
                     random_number = truncate_2dp(self.ttma_ichd_rng.uniform(0, 1))
