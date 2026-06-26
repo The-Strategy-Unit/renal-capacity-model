@@ -4,8 +4,9 @@ regardless of model geography
 """
 
 import pandas as pd
-from renal_capacity_model.utils import get_time_to_event_curve_filepaths, get_logger
+
 from renal_capacity_model.helpers import check_time_to_event_curve_dfs
+from renal_capacity_model.utils import get_logger, get_time_to_event_curve_filepaths
 
 logger = get_logger(__name__)
 
@@ -206,22 +207,25 @@ national_config_dict = {
         for y in range(1, 14)
     },
     "transplant_type_dist": {
-        "inc": {
-            1: 0.4,
-            2: 0.3,
-            3: 0.26,
-            4: 0.23,
-            5: 0.19,
-            6: 0.12,
-        },
-        "prev": {
-            1: 0.4,
-            2: 0.3,
-            3: 0.26,
-            4: 0.23,
-            5: 0.19,
-            6: 0.12,
-        },
+        y: {
+            "inc": {
+                1: 0.4,
+                2: 0.3,
+                3: 0.26,
+                4: 0.23,
+                5: 0.19,
+                6: 0.12,
+            },
+            "prev": {
+                1: 0.4,
+                2: 0.3,
+                3: 0.26,
+                4: 0.23,
+                5: 0.19,
+                6: 0.12,
+            },
+        }
+        for y in range(1, 14)
     },
     "modality_allocation_distributions": {
         y: {
@@ -420,7 +424,6 @@ tw_liveTx = {
         6: {"shape": 1.01, "scale": 342},
     },
 }
-
 
 # Time waiting before dialysis
 tw_before_dialysis_values = {

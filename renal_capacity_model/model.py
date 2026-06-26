@@ -223,7 +223,7 @@ class Model:
                         )
                     if (
                         self.live_or_cadaver_transplant_rng.uniform(0, 1)
-                        < self.config.transplant_type_dist["prev"][p.age_group]
+                        < self.config.transplant_type_dist[1]["prev"][p.age_group]
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
@@ -334,7 +334,7 @@ class Model:
                         )
                     if (
                         self.live_or_cadaver_transplant_rng.uniform(0, 1)
-                        < self.config.transplant_type_dist["prev"][p.age_group]
+                        < self.config.transplant_type_dist[1]["prev"][p.age_group]
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
@@ -444,7 +444,7 @@ class Model:
                         )
                     if (
                         self.live_or_cadaver_transplant_rng.uniform(0, 1)
-                        < self.config.transplant_type_dist["prev"][p.age_group]
+                        < self.config.transplant_type_dist[1]["prev"][p.age_group]
                     ):
                         # it's a live transplant, but not pre-emptive as they're already on dialysis
                         p.transplant_type = "live"
@@ -681,7 +681,7 @@ class Model:
                 # We now assign a transplant type: live or cadaver as this impacts the probability of starting pre-emptive transplant
                 if (
                     self.live_or_cadaver_transplant_rng.uniform(0, 1)
-                    < self.config.transplant_type_dist["inc"][patient.age_group]
+                    < self.config.transplant_type_dist[year]["inc"][patient.age_group]
                 ):
                     patient.transplant_type = "live"
                 else:
@@ -1107,9 +1107,15 @@ class Model:
         # what is the next step modality change, transplant or death
         # if they're waiting for transplant we'll compare the time generated to patient.time on waiting list
         # we'll compare all generated times to time of death
+        # patient.switches += 1  # count the number of times a patient has switched modality, this includes the initial modality allocation as a "switch" from none to a modality
 
         ## sampled_time depends on whether patient is incident or not
         if patient.patient_flag == "incident":
+            # if patient.switches > 2:
+            #    sampled_time = (
+            #        self.config.sim_duration - self.env.now + 1
+            #    )  # if they've switched modality more than 2 times we assume they stay on the second modality until the end of the simulation to avoid excessive switching
+            # else:
             if patient.dialysis_modality == "ichd":
                 random_number = truncate_2dp(self.ttma_ichd_rng.uniform(0, 1))
             elif patient.dialysis_modality == "hhd":
@@ -1376,6 +1382,7 @@ class Model:
                         if patient.id in patients_to_move:
                             # pass in the process we want to interrupt
                             # interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
+                            # patient.switches += 1
                             self.stop_patient(
                                 process=self.processes[patient.id], patient=patient
                             )
@@ -1433,6 +1440,7 @@ class Model:
                         if patient.id in patients_to_move:
                             # pass in the process we want to interrupt
                             # interrupt the current process for the patient as we are changing their modality outside of the normal modality change process
+                            # patient.switches += 1
                             self.stop_patient(
                                 process=self.processes[patient.id], patient=patient
                             )
